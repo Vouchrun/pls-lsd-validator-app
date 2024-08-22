@@ -1,8 +1,8 @@
 import React from 'react'
 import { useAppSlice } from "hooks/selector";
 import Image from "next/image";
-import appLogo from "public/images/logoStafi.png";
-import appLogoLight from "public/images/logoStafi.png";
+import appLogo from "public/images/logoStafi.svg";
+import appLogoLight from "public/images/logoStafi.svg";
 
 export default function Footer() {
     const { darkMode, unreadNoticeFlag } = useAppSlice();
