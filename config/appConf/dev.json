@@ -1,14 +1,14 @@
 {
   "chain": {
-    "id": 17000,
-    "name": "HoleSky",
-    "networkName": "holeSky"
+    "id": 943,
+    "name": "PulseChain Testnet v4",
+    "networkName": "pulsechain-testnet-v4"
   },
-  "rpc": "https://ethereum-holesky.publicnode.com",
-  "beaconHost": "https://holesky-beacon.stafi.io",
-  "explorer": "https://holesky.etherscan.io",
-  "validatorExplorer": "https://holesky.beaconcha.in",
-  "blockSeconds": 12,
+  "rpc": "https://rpc.v4.testnet.pulsechain.com",
+  "beaconHost": "https://rpc-testnet-pulsechain.g4mm4.io/beacon-api",
+  "explorer": "https://scan.v4.testnet.pulsechain.com/#",
+  "validatorExplorer": "https://beacon.v4.testnet.pulsechain.com/",
+  "blockSeconds": 10,
   "contracts": {
     "lsdTokenContract": {
       "address": "0x61135C59A4Eb452b89963188eD6B6a7487049764"
