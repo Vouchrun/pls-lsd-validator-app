@@ -4,9 +4,9 @@
   "token": {
     "tokenName": "PLS",
     "lsdTokenName": "vPLS",
-    "lsdTokenIconUri": "https://cdn.stafi.io/rtoken/logo/rPLS.png",
+    "lsdTokenIconUri": "https://cdn.stafi.io/rtoken/logo/rPLS.png", //need to update this
     "tokenIcon": "/images/token/PLS.svg",
-    "lsdTokenIcon": "/images/token/vPLS.svg"
+    "lsdTokenIcon": "/images/token/vPLS_trans.svg"
   },
   "supportRestApi": true,
   "apr": 8.1,
