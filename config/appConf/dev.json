@@ -11,20 +11,20 @@
   "blockSeconds": 12,
   "contracts": {
     "lsdTokenContract": {
-      "address": "0x85F7c01009B1bf540699C4FDDf3589DDE60BCb14"
+      "address": "0x61135C59A4Eb452b89963188eD6B6a7487049764"
     },
     "depositContract": {
-      "address": "0x044E54D0Fd299917eC9f5cb27B35Ce252D546A2b"
+      "address": "0x1B10731Ec91267e9Fd85c042a3a2961580837d1F"
     },
     "networkBalanceContract": {
-      "address": "0xbfa824c78AC83c09dBF33Fcf6bf8116496189F28"
+      "address": "0x47e97e7971D13936667EE0E0b44a4Fc1eBD871Ff"
     },
     "networkWithdrawContract": {
-      "address": "0x3CB60643B531632A243dA103f3d0A860eB49EEFC"
+      "address": "0x555E33C8782A0CeF14d2e9064598CE991f58Bc74"
     },
     "nodeDepositContract": {
-      "address": "0xcF490F4AB5dF7478de350A28cD2741534dD24986"
+      "address": "0x190e0458A673B6868148E6A9e540c93363C7c24B"
     }
   },
-  "lsdAppUrl": "https://test-eth-lsd.stafi.io"
+  "lsdAppUrl": "https://app.3aaa3.xyz"
 }

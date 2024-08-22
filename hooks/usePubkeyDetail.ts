@@ -71,7 +71,10 @@ export function usePubkeyDetail(pubkeyAddress: string | undefined) {
       const beaconApiStatus =
         matchedBeaconData?.status?.toUpperCase() || undefined;
       const eligibilityEpoch =
-        matchedBeaconData?.validator?.activation_eligibility_epoch || "--";
+        BigInt(matchedBeaconData?.validator?.activation_eligibility_epoch) >
+        BigInt("18000000000000000000")
+          ? "--"
+          : matchedBeaconData?.validator?.activation_eligibility_epoch || "--";
 
       // const beaconCheckpointsResponse = await fetch(`/api/beaconCheckpoints`, {
       //   method: "GET",
@@ -82,17 +85,19 @@ export function usePubkeyDetail(pubkeyAddress: string | undefined) {
       const currentEpoch = beaconCheckpointsResJson?.data?.finalized?.epoch;
 
       const days =
-        ((Number(currentEpoch) -
-          Number(matchedBeaconData?.validator?.activation_epoch)) *
-          32 *
-          getBlockSeconds()) /
-        (24 * 60 * 60);
-
+        BigInt(matchedBeaconData?.validator?.activation_epoch) >
+        BigInt("18000000000000000000")
+          ? "--"
+          : ((Number(currentEpoch) -
+              Number(matchedBeaconData?.validator?.activation_epoch)) *
+              32 *
+              getBlockSeconds()) /
+            (24 * 60 * 60);
       const newPubkeyInfo = {
         pubkeyAddress: pubkeyAddress,
         beaconApiStatus,
         eligibilityEpoch,
-        days: Math.floor(days) + "",
+        days: !isNaN(Number(days)) ? Math.floor(Number(days)) + "" : "--",
         currentTokenAmount: matchedBeaconData
           ? Web3.utils.fromWei(matchedBeaconData.balance, "gwei")
           : "--",

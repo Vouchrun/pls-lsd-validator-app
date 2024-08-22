@@ -3,6 +3,14 @@ import {
   getNetworkWithdrawContract,
   getNodeDepositContract,
 } from "config/contract";
+import {
+  getNetworkWithdrawContractAbi,
+  getNodeDepositContractAbi,
+} from "config/contractAbi";
+import {
+  getTrustValidatorDepositAmount,
+  getValidatorTotalDepositAmount,
+} from "config/env";
 import { getEtherScanTxUrl } from "config/explorer";
 import {
   CANCELLED_MESSAGE,
@@ -18,12 +26,14 @@ import {
   ValidatorClaimType,
 } from "interfaces/common";
 import { AppThunk } from "redux/store";
+import { fetchPubkeyStatus } from "utils/apiUtils";
 import { isEvmTxCancelError, uuid } from "utils/commonUtils";
 import { getTokenName } from "utils/configUtils";
 import { formatNumber, formatScientificNumber } from "utils/numberUtils";
 import snackbarUtil from "utils/snackbarUtils";
 import { getShortAddress } from "utils/stringUtils";
 import { createWeb3, getEthWeb3 } from "utils/web3Utils";
+import { parseEther } from "viem";
 import Web3 from "web3";
 import {
   addNotice,
@@ -36,16 +46,6 @@ import {
   updateWithdrawLoadingParams,
 } from "./AppSlice";
 import { setEthTxLoading, updateEthBalance } from "./EthSlice";
-import {
-  getNetworkWithdrawContractAbi,
-  getNodeDepositContractAbi,
-} from "config/contractAbi";
-import {
-  getTrustValidatorDepositAmount,
-  getValidatorTotalDepositAmount,
-} from "config/env";
-import { fetchPubkeyStatus } from "utils/apiUtils";
-import { parseEther } from "viem";
 
 export interface ValidatorState {
   validatorWithdrawalCredentials: string;
@@ -179,14 +179,17 @@ export const updateNodePubkeys = (): AppThunk => async (dispatch, getState) => {
       const matchedBeaconData = beaconStatusResJson.data?.find(
         (item: any) => item.validator?.pubkey === pubkeysOfNode[index]
       );
-      const type =
-        item._nodeDepositAmount ===
-        parseEther(
-          (getTrustValidatorDepositAmount() + "") as `${number}`,
-          "gwei"
-        )
-          ? "trusted"
-          : "solo";
+      // console.log({ item });
+      // const type =
+      //   item._nodeDepositAmount ===
+      //   parseEther(
+      //     (getTrustValidatorDepositAmount() + "") as `${number}`,
+      //     "gwei"
+      //   )
+      //     ? "trusted"
+      //     : "solo";
+      const type = item._nodeDepositAmount === 0 ? "solo" : "trusted";
+      // console.log({ type });
       return {
         pubkeyAddress: pubkeysOfNode[index],
         beaconApiStatus: matchedBeaconData?.status?.toUpperCase() || undefined,
@@ -486,7 +489,9 @@ export const claimValidatorRewards =
 
       dispatch(setClaimRewardsLoading(true));
 
-      const formatProofs = ["0x" + ipfsRewardItem.proof];
+      const formatProofs = ipfsRewardItem.proof
+        .split(":")
+        .map((item) => "0x" + item);
 
       const claimParams = [
         ipfsRewardItem.index,
@@ -597,14 +602,19 @@ export const withdrawValidatorEth =
         })
       );
 
+      const formatProofs = ipfsRewardItem.proof
+        .split(":")
+        .map((item) => "0x" + item);
+
       const claimParams = [
         ipfsRewardItem.index,
         ipfsRewardItem.address,
         ipfsRewardItem.totalRewardAmount,
         ipfsRewardItem.totalExitDepositAmount,
-        ["0x" + ipfsRewardItem.proof],
+        formatProofs,
         ValidatorClaimType.ClaimAll,
       ];
+
       const result = await contract.methods.nodeClaim(...claimParams).send();
 
       callback && callback(result.status, result);

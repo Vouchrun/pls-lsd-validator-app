@@ -7,7 +7,7 @@ import {
   getLsdEthTokenContractAbi,
   getNetworkWithdrawContractAbi,
 } from "config/contractAbi";
-import { RewardJsonResponse } from "interfaces/common";
+import { IpfsRewardItem, RewardJsonResponse } from "interfaces/common";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { getEthWeb3 } from "utils/web3Utils";
 import Web3 from "web3";
@@ -132,6 +132,9 @@ export function usePoolData() {
           console.log({ err });
         });
 
+      let poolEth =
+        Number(lsdTotalSupply) * Number(Web3.utils.fromWei(lsdRate));
+
       const response = await fetch(
         `https://${nodeRewardsFileCid}.ipfs.dweb.link/${getLsdEthTokenContract().toLowerCase()}-rewards-${getEthereumChainId()}-${latestMerkleRootEpoch}.json`,
         {
@@ -140,13 +143,21 @@ export function usePoolData() {
         }
       );
 
-      const resJson: RewardJsonResponse = await response.json();
+      // const resJson: RewardJsonResponse = await response.json();
       // const resJson = { List: [] };
+      const resText = await response.text();
+      var JSONbig = require("json-bigint");
+      const resTextJson = JSONbig.parse(resText);
 
-      let poolEth =
-        Number(lsdTotalSupply) * Number(Web3.utils.fromWei(lsdRate));
+      const list: IpfsRewardItem[] = resTextJson.List?.map((item: any) => {
+        return {
+          ...item,
+          totalRewardAmount: item.totalRewardAmount.toFixed(),
+          totalDepositAmount: item.totalDepositAmount.toFixed(),
+        };
+      });
 
-      const requests = resJson.List.map((data) => {
+      const requests = list?.map((data) => {
         return (async () => {
           const totalClaimedRewardOfNode = await networkWithdrawContract.methods
             .totalClaimedRewardOfNode(data.address)

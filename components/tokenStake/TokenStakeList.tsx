@@ -6,6 +6,7 @@ import { Icomoon } from "components/icon/Icomoon";
 import { getValidatorProfileUrl } from "config/explorer";
 import { robotoSemiBold } from "config/font";
 import { useAppSlice } from "hooks/selector";
+import { useIsTrustedValidator } from "hooks/useIsTrustedValidator";
 import { usePubkeysHome } from "hooks/usePubkeysHome";
 import { useWalletAccount } from "hooks/useWalletAccount";
 import { PubkeyStatus } from "interfaces/common";
@@ -22,6 +23,7 @@ export const TokenStakeList = () => {
   const { metaMaskAccount } = useWalletAccount();
   const [page, setPage] = useState(1);
   const [selectedTab, setSelectedTab] = useState("All");
+  const { isTrust } = useIsTrustedValidator();
 
   const selectedStatus = useMemo(() => {
     switch (selectedTab) {
@@ -60,10 +62,12 @@ export const TokenStakeList = () => {
   );
 
   const showGroupStakeButton =
-    displayTrustPubkeyInfos.filter((item) => isPubkeyStakeable(item._status))
-      .length > 1 ||
-    displaySoloPubkeyInfos.filter((item) => isPubkeyStakeable(item._status))
-      .length > 1;
+    displayTrustPubkeyInfos.filter(
+      (item) => item.canStake && isPubkeyStakeable(item._status)
+    ).length > 1 ||
+    displaySoloPubkeyInfos.filter(
+      (item) => item.canStake && isPubkeyStakeable(item._status)
+    ).length > 1;
 
   return (
     <div>
@@ -124,7 +128,7 @@ export const TokenStakeList = () => {
                     pathname: "/tokenStake/stake",
                     query: {
                       pubkeyAddressList: pubkeyAddressList,
-                      type: stakeablePubkeyInfos[0].type,
+                      type: isTrust ? "trusted" : "solo",
                     },
                   },
                   "/tokenStake/stake"
@@ -267,30 +271,33 @@ export const TokenStakeList = () => {
                     : "text-color-text2"
                 )}
               >
-                {pubkeyInfo.displayStatus}
+                {!pubkeyInfo.canStake && pubkeyInfo.displayStatus === "Matched"
+                  ? "Unmatch"
+                  : pubkeyInfo.displayStatus}
               </div>
 
               <div className="flex items-center justify-end pr-[.56rem] text-[.16rem] text-color-text2">
-                {isPubkeyStakeable(pubkeyInfo._status) && (
-                  <CustomButton
-                    height=".42rem"
-                    className="px-[.5rem]"
-                    onClick={() => {
-                      router.push(
-                        {
-                          pathname: "/tokenStake/stake",
-                          query: {
-                            pubkeyAddressList: [pubkeyInfo.pubkeyAddress],
-                            type: pubkeyInfo.type,
+                {pubkeyInfo.canStake &&
+                  isPubkeyStakeable(pubkeyInfo._status) && (
+                    <CustomButton
+                      height=".42rem"
+                      className="px-[.5rem]"
+                      onClick={() => {
+                        router.push(
+                          {
+                            pathname: "/tokenStake/stake",
+                            query: {
+                              pubkeyAddressList: [pubkeyInfo.pubkeyAddress],
+                              type: isTrust ? "trusted" : "solo",
+                            },
                           },
-                        },
-                        "/tokenStake/stake"
-                      );
-                    }}
-                  >
-                    Stake
-                  </CustomButton>
-                )}
+                          "/tokenStake/stake"
+                        );
+                      }}
+                    >
+                      Stake
+                    </CustomButton>
+                  )}
               </div>
             </div>
           ))}

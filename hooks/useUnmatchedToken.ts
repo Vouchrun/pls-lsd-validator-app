@@ -35,7 +35,10 @@ export function useUnmatchedToken() {
 
       const unmatchedEth = Web3.utils.fromWei(
         formatScientificNumber(
-          Number(userDepositBalance) - Number(totalMissingAmountForWithdraw)
+          Math.max(
+            0,
+            Number(userDepositBalance) - Number(totalMissingAmountForWithdraw)
+          )
         )
       );
 

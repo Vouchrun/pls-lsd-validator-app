@@ -1,25 +1,27 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { AppThunk } from "redux/store";
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { AppThunk } from 'redux/store';
 import {
   addNoticeInternal,
   LocalNotice,
   updateNoticeInternal,
-} from "utils/noticeUtils";
+} from 'utils/noticeUtils';
 import {
+  getStorage,
   removeStorage,
   saveStorage,
+  STORAGE_KEY_DARK_MODE,
   STORAGE_KEY_UNREAD_NOTICE,
-} from "utils/storageUtils";
+} from 'utils/storageUtils';
 
 export interface DepositLoadingParams {
   modalVisible?: boolean;
-  status?: "loading" | "success" | "error";
+  status?: 'loading' | 'success' | 'error';
   customMsg?: string;
 }
 
 export interface ValidatorStakeLoadingParams {
   modalVisible?: boolean;
-  status?: "loading" | "success" | "error";
+  status?: 'loading' | 'success' | 'error';
   customMsg?: string;
   stakeAmount?: string;
   scanUrl?: string;
@@ -27,7 +29,7 @@ export interface ValidatorStakeLoadingParams {
 
 export interface WithdrawLoadingParams {
   modalVisible?: boolean;
-  status?: "loading" | "success" | "error";
+  status?: 'loading' | 'success' | 'error';
   tokenAmount?: string;
   scanUrl?: string;
   txHash?: string;
@@ -50,7 +52,7 @@ export interface AppState {
 }
 
 const initialState: AppState = {
-  darkMode: false,
+  darkMode: true,
   collapseOpenId: undefined,
   updateFlag: 0,
   unreadNoticeFlag: false,
@@ -71,11 +73,13 @@ const initialState: AppState = {
 };
 
 export const appSlice = createSlice({
-  name: "app",
+  name: 'app',
   initialState,
   reducers: {
-    setDarkMode: (state: AppState, aciton: PayloadAction<boolean>) => {
-      state.darkMode = aciton.payload;
+    setDarkMode: (state: AppState, action: PayloadAction<boolean>) => {
+      saveStorage(STORAGE_KEY_DARK_MODE, JSON.stringify(action.payload));
+      const darkMode = JSON.parse(getStorage(STORAGE_KEY_DARK_MODE) || 'false');
+      state.darkMode = action.payload ?? darkMode;
     },
     setCollapseOpenId: (
       state: AppState,
@@ -88,7 +92,7 @@ export const appSlice = createSlice({
     },
     setUnreadNoticeFlag: (state: AppState, action: PayloadAction<boolean>) => {
       if (action.payload) {
-        saveStorage(STORAGE_KEY_UNREAD_NOTICE, "1");
+        saveStorage(STORAGE_KEY_UNREAD_NOTICE, '1');
       } else {
         removeStorage(STORAGE_KEY_UNREAD_NOTICE);
       }

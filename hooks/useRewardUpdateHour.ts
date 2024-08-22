@@ -1,5 +1,6 @@
 import { getNetworkBalanceContract } from "config/contract";
 import { getNetworkBalanceContractAbi } from "config/contractAbi";
+import { getBlockSeconds } from "config/env";
 import { useCallback, useEffect, useState } from "react";
 import { getEthWeb3 } from "utils/web3Utils";
 
@@ -23,7 +24,8 @@ export function useRewardUpdateHour() {
           console.log({ err });
         });
 
-      const updateHours = (Number(updateBalancesEpochs) * 6.4) / 60;
+      const updateHours =
+        (Number(updateBalancesEpochs) * (getBlockSeconds() * 32)) / 60 / 60;
       setRewardUpdateHour(Math.round(updateHours) + "");
     } catch (err: any) {
       console.log({ err });

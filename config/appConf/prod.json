@@ -1,33 +1,30 @@
 {
   "chain": {
-    "id": 1,
-    "name": "Ethereum",
-    "networkName": "mainnet"
+    "id": 943,
+    "name": "PulseChain Testnet v4",
+    "networkName": "pulsechain-testnet-v4"
   },
-  "rpc": "https://mainnet.infura.io/v3/b3611f564322439ab2491e04ddd55b39",
-  "beaconHost": "",
-  "explorer": "https://etherscan.io",
-  "validatorExplorer": "https://beaconcha.in",
-  "blockSeconds": 12,
+  "rpc": "https://rpc.v4.testnet.pulsechain.com",
+  "beaconHost": "https://rpc-testnet-pulsechain.g4mm4.io/beacon-api",
+  "explorer": "https://scan.v4.testnet.pulsechain.com/#",
+  "validatorExplorer": "https://beacon.v4.testnet.pulsechain.com/",
+  "blockSeconds": 10,
   "contracts": {
     "lsdTokenContract": {
-      "address": "0x9559aaa82d9649c7a7b220e7c461d2e74c9a3593"
+      "address": "0x61135C59A4Eb452b89963188eD6B6a7487049764"
     },
     "depositContract": {
-      "address": "0x70C5744d377aE6E9926CcBCF19D501340CB26285"
-    },
-    "withdrawContract": {
-      "address": "0xE773dbe9d073dBEfdC147fbdCCB06dBD4f5AAF54"
+      "address": "0x1B10731Ec91267e9Fd85c042a3a2961580837d1F"
     },
     "networkBalanceContract": {
-      "address": "0xda9726Fd1B125a3923f9D9521e28fE888091698d"
+      "address": "0x47e97e7971D13936667EE0E0b44a4Fc1eBD871Ff"
     },
     "networkWithdrawContract": {
-      "address": "0x524611Ca2e5A0bE5bca87bf4A6e6468Ed9311572"
+      "address": "0x555E33C8782A0CeF14d2e9064598CE991f58Bc74"
     },
     "nodeDepositContract": {
-      "address": "0x696280D6962607E32C43AF85547B39cae51a403a"
+      "address": "0x190e0458A673B6868148E6A9e540c93363C7c24B"
     }
   },
-  "lsdAppUrl": "https://test-eth-lsd.stafi.io"
+  "lsdAppUrl": "https://app.3aaa3.xyz"
 }

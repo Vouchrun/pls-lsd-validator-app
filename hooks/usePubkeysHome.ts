@@ -1,3 +1,9 @@
+import { getNodeDepositContract } from "config/contract";
+import { getNodeDepositContractAbi } from "config/contractAbi";
+import {
+  getTrustValidatorDepositAmount,
+  getValidatorTotalDepositAmount,
+} from "config/env";
 import {
   ChainPubkeyStatus,
   NodePubkeyInfo,
@@ -5,7 +11,10 @@ import {
 } from "interfaces/common";
 import { useEffect, useMemo, useState } from "react";
 import { getPubkeyDisplayStatus } from "utils/commonUtils";
+import { getEthWeb3 } from "utils/web3Utils";
+import { formatEther } from "viem";
 import { useAppSlice } from "./selector";
+import { useIsTrustedValidator } from "./useIsTrustedValidator";
 import { useUnmatchedToken } from "./useUnmatchedToken";
 import { useUserPubkeys } from "./useUserPubkeys";
 
@@ -21,6 +30,7 @@ export const usePubkeysHome = (
   const [othersCount, setOthersCount] = useState<number>();
 
   const { nodePubkeys } = useUserPubkeys();
+  const { isTrust } = useIsTrustedValidator();
 
   const [displayPubkeyInfos, setDisplayPubkeyInfos] = useState<
     NodePubkeyInfo[]
@@ -32,71 +42,98 @@ export const usePubkeysHome = (
   const { unmatchedEth } = useUnmatchedToken();
 
   useEffect(() => {
-    if (!nodePubkeys) {
-      return;
-    }
-
-    let remainingTokenAmount =
-      !unmatchedEth || isNaN(Number(unmatchedEth)) ? 0 : Number(unmatchedEth);
-
-    let unmatchedCount = 0;
-    let stakedCount = 0;
-    let othersCount = 0;
-
-    const resList: NodePubkeyInfo[] = [];
-
-    nodePubkeys.forEach((item) => {
-      const displayStatus = getPubkeyDisplayStatus(item, remainingTokenAmount);
-      item.displayStatus === displayStatus;
-      let canStake = false;
-      if (
-        item._status === ChainPubkeyStatus.Match &&
-        remainingTokenAmount >= 31
-      ) {
-        remainingTokenAmount -= 31;
-        canStake = true;
+    (async () => {
+      if (!nodePubkeys) {
+        return;
       }
 
-      const isUnmatch = item.displayStatus === "Unmatched";
-      const isStaked =
-        item._status === ChainPubkeyStatus.Staked &&
-        item.beaconApiStatus !== "EXITED_UNSLASHED" &&
-        item.beaconApiStatus !== "EXITED_SLASHED" &&
-        item.beaconApiStatus !== "WITHDRAWAL_POSSIBLE" &&
-        item.beaconApiStatus !== "WITHDRAWAL_DONE" &&
-        item.beaconApiStatus !== "EXITED" &&
-        item.beaconApiStatus !== "WITHDRAWAL";
+      const web3 = getEthWeb3();
+      let nodeDepositContract = new web3.eth.Contract(
+        getNodeDepositContractAbi(),
+        getNodeDepositContract(),
+        {}
+      );
 
-      if (isUnmatch) {
-        unmatchedCount++;
-      } else if (isStaked) {
-        stakedCount++;
-      } else {
-        othersCount++;
-      }
+      const res = await nodeDepositContract.methods
+        .soloNodeDepositAmount()
+        .call();
+      const soloDepositAmount = formatEther(res);
 
-      const newItem = { ...item, displayStatus, canStake };
+      const minimalMatchAmount = isTrust
+        ? getValidatorTotalDepositAmount() - getTrustValidatorDepositAmount()
+        : getValidatorTotalDepositAmount() - Number(soloDepositAmount);
 
-      if (isUnmatch && selectedPubkeyStatus === PubkeyStatus.Unmatched) {
-        resList.push(newItem);
-      } else if (isStaked && selectedPubkeyStatus === PubkeyStatus.Staked) {
-        resList.push(newItem);
-      } else if (
-        !isUnmatch &&
-        !isStaked &&
-        selectedPubkeyStatus === PubkeyStatus.Others
-      ) {
-        resList.push(newItem);
-      } else if (!selectedPubkeyStatus) {
-        resList.push(newItem);
-      }
-    });
+      let remainingTokenAmount =
+        !unmatchedEth || isNaN(Number(unmatchedEth)) ? 0 : Number(unmatchedEth);
 
-    setDisplayPubkeyInfos(resList);
-    setUnmatchedCount(unmatchedCount);
-    setStakedCount(stakedCount);
-    setOthersCount(othersCount);
-  }, [nodePubkeys, selectedPubkeyStatus, unmatchedEth]);
+      let unmatchedCount = 0;
+      let stakedCount = 0;
+      let othersCount = 0;
+
+      const resList: NodePubkeyInfo[] = [];
+
+      nodePubkeys.forEach((item) => {
+        const displayStatus = getPubkeyDisplayStatus(
+          item,
+          remainingTokenAmount
+        );
+        // console.log({ remainingTokenAmount });
+        // console.log({ minimalMatchAmount });
+        let canStake = false;
+        if (
+          item._status === ChainPubkeyStatus.Match &&
+          remainingTokenAmount >= minimalMatchAmount
+        ) {
+          remainingTokenAmount -= minimalMatchAmount;
+          canStake = true;
+        }
+
+        const isUnmatch = displayStatus === "Unmatched";
+        const isStaked =
+          item._status === ChainPubkeyStatus.Staked &&
+          item.beaconApiStatus !== "EXITED_UNSLASHED" &&
+          item.beaconApiStatus !== "EXITED_SLASHED" &&
+          item.beaconApiStatus !== "WITHDRAWAL_POSSIBLE" &&
+          item.beaconApiStatus !== "WITHDRAWAL_DONE" &&
+          item.beaconApiStatus !== "EXITED" &&
+          item.beaconApiStatus !== "WITHDRAWAL";
+
+        if (isUnmatch) {
+          unmatchedCount++;
+        } else if (isStaked) {
+          stakedCount++;
+        } else {
+          othersCount++;
+        }
+
+        const newItem = { ...item, displayStatus, canStake };
+
+        if (isUnmatch && selectedPubkeyStatus === PubkeyStatus.Unmatched) {
+          resList.push(newItem);
+        } else if (isStaked && selectedPubkeyStatus === PubkeyStatus.Staked) {
+          resList.push(newItem);
+        } else if (
+          !isUnmatch &&
+          !isStaked &&
+          selectedPubkeyStatus === PubkeyStatus.Others
+        ) {
+          resList.push(newItem);
+        } else if (!selectedPubkeyStatus) {
+          resList.push(newItem);
+        }
+      });
+
+      setDisplayPubkeyInfos(resList);
+      setUnmatchedCount(unmatchedCount);
+      setStakedCount(stakedCount);
+      setOthersCount(othersCount);
+    })();
+  }, [
+    nodePubkeys,
+    selectedPubkeyStatus,
+    unmatchedEth,
+    // Number(minimalMatchAmount),
+  ]);
 
   const showLoading = useMemo(() => {
     return nodePubkeys === undefined;
@@ -105,89 +142,6 @@ export const usePubkeysHome = (
   const showEmptyContent = useMemo(() => {
     return displayPubkeyInfos.length === 0 && !showLoading;
   }, [showLoading, displayPubkeyInfos]);
-
-  // const updateData = useCallback(async () => {
-  //   if (!nodeAddress) {
-  //     setTotalCount(undefined);
-  //     setUnmatchedCount(undefined);
-  //     setStakedCount(undefined);
-  //     setOthersCount(undefined);
-  //     return;
-  //   }
-
-  //   try {
-  //     setRefreshing(true);
-  //     const web3 = getEthWeb3();
-
-  //     const nodeDepositContract = new web3.eth.Contract(
-  //       getNodeDepositContractAbi(),
-  //       getNodeDepositContract(),
-  //       {
-  //         from: nodeAddress,
-  //       }
-  //     );
-
-  //     const pubkeysOfNode = await nodeDepositContract.methods
-  //       .getPubkeysOfNode(nodeAddress)
-  //       .call()
-  //       .catch((err: any) => {
-  //         console.log({ err });
-  //       });
-
-  //     setTotalCount(pubkeysOfNode.length);
-
-  //     const requests = pubkeysOfNode?.map((pubkeyAddress: string) => {
-  //       return (async () => {
-  //         const pubkeyInfo = await nodeDepositContract.methods
-  //           .pubkeyInfoOf(pubkeyAddress)
-  //           .call()
-  //           .catch((err: any) => {
-  //             console.log({ err });
-  //           });
-
-  //         return pubkeyInfo;
-  //       })();
-  //     });
-
-  //     const pubkeyInfos = await Promise.all(requests);
-
-  //     const beaconStatusResponse = await fetch(
-  //       `/api/pubkeyStatus?id=${pubkeysOfNode.join(",")}`,
-  //       {
-  //         method: "GET",
-  //       }
-  //     );
-  //     const beaconStatusResJson = await beaconStatusResponse.json();
-
-  //     const nodePubkeyInfos: NodePubkeyInfo[] = pubkeyInfos.map(
-  //       (item, index) => {
-  //         const matchedBeaconData = beaconStatusResJson.data?.find(
-  //           (item: any) => item.validator?.pubkey === pubkeysOfNode[index]
-  //         );
-  //         return {
-  //           pubkeyAddress: pubkeysOfNode[index],
-  //           beaconApiStatus:
-  //             matchedBeaconData?.status?.toUpperCase() || undefined,
-  //           ...item,
-  //         };
-  //       }
-  //     );
-
-  //     setUnmatchedCount(unmatchedCount);
-  //     setStakedCount(stakedCount);
-  //     setOthersCount(othersCount);
-  //     setRefreshing(false);
-  //     setRequestFirstTime(false);
-  //   } catch (err: any) {
-  //     setRefreshing(false);
-  //     setRequestFirstTime(false);
-  //     console.log({ err });
-  //   }
-  // }, [nodeAddress, updateFlag]);
-
-  // useEffect(() => {
-  //   updateData();
-  // }, [updateData]);
 
   return {
     showLoading,
