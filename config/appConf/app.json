@@ -33,15 +33,15 @@
       ]
     },
     {
-      "title": "How much time is needed for PLS withdrawals?",
+      "title": "How much time is needed for ETH withdrawals?",
       "contents": [
         {
           "type": "text",
-          "content": "If the unstaking pool's PLS balance exceeds your withdrawal amount, you will instantly receive your PLS upon transaction approval.\n"
+          "content": "If the unstaking pool's ETH balance exceeds your withdrawal amount, you will instantly receive your ETH upon transaction approval.\n"
         },
         {
           "type": "text",
-          "content": "However, if the unstaking pool's PLS balance is less than your withdrawal amount, the withdrawal process will take 1-5 days. After this period, you can claim your PLS using the withdraw function.\n"
+          "content": "However, if the unstaking pool's ETH balance is less than your withdrawal amount, the withdrawal process will take 1-5 days. After this period, you can claim your ETH using the withdraw function.\n"
         }
       ]
     },
@@ -96,7 +96,7 @@
       "link": "https://t.me/vouchrun"
     }
   ],
-  "tokenPriceUrl": "https://api.coingecko.com/api/v3/simple/price?ids=pulsechain&vs_currencies=usd",
+  "tokenPriceUrl": "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd",
   "docLinks": {
     "ejectionMechanism": "https://commonwealth.im/stafi/discussion/10127-withdrawal-design-for-reth-solution-for-upcoming-shanghai-upgrade",
     "delegationMechanism": "https://lsaas-docs.stafi.io/docs/developethlsd/validator.html"

@@ -15,7 +15,7 @@ export function usePrice() {
         });
         const resJson = await response.json();
         if (resJson) {
-          const { usd } = resJson["pulsechain"];
+          const { usd } = resJson["ethereum"];
           // console.log({ usd });
           return usd;
         }

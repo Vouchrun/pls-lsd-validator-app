@@ -37,8 +37,14 @@ const ChooseTypePage = () => {
     <div className="w-smallContentW xl:w-contentW 2xl:w-largeContentW mx-auto">
       <div className="flex mt-[.24rem] items-start">
         <CardContainer width="6.2rem" title="Choose Validator Type">
-          <div className="h-[3.4rem] flex justify-center pt-[.52rem]">
-            <div className="mr-[.27rem] w-[1.88rem] h-[2.11rem] rounded-[.16rem] bg-color-bgPage flex flex-col items-center justify-between">
+          <div
+            className="pb-[.52rem] flex justify-center pt-[.52rem] flex-wrap gap-[.12rem]"
+            style={{
+              rowGap: ".32rem",
+              columnGap: ".12rem",
+            }}
+          >
+            <div className="w-[1.88rem] h-[2.11rem] rounded-[.16rem] bg-color-bgPage flex flex-col items-center justify-between">
               <div className="mt-[.32rem] flex flex-col items-center">
                 <div
                   className={classNames(
@@ -116,7 +122,7 @@ const ChooseTypePage = () => {
               </div>
             </div>
 
-            <div className="ml-[.27rem] w-[1.88rem] h-[2.11rem] rounded-[.16rem] bg-color-bgPage hidden flex-col items-center justify-between">
+            <div className="w-[1.88rem] h-[2.11rem] rounded-[.16rem] bg-color-bgPage flex flex-col items-center justify-between">
               <div className="mt-[.32rem] flex flex-col items-center mx-[.16rem]">
                 <div
                   className={classNames(

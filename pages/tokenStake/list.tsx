@@ -75,7 +75,7 @@ const TokenStakeListPage = () => {
               </a>
             </FaqItem>
 
-            <FaqItem text="What are the commissions and fees associated with staking PLS?">
+            <FaqItem text="What are the commissions and fees associated with staking ETH?">
               Staking Reward Commission: 10% of your staking reward. 5% will be
               allocated to the StaFi DAO, 5% will be allocated to validators.
             </FaqItem>
