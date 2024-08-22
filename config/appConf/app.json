@@ -4,7 +4,7 @@
   "token": {
     "tokenName": "PLS",
     "lsdTokenName": "vPLS",
-    "lsdTokenIconUri": "https://cdn.stafi.io/rtoken/logo/rPLS.png", //need to update this
+    "lsdTokenIconUri": "https://cdn.stafi.io/rtoken/logo/rPLS.png",
     "tokenIcon": "/images/token/PLS.svg",
     "lsdTokenIcon": "/images/token/vPLS_trans.svg"
   },
