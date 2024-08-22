@@ -13,7 +13,7 @@ export default function Footer() {
             <Image
                 src={darkMode ? appLogo : appLogoLight}
                 alt="stafi"
-                width={80}
+                width={30}
                 className='ml-[5px]'
             />
         </a>
