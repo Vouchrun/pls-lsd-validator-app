@@ -1,42 +1,42 @@
-import classNames from "classnames";
-import { BackNavigation } from "components/common/BackNavigation";
-import { CardContainer } from "components/common/CardContainer";
-import { CustomButton } from "components/common/CustomButton";
-import { Icomoon } from "components/icon/Icomoon";
-import { ConfirmModal } from "components/modal/ConfirmModal";
-import { StakeGuide } from "components/tokenStake/StakeGuide";
-import { ValidatorKeyUpload } from "components/tokenStake/ValidatorKeyUpload";
-import { ValidatorStakeLoading } from "components/tokenStake/ValidatorStakeLoading";
+import classNames from 'classnames';
+import { BackNavigation } from 'components/common/BackNavigation';
+import { CardContainer } from 'components/common/CardContainer';
+import { CustomButton } from 'components/common/CustomButton';
+import { Icomoon } from 'components/icon/Icomoon';
+import { ConfirmModal } from 'components/modal/ConfirmModal';
+import { StakeGuide } from 'components/tokenStake/StakeGuide';
+import { ValidatorKeyUpload } from 'components/tokenStake/ValidatorKeyUpload';
+import { ValidatorStakeLoading } from 'components/tokenStake/ValidatorStakeLoading';
 import {
   getEthereumChainId,
   getNetworkName,
   getTrustValidatorDepositAmount,
   getValidatorTotalDepositAmount,
-} from "config/env";
-import { robotoSemiBold } from "config/font";
-import { FILE_NETWORK_NAME_KEY } from "constants/common";
-import { useAppDispatch, useAppSelector } from "hooks/common";
-import { useAppSlice } from "hooks/selector";
-import { useIsTrustedValidator } from "hooks/useIsTrustedValidator";
-import { useSoloDepositAmount } from "hooks/useSoloDepositAmount";
-import { useUnmatchedToken } from "hooks/useUnmatchedToken";
-import { useWalletAccount } from "hooks/useWalletAccount";
-import _ from "lodash";
-import Image from "next/image";
-import { useRouter } from "next/router";
-import checkedIcon from "public/images/checked_circle.svg";
-import uploadIcon from "public/images/upload.svg";
-import { useEffect, useMemo, useState } from "react";
-import { updateEthBalance } from "redux/reducers/EthSlice";
-import { handleEthValidatorStake } from "redux/reducers/ValidatorSlice";
-import { setMetaMaskDisconnected } from "redux/reducers/WalletSlice";
-import { RootState } from "redux/store";
-import { openLink } from "utils/commonUtils";
-import { getTokenName } from "utils/configUtils";
-import snackbarUtil from "utils/snackbarUtils";
-import { getShortAddress } from "utils/stringUtils";
-import { parseEther } from "viem";
-import { useConnect, useSwitchNetwork } from "wagmi";
+} from 'config/env';
+import { robotoSemiBold } from 'config/font';
+import { FILE_NETWORK_NAME_KEY } from 'constants/common';
+import { useAppDispatch, useAppSelector } from 'hooks/common';
+import { useAppSlice } from 'hooks/selector';
+import { useIsTrustedValidator } from 'hooks/useIsTrustedValidator';
+import { useSoloDepositAmount } from 'hooks/useSoloDepositAmount';
+import { useUnmatchedToken } from 'hooks/useUnmatchedToken';
+import { useWalletAccount } from 'hooks/useWalletAccount';
+import _ from 'lodash';
+import Image from 'next/image';
+import { useRouter } from 'next/router';
+import checkedIcon from 'public/images/checked_circle.svg';
+import uploadIcon from 'public/images/upload.svg';
+import { useEffect, useMemo, useState } from 'react';
+import { updateEthBalance } from 'redux/reducers/EthSlice';
+import { handleEthValidatorStake } from 'redux/reducers/ValidatorSlice';
+import { setMetaMaskDisconnected } from 'redux/reducers/WalletSlice';
+import { RootState } from 'redux/store';
+import { openLink } from 'utils/commonUtils';
+import { getTokenName } from 'utils/configUtils';
+import snackbarUtil from 'utils/snackbarUtils';
+import { getShortAddress } from 'utils/stringUtils';
+import { parseEther } from 'viem';
+import { useConnect, useSwitchNetwork } from 'wagmi';
 
 const StakePage = () => {
   const router = useRouter();
@@ -84,7 +84,7 @@ const StakePage = () => {
       !pubkeyAddressList ||
       (Array.isArray(pubkeyAddressList) && pubkeyAddressList.length === 0)
     ) {
-      router.push("/tokenStake/list");
+      router.push('/tokenStake/list');
     }
   }, [router]);
 
@@ -105,19 +105,19 @@ const StakePage = () => {
       !validatorKey.signature ||
       !validatorKey.pubkey
     ) {
-      throw new Error("Miss deposit_data_root or signature or pubkey");
+      throw new Error('Miss deposit_data_root or signature or pubkey');
     }
-    if (type === "solo") {
+    if (type === 'solo') {
       if (
         parseEther(
-          (getValidatorTotalDepositAmount() + "") as `${number}`,
-          "wei"
+          (getValidatorTotalDepositAmount() + '') as `${number}`,
+          'wei'
         ) -
-          parseEther((validatorKey.amount + "") as `${number}`, "gwei") !==
-        BigInt(soloDepositAmountInWei || "0")
+          parseEther((validatorKey.amount + '') as `${number}`, 'gwei') !==
+        BigInt(soloDepositAmountInWei || '0')
       ) {
         throw new Error(
-          "Please use stake_data file of solo validator to stake"
+          'Please use stake_data file of solo validator to stake'
         );
       }
     } else {
@@ -126,12 +126,12 @@ const StakePage = () => {
         parseEther(
           (getValidatorTotalDepositAmount() -
             getTrustValidatorDepositAmount() +
-            "") as `${number}`,
-          "gwei"
+            '') as `${number}`,
+          'gwei'
         )
       ) {
         throw new Error(
-          "Please use stake_data file of trusted validator to stake"
+          'Please use stake_data file of trusted validator to stake'
         );
       }
     }
@@ -151,7 +151,7 @@ const StakePage = () => {
     const oldValidatorKeys = [...validatorKeys];
     let hasUnmatched = false;
     newValidatorKeys.forEach((validatorKey) => {
-      if (stakePubkeyAddressList.indexOf("0x" + validatorKey.pubkey) < 0) {
+      if (stakePubkeyAddressList.indexOf('0x' + validatorKey.pubkey) < 0) {
         hasUnmatched = true;
         return;
       }
@@ -170,20 +170,20 @@ const StakePage = () => {
   };
 
   return (
-    <div className="w-smallContentW xl:w-contentW 2xl:w-largeContentW mx-auto">
+    <div className='w-smallContentW xl:w-contentW 2xl:w-largeContentW mx-auto'>
       <BackNavigation
         onClick={() => {
-          router.replace("/tokenStake/list");
+          router.replace('/tokenStake/list');
         }}
       />
 
-      <div className="flex mt-[.24rem] items-start">
+      <div className='flex mt-[.24rem] items-start'>
         {validatorStakeLoadingParams?.modalVisible ? (
           <ValidatorStakeLoading />
         ) : (
-          <CardContainer width="6.2rem" title="Stake">
-            <div className="flex flex-col items-center">
-              <div className="mt-[.56rem]">
+          <CardContainer width='6.2rem' title='Stake'>
+            <div className='flex flex-col items-center'>
+              <div className='mt-[.56rem]'>
                 <ValidatorKeyUpload
                   // disabled={
                   //   stakePubkeyAddressList.length === validatorKeys.length
@@ -192,17 +192,17 @@ const StakePage = () => {
                   checkValidatorKey={checkUploadPubkey}
                   onSuccess={handleNewValidaorKeys}
                 >
-                  <div className="flex flex-col items-center">
-                    <div className="w-[.5rem] h-[.6rem] relative">
-                      <Image src={uploadIcon} alt="upload" layout="fill" />
+                  <div className='flex flex-col items-center'>
+                    <div className='w-[.5rem] h-[.6rem] relative'>
+                      <Image src={uploadIcon} alt='upload' layout='fill' />
                     </div>
 
-                    <div className="text-color-text2 text-[.14rem] mt-[.15rem]">
-                      Please follow the instruction and upload{" "}
-                      {stakePubkeyAddressList.length}{" "}
+                    <div className='text-color-text2 text-[.14rem] mt-[.15rem]'>
+                      Please follow the instruction and upload{' '}
+                      {stakePubkeyAddressList.length}{' '}
                       {stakePubkeyAddressList.length <= 1
-                        ? "Pubkey"
-                        : "Pubkeys"}
+                        ? 'Pubkey'
+                        : 'Pubkeys'}
                     </div>
                   </div>
                 </ValidatorKeyUpload>
@@ -210,28 +210,28 @@ const StakePage = () => {
 
               <div
                 className={classNames(
-                  "mt-[.32rem] w-[5.7rem] max-h-[3rem] overflow-auto bg-color-bgPage rounded-[.1rem]",
-                  validatorKeys.length > 0 ? "" : "hidden"
+                  'mt-[.32rem] w-[5.7rem] max-h-[3rem] overflow-auto bg-color-bgPage rounded-[.1rem]',
+                  validatorKeys.length > 0 ? '' : 'hidden'
                 )}
               >
-                <div className="bg-color-bg3 rounded-t-[.1rem] h-[.42rem] flex items-center justify-between px-[.32rem]">
+                <div className='bg-color-bg3 rounded-t-[.1rem] h-[.42rem] flex items-center justify-between px-[.32rem]'>
                   <div
                     className={classNames(
-                      "text-color-text1 text-[.14rem]",
+                      'text-color-text1 text-[.14rem]',
                       robotoSemiBold.className
                     )}
                   >
-                    {validatorKeys.length}{" "}
-                    {validatorKeys.length > 1 ? "files" : "file"} Uploaded
+                    {validatorKeys.length}{' '}
+                    {validatorKeys.length > 1 ? 'files' : 'file'} Uploaded
                   </div>
 
                   {editMode ? (
-                    <div className="flex items-center">
+                    <div className='flex items-center'>
                       <CustomButton
                         disabled={editSelectedPubkeys.length === 0}
-                        fontSize=".14rem"
-                        height=".26rem"
-                        className="px-[.12rem]"
+                        fontSize='.14rem'
+                        height='.26rem'
+                        className='px-[.12rem]'
                         onClick={() => {
                           setWaitDeletePubkeys([...editSelectedPubkeys]);
                           setDeleteConfirmModalVisible(true);
@@ -240,34 +240,34 @@ const StakePage = () => {
                         Delete Selection
                         {editSelectedPubkeys.length > 0
                           ? ` (${editSelectedPubkeys.length})`
-                          : ""}
+                          : ''}
                       </CustomButton>
 
                       <div
-                        className="ml-[.16rem] px-[.16rem] flex items-center h-[.26rem] rounded-[.2rem] border-[.01rem] border-solid border-[#6C86AD4D]"
+                        className='ml-[.16rem] px-[.16rem] flex items-center h-[.26rem] rounded-[.2rem] border-[.01rem] border-solid border-[#6C86AD4D]'
                         onClick={() => {
                           setEditMode(false);
                         }}
                       >
-                        <div className="cursor-pointer" onClick={() => {}}>
+                        <div className='cursor-pointer' onClick={() => {}}>
                           <Icomoon
-                            size=".15rem"
-                            color={darkMode ? "#ffffff80" : "#6C86AD"}
-                            icon="edit"
+                            size='.15rem'
+                            color={darkMode ? '#ffffff80' : '#6C86AD'}
+                            icon='edit'
                           />
                         </div>
 
-                        <div className="ml-[.24rem] cursor-pointer">
+                        <div className='ml-[.24rem] cursor-pointer'>
                           <Icomoon
-                            icon="complete-outline"
-                            color={darkMode ? "#ffffff80" : "#6C86AD"}
-                            size=".12rem"
+                            icon='complete-outline'
+                            color={darkMode ? '#ffffff80' : '#6C86AD'}
+                            size='.12rem'
                           />
                         </div>
                       </div>
                     </div>
                   ) : (
-                    <div className="flex items-center">
+                    <div className='flex items-center'>
                       <ValidatorKeyUpload
                         // disabled={
                         //   stakePubkeyAddressList.length === validatorKeys.length
@@ -276,31 +276,31 @@ const StakePage = () => {
                         checkValidatorKey={checkUploadPubkey}
                         onSuccess={handleNewValidaorKeys}
                       >
-                        <div className="">
+                        <div className=''>
                           <Icomoon
-                            size=".16rem"
-                            color={darkMode ? "#E8EFFD" : "#222C3C"}
-                            icon="file_add"
+                            size='.16rem'
+                            color={darkMode ? '#E8EFFD' : '#1B1B1F'}
+                            icon='file_add'
                           />
                         </div>
                       </ValidatorKeyUpload>
 
                       <div
-                        className="ml-[.16rem] cursor-pointer"
+                        className='ml-[.16rem] cursor-pointer'
                         onClick={() => {
                           setEditSelectedPubkeys([]);
                           setEditMode(true);
                         }}
                       >
                         <Icomoon
-                          size=".16rem"
-                          color={darkMode ? "#E8EFFD" : "#222C3C"}
-                          icon="edit"
+                          size='.16rem'
+                          color={darkMode ? '#E8EFFD' : '#1B1B1F'}
+                          icon='edit'
                         />
                       </div>
 
                       <div
-                        className="ml-[.16rem] cursor-pointer"
+                        className='ml-[.16rem] cursor-pointer'
                         onClick={() => {
                           setWaitDeletePubkeys(
                             validatorKeys.map((item) => item.pubkey)
@@ -309,36 +309,36 @@ const StakePage = () => {
                         }}
                       >
                         <Icomoon
-                          size=".16rem"
-                          color={darkMode ? "#E8EFFD" : "#222C3C"}
-                          icon="delete"
+                          size='.16rem'
+                          color={darkMode ? '#E8EFFD' : '#1B1B1F'}
+                          icon='delete'
                         />
                       </div>
                     </div>
                   )}
                 </div>
 
-                <div className="pt-[.06rem] pb-[.18rem] flex flex-col items-center">
+                <div className='pt-[.06rem] pb-[.18rem] flex flex-col items-center'>
                   {validatorKeys.map((item, index) => (
                     <div
                       key={index}
                       className={classNames(
-                        "mt-[.12rem] rounded-[.1rem] h-[.42rem] w-[5.2rem] flex items-center justify-between px-[.16rem]",
-                        editMode ? "cursor-pointer" : ""
+                        'mt-[.12rem] rounded-[.1rem] h-[.42rem] w-[5.2rem] flex items-center justify-between px-[.16rem]',
+                        editMode ? 'cursor-pointer' : ''
                       )}
                       style={{
                         background:
                           editMode &&
                           editSelectedPubkeys.indexOf(item.pubkey) >= 0
-                            ? "linear-gradient(0deg, rgba(0, 243, 171, 0.1), rgba(0, 243, 171, 0.1)), linear-gradient(0deg, rgba(0, 243, 171, 0.1), rgba(0, 243, 171, 0.1))"
+                            ? 'linear-gradient(0deg, rgba(0, 243, 171, 0.1), rgba(0, 243, 171, 0.1)), linear-gradient(0deg, rgba(0, 243, 171, 0.1), rgba(0, 243, 171, 0.1))'
                             : darkMode
-                            ? "#6C86AD80"
-                            : "#DEE6F7",
+                            ? '#6C86AD80'
+                            : '#DEE6F7',
                         border:
                           editMode &&
                           editSelectedPubkeys.indexOf(item.pubkey) >= 0
-                            ? "1px solid #00F3AB80"
-                            : "none",
+                            ? '1px solid #00F3AB80'
+                            : 'none',
                       }}
                       onClick={() => {
                         if (editMode) {
@@ -356,31 +356,31 @@ const StakePage = () => {
                       }}
                     >
                       {editMode && (
-                        <div className="mr-[.12rem]">
+                        <div className='mr-[.12rem]'>
                           {editSelectedPubkeys.indexOf(item.pubkey) >= 0 ? (
-                            <div className="w-[.16rem] h-[.16rem] relative">
+                            <div className='w-[.16rem] h-[.16rem] relative'>
                               <Image
                                 src={checkedIcon}
-                                layout="fill"
-                                alt="checked"
+                                layout='fill'
+                                alt='checked'
                               />
                             </div>
                           ) : (
-                            <div className="w-[.16rem] h-[.16rem] rounded-full border-solid border-[1px] border-[#9DAFBE]" />
+                            <div className='w-[.16rem] h-[.16rem] rounded-full border-solid border-[1px] border-[#9DAFBE]' />
                           )}
                         </div>
                       )}
 
                       <div
-                        className="flex-1 text-color-text2 text-[.12rem] mr-[.4rem] leading-normal"
+                        className='flex-1 text-color-text2 text-[.12rem] mr-[.4rem] leading-normal'
                         style={{
                           maxLines: 1,
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
                           WebkitLineClamp: 1,
                           lineClamp: 1,
-                          display: "-webkit-box",
-                          WebkitBoxOrient: "vertical",
+                          display: '-webkit-box',
+                          WebkitBoxOrient: 'vertical',
                         }}
                       >
                         {getShortAddress(item.pubkey, 20)}
@@ -388,8 +388,8 @@ const StakePage = () => {
 
                       <div
                         className={classNames(
-                          "cursor-pointer w-[.16rem] min-w-[.16rem]",
-                          editMode ? "hidden" : ""
+                          'cursor-pointer w-[.16rem] min-w-[.16rem]',
+                          editMode ? 'hidden' : ''
                         )}
                         onClick={() => {
                           setWaitDeletePubkeys([item.pubkey]);
@@ -397,9 +397,9 @@ const StakePage = () => {
                         }}
                       >
                         <Icomoon
-                          icon="delete"
-                          size=".16rem"
-                          color={darkMode ? "#ffffff80" : "#6C86AD"}
+                          icon='delete'
+                          size='.16rem'
+                          color={darkMode ? '#ffffff80' : '#6C86AD'}
                         />
                       </div>
                     </div>
@@ -407,21 +407,21 @@ const StakePage = () => {
                 </div>
               </div>
 
-              <div className="self-stretch mx-[.24rem] mt-[.46rem] mb-[.32rem]">
+              <div className='self-stretch mx-[.24rem] mt-[.46rem] mb-[.32rem]'>
                 <CustomButton
-                  height=".56rem"
+                  height='.56rem'
                   loading={ethTxLoading}
                   type={
                     !metaMaskAccount ||
                     isWrongMetaMaskNetwork ||
-                    (!isTrust && type === "trusted")
-                      ? "secondary"
-                      : "primary"
+                    (!isTrust && type === 'trusted')
+                      ? 'secondary'
+                      : 'primary'
                   }
                   disabled={
                     !!metaMaskAccount &&
                     !isWrongMetaMaskNetwork &&
-                    (isTrust || type !== "trusted") &&
+                    (isTrust || type !== 'trusted') &&
                     validatorKeys.length < stakePubkeyAddressList.length
                   }
                   onClick={async () => {
@@ -431,7 +431,7 @@ const StakePage = () => {
                       return;
                     } else if (!metaMaskAccount) {
                       const metamaskConnector = connectors.find(
-                        (c) => c.name === "MetaMask"
+                        (c) => c.name === 'MetaMask'
                       );
                       if (!metamaskConnector) {
                         return;
@@ -451,13 +451,13 @@ const StakePage = () => {
                       return;
                     }
 
-                    if (type === "trusted" && !isTrust) {
-                      openLink("https://forms.gle/RtFK7qo9GzabQTCfA");
+                    if (type === 'trusted' && !isTrust) {
+                      openLink('https://forms.gle/RtFK7qo9GzabQTCfA');
                       return;
                     }
 
                     if (
-                      type === "solo" &&
+                      type === 'solo' &&
                       Number(unmatchedEth) <
                         validatorKeys.length *
                           (getValidatorTotalDepositAmount() -
@@ -470,7 +470,7 @@ const StakePage = () => {
                     }
 
                     if (
-                      type === "trusted" &&
+                      type === 'trusted' &&
                       Number(unmatchedEth) <
                         validatorKeys.length *
                           (getValidatorTotalDepositAmount() -
@@ -485,7 +485,7 @@ const StakePage = () => {
                     dispatch(
                       handleEthValidatorStake(
                         validatorKeys,
-                        type as "solo" | "trusted",
+                        type as 'solo' | 'trusted',
                         (success, result) => {
                           dispatch(updateEthBalance());
                           if (success) {
@@ -496,16 +496,16 @@ const StakePage = () => {
                   }}
                 >
                   {!metaMaskAccount
-                    ? "Connect Wallet"
+                    ? 'Connect Wallet'
                     : isWrongMetaMaskNetwork
-                    ? "Switch Network"
-                    : !isTrust && type === "trusted"
-                    ? "Apply Trusted Validator"
+                    ? 'Switch Network'
+                    : !isTrust && type === 'trusted'
+                    ? 'Apply Trusted Validator'
                     : validatorKeys.length < stakePubkeyAddressList.length
                     ? `Please Upload ${stakePubkeyAddressList.length} ${
                         stakePubkeyAddressList.length <= 1
-                          ? "Pubkey"
-                          : "Pubkeys"
+                          ? 'Pubkey'
+                          : 'Pubkeys'
                       }`
                     : `Stake (${validatorKeys.length} Uploaded)`}
                 </CustomButton>
@@ -514,7 +514,7 @@ const StakePage = () => {
           </CardContainer>
         )}
 
-        <div className="ml-[.85rem]">
+        <div className='ml-[.85rem]'>
           <StakeGuide />
         </div>
       </div>
@@ -534,13 +534,13 @@ const StakePage = () => {
             setEditMode(false);
           }
         }}
-        title="Sure Delete?"
+        title='Sure Delete?'
         content={
           waitDeletePubkeys.length > 1
             ? `Sure you want to delete all of those ${validatorKeys.length} pubkeys?`
-            : "Sure you want to delete this pubkey?"
+            : 'Sure you want to delete this pubkey?'
         }
-        confirmText="Yes, Delete"
+        confirmText='Yes, Delete'
       />
     </div>
   );

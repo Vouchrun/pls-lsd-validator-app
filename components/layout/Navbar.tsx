@@ -542,7 +542,7 @@ const AuditComponent = (props: AuditComponentProps) => {
         <div className='ml-[.1rem] w-[.52rem] h-[.17rem] relative flex items-center'>
           <Icomoon
             icon='zellic'
-            color={darkMode ? '#E8EFFD' : '#222C3C'}
+            color={darkMode ? '#E8EFFD' : '#1B1B1F'}
             size='.52rem'
           />
         </div>

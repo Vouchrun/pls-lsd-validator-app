@@ -52,7 +52,7 @@ export function useInit() {
     dispatch(
       setMetaMaskDisconnected(!!getStorage(STORAGE_KEY_DISCONNECT_METAMASK))
     );
-    const darkMode = JSON.parse(getStorage(STORAGE_KEY_DARK_MODE) || 'false');
+    const darkMode = JSON.parse(getStorage(STORAGE_KEY_DARK_MODE) || 'true');
     dispatch(setDarkMode(darkMode));
   }, [dispatch]);
 
@@ -97,6 +97,6 @@ export function useInit() {
 
   // Change body backgroundColor
   useEffect(() => {
-    document.body.style.backgroundColor = darkMode ? '#222C3C' : '#E8EFFD';
+    document.body.style.backgroundColor = darkMode ? '#1B1B1F' : '#E8EFFD';
   }, [darkMode]);
 }
