@@ -52,7 +52,7 @@ export function useInit() {
     dispatch(
       setMetaMaskDisconnected(!!getStorage(STORAGE_KEY_DISCONNECT_METAMASK))
     );
-    const darkMode = JSON.parse(getStorage(STORAGE_KEY_DARK_MODE) || 'false');
+    const darkMode = JSON.parse(getStorage(STORAGE_KEY_DARK_MODE) || 'true');
     dispatch(setDarkMode(darkMode));
   }, [dispatch]);
 
