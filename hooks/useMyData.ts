@@ -19,7 +19,8 @@ import {
 } from "config/contractAbi";
 import { useUserPubkeys } from "./useUserPubkeys";
 import { getEthereumChainId, getValidatorTotalDepositAmount } from "config/env";
-import { formatScientificNumber } from "utils/numberUtils";
+import { formatScientificNumber, removeDecimals } from "utils/numberUtils";
+import { fetchPubkeyStatus } from "utils/apiUtils";
 
 export function useMyData() {
   const { updateFlag } = useAppSlice();
@@ -114,9 +115,11 @@ export function useMyData() {
       const list: IpfsRewardItem[] = resTextJson.List?.map((item: any) => {
         return {
           ...item,
-          totalRewardAmount: item.totalRewardAmount.toFixed(),
-          totalDepositAmount: item.totalDepositAmount.toFixed(),
-          totalExitDepositAmount: item.totalExitDepositAmount.toFixed(),
+          totalRewardAmount: removeDecimals(item.totalRewardAmount.toFixed()),
+          totalDepositAmount: removeDecimals(item.totalDepositAmount.toFixed()),
+          totalExitDepositAmount: removeDecimals(
+            item.totalExitDepositAmount.toFixed()
+          ),
         };
       });
 
@@ -207,10 +210,19 @@ export function useMyData() {
 
       let totalNodeDepositAmount = 0;
 
-      pubekyInfos.forEach((pubkeyInfo) => {
-        // console.log({ pubkeyInfo });
-        totalNodeDepositAmount += Number(pubkeyInfo._nodeDepositAmount);
-        myShareAmount += Number(pubkeyInfo._nodeDepositAmount);
+      const beaconStatusResJson = await fetchPubkeyStatus(
+        pubkeysOfNode.join(",")
+      );
+
+      pubekyInfos.forEach((pubkeyInfo, index) => {
+        const matchedBeaconData = beaconStatusResJson.data?.find(
+          (item: any) => item.validator?.pubkey === pubkeysOfNode[index]
+        );
+
+        if (matchedBeaconData.status !== "withdrawal_done") {
+          totalNodeDepositAmount += Number(pubkeyInfo._nodeDepositAmount);
+          myShareAmount += Number(pubkeyInfo._nodeDepositAmount);
+        }
       });
 
       myShareAmount = Math.max(
@@ -225,11 +237,10 @@ export function useMyData() {
         .catch((err: any) => {
           console.log({ err });
         });
+      // console.log({ totalNodeDepositAmount });
+      // console.log({ totalClaimedDepositOfNode });
 
-      selfDepositAmount = Math.max(
-        0,
-        totalNodeDepositAmount - Number(totalClaimedDepositOfNode)
-      );
+      selfDepositAmount = Math.max(0, totalNodeDepositAmount);
       setMyShareAmount(
         Web3.utils.fromWei(formatScientificNumber(myShareAmount))
       );

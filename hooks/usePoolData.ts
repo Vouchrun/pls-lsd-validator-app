@@ -15,7 +15,7 @@ import { useAppSlice } from "./selector";
 import { usePoolPubkeyData } from "./usePoolPubkeyData";
 import { usePrice } from "./usePrice";
 import { getEthereumChainId, getValidatorTotalDepositAmount } from "config/env";
-import { formatScientificNumber } from "utils/numberUtils";
+import { formatScientificNumber, removeDecimals } from "utils/numberUtils";
 
 export function usePoolData() {
   const { updateFlag } = useAppSlice();
@@ -152,8 +152,8 @@ export function usePoolData() {
       const list: IpfsRewardItem[] = resTextJson.List?.map((item: any) => {
         return {
           ...item,
-          totalRewardAmount: item.totalRewardAmount.toFixed(),
-          totalDepositAmount: item.totalDepositAmount.toFixed(),
+          totalRewardAmount: removeDecimals(item.totalRewardAmount.toFixed()),
+          totalDepositAmount: removeDecimals(item.totalDepositAmount.toFixed()),
         };
       });
 
