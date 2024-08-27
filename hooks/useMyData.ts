@@ -48,7 +48,9 @@ export function useMyData() {
         item._status === ChainPubkeyStatus.Staked &&
         item.beaconApiStatus !== "EXITED_UNSLASHED" &&
         item.beaconApiStatus !== "EXITED_SLASHED" &&
-        item.beaconApiStatus !== "EXITED"
+        item.beaconApiStatus !== "EXITED" &&
+        item.beaconApiStatus !== "WITHDRAWAL_POSSIBLE" &&
+        item.beaconApiStatus !== "WITHDRAWAL_DONE"
       ) {
         totalManagedToken += getValidatorTotalDepositAmount();
       }
