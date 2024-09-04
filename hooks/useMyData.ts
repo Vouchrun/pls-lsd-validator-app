@@ -21,6 +21,7 @@ import { useUserPubkeys } from "./useUserPubkeys";
 import { getEthereumChainId, getValidatorTotalDepositAmount } from "config/env";
 import { formatScientificNumber, removeDecimals } from "utils/numberUtils";
 import { fetchPubkeyStatus } from "utils/apiUtils";
+import { isPubkeyStillValid } from "utils/commonUtils";
 
 export function useMyData() {
   const { updateFlag } = useAppSlice();
@@ -46,11 +47,7 @@ export function useMyData() {
     nodePubkeys.forEach((item) => {
       if (
         item._status === ChainPubkeyStatus.Staked &&
-        item.beaconApiStatus !== "EXITED_UNSLASHED" &&
-        item.beaconApiStatus !== "EXITED_SLASHED" &&
-        item.beaconApiStatus !== "EXITED" &&
-        item.beaconApiStatus !== "WITHDRAWAL_POSSIBLE" &&
-        item.beaconApiStatus !== "WITHDRAWAL_DONE"
+        isPubkeyStillValid(item.beaconApiStatus)
       ) {
         totalManagedToken += getValidatorTotalDepositAmount();
       }
@@ -221,7 +218,7 @@ export function useMyData() {
           (item: any) => item.validator?.pubkey === pubkeysOfNode[index]
         );
 
-        if (matchedBeaconData.status !== "withdrawal_done") {
+        if (isPubkeyStillValid(matchedBeaconData.status)) {
           totalNodeDepositAmount += Number(pubkeyInfo._nodeDepositAmount);
           myShareAmount += Number(pubkeyInfo._nodeDepositAmount);
         }
