@@ -1,12 +1,14 @@
-import { getNodeDepositContract } from "config/contract";
-import { getNodeDepositContractAbi } from "config/contractAbi";
-import { ChainPubkeyStatus, NodePubkeyInfo } from "interfaces/common";
-import { useCallback, useEffect, useState } from "react";
-import { fetchPubkeyStatus } from "utils/apiUtils";
-import { getEthWeb3 } from "utils/web3Utils";
+import { getNodeDepositContract } from 'config/contract';
+import { getNodeDepositContractAbi } from 'config/contractAbi';
+import { ChainPubkeyStatus, NodePubkeyInfo } from 'interfaces/common';
+import { useCallback, useEffect, useState } from 'react';
+import { fetchPubkeyStatus } from 'utils/apiUtils';
+import { getEthWeb3 } from 'utils/web3Utils';
 
 export function usePoolPubkeyData() {
   const [matchedValidators, setMatchedValidators] = useState<string>();
+  const [trustNodePubkeyNumberLimit, setTrustNodePubkeyNumberLimit] =
+    useState<string>();
 
   const updateMatchedValidators = useCallback(async () => {
     try {
@@ -31,6 +33,15 @@ export function usePoolPubkeyData() {
         .catch((err: any) => {
           console.log({ err });
         });
+
+      const trustNodePubkeyNumberLimitValue = await nodeDepositContract.methods
+        .trustNodePubkeyNumberLimit()
+        .call()
+        .catch((err: any) => {
+          console.log({ err });
+        });
+
+      setTrustNodePubkeyNumberLimit(trustNodePubkeyNumberLimitValue);
 
       const pubkeyAddressList: string[] = [];
 
@@ -57,7 +68,7 @@ export function usePoolPubkeyData() {
       // );
       // const beaconStatusResJson = await beaconStatusResponse.json();
       const beaconStatusResJson = await fetchPubkeyStatus(
-        pubkeyAddressList.join(",")
+        pubkeyAddressList.join(',')
       );
 
       // Query on-chain pubkey detail info list
@@ -96,24 +107,24 @@ export function usePoolPubkeyData() {
       nodePubkeyInfos.forEach((item) => {
         if (
           item._status === ChainPubkeyStatus.Staked &&
-          item.beaconApiStatus !== "EXITED_UNSLASHED" &&
-          item.beaconApiStatus !== "EXITED_SLASHED" &&
-          item.beaconApiStatus !== "EXITED"
+          item.beaconApiStatus !== 'EXITED_UNSLASHED' &&
+          item.beaconApiStatus !== 'EXITED_SLASHED' &&
+          item.beaconApiStatus !== 'EXITED'
         ) {
           matchedValidators += 1;
         }
 
         if (
           item._status === ChainPubkeyStatus.Staked &&
-          (item.beaconApiStatus === "EXITED_UNSLASHED" ||
-            item.beaconApiStatus === "EXITED_SLASHED" ||
-            item.beaconApiStatus === "EXITED")
+          (item.beaconApiStatus === 'EXITED_UNSLASHED' ||
+            item.beaconApiStatus === 'EXITED_SLASHED' ||
+            item.beaconApiStatus === 'EXITED')
         ) {
           matchedValidators += 1;
         }
       });
 
-      setMatchedValidators(matchedValidators + "");
+      setMatchedValidators(matchedValidators + '');
     } catch (err: any) {
       console.log({ err });
     }
@@ -125,5 +136,6 @@ export function usePoolPubkeyData() {
 
   return {
     matchedValidators,
+    trustNodePubkeyNumberLimit,
   };
 }

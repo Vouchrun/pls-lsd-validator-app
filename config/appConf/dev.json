@@ -24,6 +24,9 @@
     },
     "nodeDepositContract": {
       "address": "0x190e0458A673B6868148E6A9e540c93363C7c24B"
+    },
+    "networkProposalContract": {
+      "address": "0x0E7bcecEB7691e0d288cCECDF52818F2823409F0"
     }
   },
   "lsdAppUrl": "https://app.3aaa3.xyz"

@@ -1,9 +1,10 @@
-import networkBalanceContractAbi from "./abi/networkBalance.json";
-import networkWithdrawContractAbi from "./abi/networkWithdraw.json";
-import lsdTokenContractAbi from "./abi/lsdToken.json";
-import nodeDepositContractAbi from "./abi/nodeDeposit.json";
-import userDepositContractAbi from "./abi/userDeposit.json";
-import { AbiItem } from "web3-utils";
+import networkBalanceContractAbi from './abi/networkBalance.json';
+import networkWithdrawContractAbi from './abi/networkWithdraw.json';
+import networkProposalContractAbi from './abi/networkProposal.json';
+import lsdTokenContractAbi from './abi/lsdToken.json';
+import nodeDepositContractAbi from './abi/nodeDeposit.json';
+import userDepositContractAbi from './abi/userDeposit.json';
+import { AbiItem } from 'web3-utils';
 
 /**
  * get lsdETH token contract ABI
@@ -38,4 +39,11 @@ export function getNodeDepositContractAbi() {
  */
 export function getNetworkWithdrawContractAbi() {
   return networkWithdrawContractAbi as AbiItem[];
+}
+
+/**
+ * get networkProposal contract ABI
+ */
+export function getNetworkProposalContractAbi() {
+  return networkProposalContractAbi as AbiItem[];
 }
