@@ -44,12 +44,16 @@ import { getChainIcon } from 'utils/iconUtils';
 import snackbarUtil from 'utils/snackbarUtils';
 import { getShortAddress } from 'utils/stringUtils';
 import { useConnect } from 'wagmi';
+import { useNetworkProposalData } from 'hooks/useNetworkProposalData';
 
 export const Navbar = () => {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { darkMode, unreadNoticeFlag } = useAppSlice();
   const [auditExpand, setAuditExpand] = useState(false);
+  const { voters } = useNetworkProposalData();
+  const { admin } = useNetworkProposalData();
+
   const [pageWidth, setPageWidth] = useState(
     document.documentElement.clientWidth
   );
@@ -85,6 +89,12 @@ export const Navbar = () => {
     const clientW = document.documentElement.clientWidth;
     setPageWidth(clientW);
   };
+
+  useEffect(() => {
+    if (admin === metaMaskAccount || metaMaskAccount?.indexOf(voters)) {
+      router.push('/');
+    }
+  }, [voters, admin]);
 
   useEffect(() => {
     window.addEventListener('resize', resizeListener);
@@ -127,7 +137,10 @@ export const Navbar = () => {
           <div
             className='w-[4.3rem] h-[.42rem] p-[.04rem] grid items-stretch bg-color-bg2 rounded-[.6rem]'
             style={{
-              gridTemplateColumns: '25% 25% 25% 25%',
+              gridTemplateColumns:
+                admin === metaMaskAccount || metaMaskAccount?.indexOf(voters)
+                  ? '25% 25% 25% 25%'
+                  : '40% 28% 32%',
             }}
           >
             <Link href={`/tokenStake/list`}>
@@ -168,18 +181,21 @@ export const Navbar = () => {
                 {getLsdTokenName()} Pool
               </div>
             </Link>
-            <Link href={'/system'}>
-              <div
-                className={classNames(
-                  'h-[.34rem] cursor-pointer flex items-center justify-center text-[.16rem] rounded-[.6rem]',
-                  router.pathname.startsWith('/system')
-                    ? 'bg-color-selected text-text1 font-bold rounded-[.6rem] border-color-divider1 border-solid border-[0.01rem]'
-                    : 'text-color-text1'
-                )}
-              >
-                System
-              </div>
-            </Link>
+            {admin === metaMaskAccount ||
+              (metaMaskAccount?.indexOf(voters) && (
+                <Link href={'/system'}>
+                  <div
+                    className={classNames(
+                      'h-[.34rem] cursor-pointer flex items-center justify-center text-[.16rem] rounded-[.6rem]',
+                      router.pathname.startsWith('/system')
+                        ? 'bg-color-selected text-text1 font-bold rounded-[.6rem] border-color-divider1 border-solid border-[0.01rem]'
+                        : 'text-color-text1'
+                    )}
+                  >
+                    System
+                  </div>
+                </Link>
+              ))}
           </div>
 
           {/* <AuditComponent

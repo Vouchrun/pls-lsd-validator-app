@@ -9,6 +9,7 @@ import {
   getNetworkWithdrawContract,
   getNodeDepositContract,
 } from 'config/contract';
+import { getEtherScanAccountUrl } from 'config/explorer';
 
 export default function VouchContracts() {
   const networkBalanceAddress = getNetworkBalanceContract();
@@ -17,6 +18,7 @@ export default function VouchContracts() {
   const vPLSTokenAddress = getLsdEthTokenContract();
   const vPLSUserDepositAddress = getEthDepositContract();
   const feePoolAddress = getFeePoolContract();
+
   return (
     <div className='bg-color-bg2 border-[0.01rem] border-color-border1 rounded-[.3rem]'>
       <div className='h-[.7rem] flex items-center justify-center font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[.16rem] text-color-text2'>
@@ -34,7 +36,7 @@ export default function VouchContracts() {
           </div>
           <div className='text-color-text2 text-[14px] flex items-center justify-between'>
             <div className='truncate'>{vPLSTokenAddress}</div>
-            <a href='#'>
+            <a href={getEtherScanAccountUrl(vPLSTokenAddress)} target='_blank'>
               <Image src='/images/link.svg' height={15} width={15} alt='' />
             </a>
           </div>
@@ -45,7 +47,10 @@ export default function VouchContracts() {
           </div>
           <div className='text-color-text2 text-[14px] flex items-center justify-between'>
             <div className='truncate'>{vPLSUserDepositAddress}</div>
-            <a href='#'>
+            <a
+              href={getEtherScanAccountUrl(vPLSUserDepositAddress)}
+              target='_blank'
+            >
               <Image src='/images/link.svg' height={15} width={15} alt='' />
             </a>
           </div>
@@ -56,7 +61,10 @@ export default function VouchContracts() {
           </div>
           <div className='text-color-text2 text-[14px] flex items-center justify-between'>
             <div className='truncate'>{networkwithdrawAddress}</div>
-            <a href='#'>
+            <a
+              href={getEtherScanAccountUrl(networkwithdrawAddress)}
+              target='_blank'
+            >
               <Image src='/images/link.svg' height={15} width={15} alt='' />
             </a>
           </div>
@@ -67,7 +75,10 @@ export default function VouchContracts() {
           </div>
           <div className='text-color-text2 text-[14px] flex items-center justify-between'>
             <div className='truncate'>{nodeDepositAddress}</div>
-            <a href='#'>
+            <a
+              href={getEtherScanAccountUrl(nodeDepositAddress)}
+              target='_blank'
+            >
               <Image src='/images/link.svg' height={15} width={15} alt='' />
             </a>
           </div>
@@ -78,7 +89,7 @@ export default function VouchContracts() {
           </div>
           <div className='text-color-text2 text-[14px] flex items-center justify-between'>
             <div className='truncate'>{feePoolAddress}</div>
-            <a href='#'>
+            <a href={getEtherScanAccountUrl(feePoolAddress)} target='_blank'>
               <Image src='/images/link.svg' height={15} width={15} alt='' />
             </a>
           </div>
@@ -89,7 +100,10 @@ export default function VouchContracts() {
           </div>
           <div className='text-color-text2 text-[14px] flex items-center justify-between'>
             <div className='truncate'>{networkBalanceAddress}</div>
-            <a href='#'>
+            <a
+              href={getEtherScanAccountUrl(networkBalanceAddress)}
+              target='_blank'
+            >
               <Image src='/images/link.svg' height={15} width={15} alt='' />
             </a>
           </div>

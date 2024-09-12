@@ -8,6 +8,7 @@ import { useNetworkProposalData } from 'hooks/useNetworkProposalData';
 import { useAppSelector } from 'hooks/common';
 import { RootState } from 'redux/store';
 import { usePoolPubkeyData } from 'hooks/usePoolPubkeyData';
+import millify from 'millify';
 
 export default function ProtocolStatus() {
   const { darkMode } = useAppSlice();
@@ -53,7 +54,10 @@ export default function ProtocolStatus() {
         >
           <div className='text-color-text2'>Waiting PLS Withdrawal</div>
           <div className={robotoSemiBold.className}>
-            {totalMissingAmountForWithdraw} Mil
+            {millify(totalMissingAmountForWithdraw, {
+              precision: 2,
+              space: true,
+            })}
           </div>
         </div>
         <div

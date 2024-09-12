@@ -17,16 +17,16 @@ export function useUnstakingPoolData() {
   const [unstakeawableEth, setUnstakeawableEth] = useState<string>();
   const [ejectedValidators, setEjectedValidators] = useState<string>();
   const [waitingStakers, setWaitingStakers] = useState<string>();
-  const [nodeCommissionValue, setNodeCommissionValue] = useState<string>();
-  const [stackCommissionRate, setStackCommissionRate] = useState<string>();
+  const [nodeCommissionValue, setNodeCommissionValue] = useState<number>(0);
+  const [stackCommissionRate, setStackCommissionRate] = useState<number>(0);
   const [platformCommissionRate, setPlatformCommissionRate] =
-    useState<string>();
+    useState<number>(0);
   const [totalMissingAmountForWithdraw, setTotalMissingAmountForWithdraw] =
-    useState<string>();
+    useState<number>(0);
   const [totalPlatformClaimedAmount, setTotalPlatformClaimedAmount] =
-    useState<string>();
+    useState<number>(0);
   const [totalPlatformCommission, setTotalPlatformCommission] =
-    useState<string>();
+    useState<number>(0);
 
   const web3 = getEthWeb3();
 
@@ -68,7 +68,8 @@ export function useUnstakingPoolData() {
         .catch((err: any) => {
           console.log({ err });
         });
-      setNodeCommissionValue(Web3.utils.fromWei(nodeComissionFeeValue));
+      console.log('nodeComissionFeeValue', nodeComissionFeeValue);
+      setNodeCommissionValue(+Web3.utils.fromWei(nodeComissionFeeValue) * 100);
 
       const platformCommissionValue = await networkWithdrawContract.methods
         .platformCommissionRate()
@@ -76,7 +77,9 @@ export function useUnstakingPoolData() {
         .catch((err: any) => {
           console.log({ err });
         });
-      setPlatformCommissionRate(Web3.utils.fromWei(platformCommissionValue));
+      setPlatformCommissionRate(
+        +Web3.utils.fromWei(platformCommissionValue) * 100
+      );
 
       const stackCommissionValue = await networkWithdrawContract.methods
         .stackCommissionRate()
@@ -84,7 +87,7 @@ export function useUnstakingPoolData() {
         .catch((err: any) => {
           console.log({ err });
         });
-      setStackCommissionRate(Web3.utils.fromWei(stackCommissionValue));
+      setStackCommissionRate(+Web3.utils.fromWei(stackCommissionValue) * 100);
 
       const totalPlatformClaimedAmountValue =
         await networkWithdrawContract.methods
@@ -94,17 +97,7 @@ export function useUnstakingPoolData() {
             console.log({ err });
           });
       setTotalPlatformClaimedAmount(
-        (+Web3.utils.fromWei(totalPlatformClaimedAmountValue)).toFixed(0)
-      );
-
-      const stackCommissionRateValue = await networkWithdrawContract.methods
-        .stackCommissionRate()
-        .call()
-        .catch((err: any) => {
-          console.log({ err });
-        });
-      setStackCommissionRate(
-        (+Web3.utils.fromWei(stackCommissionRateValue)).toFixed(0)
+        +Web3.utils.fromWei(totalPlatformClaimedAmountValue)
       );
 
       const totalPlatformCommissionValue = await networkWithdrawContract.methods
@@ -114,7 +107,7 @@ export function useUnstakingPoolData() {
           console.log({ err });
         });
       setTotalPlatformCommission(
-        (+Web3.utils.fromWei(totalPlatformCommissionValue)).toFixed(0)
+        +Web3.utils.fromWei(totalPlatformCommissionValue)
       );
 
       const totalMissingAmountForWithdrawValue =
@@ -126,7 +119,7 @@ export function useUnstakingPoolData() {
           });
 
       setTotalMissingAmountForWithdraw(
-        Web3.utils.fromWei(
+        +Web3.utils.fromWei(
           formatScientificNumber(Number(totalMissingAmountForWithdrawValue))
         )
       );

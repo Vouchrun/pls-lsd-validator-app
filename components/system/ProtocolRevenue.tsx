@@ -6,6 +6,7 @@ import { CustomButton } from 'components/common/CustomButton';
 import { useUnstakingPoolData } from 'hooks/useUnstakingPoolData';
 import { useNetworkProposalData } from 'hooks/useNetworkProposalData';
 import { useWalletAccount } from 'hooks/useWalletAccount';
+import millify from 'millify';
 
 export default function ProtocolRevenue() {
   const { darkMode } = useAppSlice();
@@ -49,7 +50,10 @@ export default function ProtocolRevenue() {
         >
           <div className='text-color-text2'>Total Platform Commissions</div>
           <div className={robotoSemiBold.className}>
-            {totalPlatformCommission} Mil
+            {millify(totalPlatformCommission, {
+              precision: 2,
+              space: true,
+            })}
           </div>
         </div>
         <div
@@ -61,7 +65,10 @@ export default function ProtocolRevenue() {
         >
           <div className='text-color-text2'>Platform Commissions Withdrawn</div>
           <div className={robotoSemiBold.className}>
-            {totalPlatformClaimedAmount} Mil
+            {millify(totalPlatformClaimedAmount, {
+              precision: 2,
+              space: true,
+            })}
           </div>
         </div>
         <div
@@ -73,10 +80,10 @@ export default function ProtocolRevenue() {
         >
           <div className='text-color-text2'>Total Stack Commissions</div>
           <div className={robotoSemiBold.className}>
-            {stackCommissionRate &&
-              totalPlatformCommission &&
-              +stackCommissionRate * +totalPlatformCommission}{' '}
-            Mil
+            {millify(+(stackCommissionRate / 100) * +totalPlatformCommission, {
+              precision: 2,
+              space: true,
+            })}
           </div>
         </div>
         <div
@@ -87,14 +94,20 @@ export default function ProtocolRevenue() {
           }
         >
           <div className='text-color-text2'>Treasury Balance</div>
-          <div className={robotoSemiBold.className}>{treasuryBalance} Mil</div>
+          <div className={robotoSemiBold.className}>
+            {millify(treasuryBalance, {
+              precision: 2,
+              space: true,
+            })}
+          </div>
         </div>
         <div className='text-[.14rem] text-color-text1 mt-5 text-center mb-[10px]'>
           <span className='text-color-text2'>Withdrawable Balance:</span>{' '}
           <span className={robotoSemiBold.className}>
-            {totalPlatformCommission &&
-              totalPlatformClaimedAmount &&
-              +totalPlatformCommission - +totalPlatformClaimedAmount}{' '}
+            {millify(totalPlatformCommission - totalPlatformClaimedAmount, {
+              precision: 2,
+              space: true,
+            })}{' '}
             PLS
           </span>
         </div>
@@ -109,17 +122,16 @@ export default function ProtocolRevenue() {
               : 'w-full rounded-[35px] bg-[#fff] text-center h-[42px] border-[0.01rem] border-[#6C86AD80]'
           }
         />
-        {admin === metaMaskAccount && (
-          <div className='mt-[10px] max-w-[250px] mx-auto'>
-            <CustomButton
-              type='small'
-              height='.42rem'
-              onClick={() => withDrawAdmin()}
-            >
-              Distribute Commissions
-            </CustomButton>
-          </div>
-        )}
+        <div className='mt-[10px] max-w-[250px] mx-auto'>
+          <CustomButton
+            type='small'
+            height='.42rem'
+            disabled={admin !== metaMaskAccount}
+            onClick={() => withDrawAdmin()}
+          >
+            Distribute Commissions
+          </CustomButton>
+        </div>
       </div>
     </div>
   );
