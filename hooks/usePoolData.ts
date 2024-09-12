@@ -2,20 +2,20 @@ import {
   getEthDepositContract,
   getLsdEthTokenContract,
   getNetworkWithdrawContract,
-} from "config/contract";
+} from 'config/contract';
 import {
   getLsdEthTokenContractAbi,
   getNetworkWithdrawContractAbi,
-} from "config/contractAbi";
-import { IpfsRewardItem, RewardJsonResponse } from "interfaces/common";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { getEthWeb3 } from "utils/web3Utils";
-import Web3 from "web3";
-import { useAppSlice } from "./selector";
-import { usePoolPubkeyData } from "./usePoolPubkeyData";
-import { usePrice } from "./usePrice";
-import { getEthereumChainId, getValidatorTotalDepositAmount } from "config/env";
-import { formatScientificNumber } from "utils/numberUtils";
+} from 'config/contractAbi';
+import { IpfsRewardItem, RewardJsonResponse } from 'interfaces/common';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { getEthWeb3 } from 'utils/web3Utils';
+import Web3 from 'web3';
+import { useAppSlice } from './selector';
+import { usePoolPubkeyData } from './usePoolPubkeyData';
+import { usePrice } from './usePrice';
+import { getEthereumChainId, getValidatorTotalDepositAmount } from 'config/env';
+import { formatScientificNumber, removeDecimals } from 'utils/numberUtils';
 
 export function usePoolData() {
   const { updateFlag } = useAppSlice();
@@ -41,7 +41,7 @@ export function usePoolData() {
     if (!matchedValidators) {
       return undefined;
     }
-    return Number(matchedValidators) * getValidatorTotalDepositAmount() + "";
+    return Number(matchedValidators) * getValidatorTotalDepositAmount() + '';
   }, [matchedValidators]);
 
   const mintedLsdTokenValue = useMemo(() => {
@@ -138,7 +138,7 @@ export function usePoolData() {
       const response = await fetch(
         `https://${nodeRewardsFileCid}.ipfs.dweb.link/${getLsdEthTokenContract().toLowerCase()}-rewards-${getEthereumChainId()}-${latestMerkleRootEpoch}.json`,
         {
-          method: "GET",
+          method: 'GET',
           headers: {},
         }
       );
@@ -146,14 +146,14 @@ export function usePoolData() {
       // const resJson: RewardJsonResponse = await response.json();
       // const resJson = { List: [] };
       const resText = await response.text();
-      var JSONbig = require("json-bigint");
+      var JSONbig = require('json-bigint');
       const resTextJson = JSONbig.parse(resText);
 
       const list: IpfsRewardItem[] = resTextJson.List?.map((item: any) => {
         return {
           ...item,
-          totalRewardAmount: item.totalRewardAmount.toFixed(),
-          totalDepositAmount: item.totalDepositAmount.toFixed(),
+          totalRewardAmount: removeDecimals(item.totalRewardAmount.toFixed()),
+          totalDepositAmount: removeDecimals(item.totalDepositAmount.toFixed()),
         };
       });
 
@@ -194,9 +194,9 @@ export function usePoolData() {
 
       // console.log({ poolEth });
 
-      setPoolEth(Web3.utils.fromWei(formatScientificNumber(poolEth) + ""));
+      setPoolEth(Web3.utils.fromWei(formatScientificNumber(poolEth) + ''));
     } catch {
-      setPoolEth("--");
+      setPoolEth('--');
     }
   }, [updateFlag]);
 
@@ -219,5 +219,6 @@ export function usePoolData() {
     stakeApr,
     validatorApr,
     matchedValidators,
+    lsdRate,
   };
 }

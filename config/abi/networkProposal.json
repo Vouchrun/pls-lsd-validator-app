@@ -1,0 +1,788 @@
+[
+  {
+    "inputs": [],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "inputs": [],
+    "name": "AddressNotAllowed",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "AlreadyClaimed",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "AlreadyDealedEpoch",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "AlreadyDealedHeight",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "AlreadyInitialized",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "AlreadyNotifiedCycle",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "AlreadyVoted",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "AmountNotZero",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "AmountUnmatch",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "AmountZero",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "BalanceNotEnough",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "BlockNotMatch",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "CallerNotAllowed",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ClaimableAmountZero",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ClaimableDepositZero",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ClaimableRewardZero",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ClaimableWithdrawIndexOverflow",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "CommissionRateInvalid",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "CycleNotMatch",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "DepositAmountGTMaxAmount",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "DepositAmountLTMinAmount",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "EmptyEntrustedVoters",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "EthAmountZero",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "FailedToCall",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InvalidMerkleProof",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InvalidThreshold",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "LengthNotMatch",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "LsdTokenAmountZero",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "LsdTokenCanOnlyUseOnce",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "NodeAlreadyExist",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "NodeAlreadyRemoved",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "NodeNotClaimable",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "NotAuthorizedLsdToken",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "NotClaimable",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "NotPubkeyOwner",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "NotTrustNode",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ProposalExecFailed",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "PubkeyAlreadyExist",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "PubkeyNotExist",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "PubkeyNumberOverLimit",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "PubkeyStatusUnmatch",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "RateChangeOverLimit",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "SoloNodeDepositAmountZero",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "SoloNodeDepositDisabled",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "SubmitBalancesDisabled",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "min",
+        "type": "uint256"
+      }
+    ],
+    "name": "TooLow",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "TrustNodeDepositDisabled",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "UserDepositDisabled",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "VotersDuplicate",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "VotersNotEnough",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "VotersNotExist",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "WithdrawIndexEmpty",
+    "type": "error"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "previousAdmin",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "newAdmin",
+        "type": "address"
+      }
+    ],
+    "name": "AdminChanged",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "beacon",
+        "type": "address"
+      }
+    ],
+    "name": "BeaconUpgraded",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint8",
+        "name": "version",
+        "type": "uint8"
+      }
+    ],
+    "name": "Initialized",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "_proposalId",
+        "type": "bytes32"
+      }
+    ],
+    "name": "ProposalExecuted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "implementation",
+        "type": "address"
+      }
+    ],
+    "name": "Upgraded",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "_proposalId",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "_voter",
+        "type": "address"
+      }
+    ],
+    "name": "VoteProposal",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "_oldManager",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "_newManager",
+        "type": "address"
+      }
+    ],
+    "name": "VoterManagementTakenOver",
+    "type": "event"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_voter",
+        "type": "address"
+      }
+    ],
+    "name": "addVoter",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "admin",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address[]",
+        "name": "_tos",
+        "type": "address[]"
+      },
+      {
+        "internalType": "bytes[]",
+        "name": "_callDatas",
+        "type": "bytes[]"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "_proposalFactors",
+        "type": "uint256[]"
+      }
+    ],
+    "name": "batchExecProposals",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_newThreshold",
+        "type": "uint256"
+      }
+    ],
+    "name": "changeThreshold",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_to",
+        "type": "address"
+      },
+      {
+        "internalType": "bytes",
+        "name": "_callData",
+        "type": "bytes"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_proposalFactor",
+        "type": "uint256"
+      }
+    ],
+    "name": "execProposal",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_voter",
+        "type": "address"
+      }
+    ],
+    "name": "getVoterIndex",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getVoters",
+    "outputs": [
+      {
+        "internalType": "address[]",
+        "name": "",
+        "type": "address[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "_proposalId",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "_voter",
+        "type": "address"
+      }
+    ],
+    "name": "hasVoted",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address[]",
+        "name": "_voters",
+        "type": "address[]"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_initialThreshold",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "_adminAddress",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_voterManagerAddress",
+        "type": "address"
+      }
+    ],
+    "name": "init",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_sender",
+        "type": "address"
+      }
+    ],
+    "name": "isAdmin",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_sender",
+        "type": "address"
+      }
+    ],
+    "name": "isVoter",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "name": "proposals",
+    "outputs": [
+      {
+        "internalType": "enum INetworkProposal.ProposalStatus",
+        "name": "_status",
+        "type": "uint8"
+      },
+      {
+        "internalType": "uint16",
+        "name": "_yesVotes",
+        "type": "uint16"
+      },
+      {
+        "internalType": "uint8",
+        "name": "_yesVotesTotal",
+        "type": "uint8"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "proxiableUUID",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "reinit",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_voter",
+        "type": "address"
+      }
+    ],
+    "name": "removeVoter",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address[]",
+        "name": "_newVoters",
+        "type": "address[]"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_threshold",
+        "type": "uint256"
+      }
+    ],
+    "name": "replaceVoters",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_newVoterManager",
+        "type": "address"
+      },
+      {
+        "internalType": "address[]",
+        "name": "_newVoters",
+        "type": "address[]"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_threshold",
+        "type": "uint256"
+      }
+    ],
+    "name": "takeoverVoterManagement",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "threshold",
+    "outputs": [
+      {
+        "internalType": "uint8",
+        "name": "",
+        "type": "uint8"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_newAdmin",
+        "type": "address"
+      }
+    ],
+    "name": "transferAdmin",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_newVoterManager",
+        "type": "address"
+      }
+    ],
+    "name": "transferVoterManager",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "newImplementation",
+        "type": "address"
+      }
+    ],
+    "name": "upgradeTo",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "newImplementation",
+        "type": "address"
+      },
+      {
+        "internalType": "bytes",
+        "name": "data",
+        "type": "bytes"
+      }
+    ],
+    "name": "upgradeToAndCall",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "version",
+    "outputs": [
+      {
+        "internalType": "uint8",
+        "name": "",
+        "type": "uint8"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "voterManager",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]

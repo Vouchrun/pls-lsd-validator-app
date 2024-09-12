@@ -266,3 +266,14 @@ export const formatValidatorDespositAmount = formatNumber(
   getValidatorTotalDepositAmount(),
   { fixedDecimals: false }
 );
+
+export const isPubkeyStillValid = (beaconStatus: string | undefined) => {
+  const uppercaseStatus = beaconStatus?.toUpperCase();
+  return (
+    uppercaseStatus !== "EXITED_UNSLASHED" &&
+    uppercaseStatus !== "EXITED_SLASHED" &&
+    uppercaseStatus !== "EXITED" &&
+    uppercaseStatus !== "WITHDRAWAL_POSSIBLE" &&
+    uppercaseStatus !== "WITHDRAWAL_DONE"
+  );
+};
