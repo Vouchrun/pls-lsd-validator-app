@@ -100,3 +100,13 @@ export function chainAmountToHuman(num: string | number) {
 export function formatScientificNumber(n: number | string) {
   return n.toLocaleString("fullwide", { useGrouping: false });
 }
+
+export function removeDecimals(n: number | string) {
+  let res = "";
+  if ((n + "").lastIndexOf(".") >= 0) {
+    res = (n + "").substring(0, (n + "").lastIndexOf("."));
+  } else {
+    res = n + "";
+  }
+  return res;
+}

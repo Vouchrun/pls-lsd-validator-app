@@ -19,7 +19,9 @@ import {
 } from "config/contractAbi";
 import { useUserPubkeys } from "./useUserPubkeys";
 import { getEthereumChainId, getValidatorTotalDepositAmount } from "config/env";
-import { formatScientificNumber } from "utils/numberUtils";
+import { formatScientificNumber, removeDecimals } from "utils/numberUtils";
+import { fetchPubkeyStatus } from "utils/apiUtils";
+import { isPubkeyStillValid } from "utils/commonUtils";
 
 export function useMyData() {
   const { updateFlag } = useAppSlice();
@@ -45,9 +47,7 @@ export function useMyData() {
     nodePubkeys.forEach((item) => {
       if (
         item._status === ChainPubkeyStatus.Staked &&
-        item.beaconApiStatus !== "EXITED_UNSLASHED" &&
-        item.beaconApiStatus !== "EXITED_SLASHED" &&
-        item.beaconApiStatus !== "EXITED"
+        isPubkeyStillValid(item.beaconApiStatus)
       ) {
         totalManagedToken += getValidatorTotalDepositAmount();
       }
@@ -114,9 +114,11 @@ export function useMyData() {
       const list: IpfsRewardItem[] = resTextJson.List?.map((item: any) => {
         return {
           ...item,
-          totalRewardAmount: item.totalRewardAmount.toFixed(),
-          totalDepositAmount: item.totalDepositAmount.toFixed(),
-          totalExitDepositAmount: item.totalExitDepositAmount.toFixed(),
+          totalRewardAmount: removeDecimals(item.totalRewardAmount.toFixed()),
+          totalDepositAmount: removeDecimals(item.totalDepositAmount.toFixed()),
+          totalExitDepositAmount: removeDecimals(
+            item.totalExitDepositAmount.toFixed()
+          ),
         };
       });
 
@@ -207,10 +209,19 @@ export function useMyData() {
 
       let totalNodeDepositAmount = 0;
 
-      pubekyInfos.forEach((pubkeyInfo) => {
-        // console.log({ pubkeyInfo });
-        totalNodeDepositAmount += Number(pubkeyInfo._nodeDepositAmount);
-        myShareAmount += Number(pubkeyInfo._nodeDepositAmount);
+      const beaconStatusResJson = await fetchPubkeyStatus(
+        pubkeysOfNode.join(",")
+      );
+
+      pubekyInfos.forEach((pubkeyInfo, index) => {
+        const matchedBeaconData = beaconStatusResJson.data?.find(
+          (item: any) => item.validator?.pubkey === pubkeysOfNode[index]
+        );
+
+        if (isPubkeyStillValid(matchedBeaconData.status)) {
+          totalNodeDepositAmount += Number(pubkeyInfo._nodeDepositAmount);
+          myShareAmount += Number(pubkeyInfo._nodeDepositAmount);
+        }
       });
 
       myShareAmount = Math.max(
@@ -225,11 +236,10 @@ export function useMyData() {
         .catch((err: any) => {
           console.log({ err });
         });
+      // console.log({ totalNodeDepositAmount });
+      // console.log({ totalClaimedDepositOfNode });
 
-      selfDepositAmount = Math.max(
-        0,
-        totalNodeDepositAmount - Number(totalClaimedDepositOfNode)
-      );
+      selfDepositAmount = Math.max(0, totalNodeDepositAmount);
       setMyShareAmount(
         Web3.utils.fromWei(formatScientificNumber(myShareAmount))
       );

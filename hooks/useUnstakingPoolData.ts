@@ -2,32 +2,42 @@ import {
   getEthDepositContract,
   getLsdEthTokenContract,
   getNetworkWithdrawContract,
-} from "config/contract";
+} from 'config/contract';
 import {
   getLsdEthTokenContractAbi,
   getNetworkWithdrawContractAbi,
-} from "config/contractAbi";
-import { useCallback, useEffect, useState } from "react";
-import { formatScientificNumber } from "utils/numberUtils";
-import { getEthWeb3 } from "utils/web3Utils";
-import Web3 from "web3";
+} from 'config/contractAbi';
+import { useCallback, useEffect, useState } from 'react';
+import { formatScientificNumber } from 'utils/numberUtils';
+import { getEthWeb3 } from 'utils/web3Utils';
+import Web3 from 'web3';
 
 export function useUnstakingPoolData() {
   const [poolEth, setPoolEth] = useState<string>();
   const [unstakeawableEth, setUnstakeawableEth] = useState<string>();
   const [ejectedValidators, setEjectedValidators] = useState<string>();
   const [waitingStakers, setWaitingStakers] = useState<string>();
+  const [nodeCommissionValue, setNodeCommissionValue] = useState<number>(0);
+  const [stackCommissionRate, setStackCommissionRate] = useState<number>(0);
+  const [platformCommissionRate, setPlatformCommissionRate] =
+    useState<number>(0);
+  const [totalMissingAmountForWithdraw, setTotalMissingAmountForWithdraw] =
+    useState<number>(0);
+  const [totalPlatformClaimedAmount, setTotalPlatformClaimedAmount] =
+    useState<number>(0);
+  const [totalPlatformCommission, setTotalPlatformCommission] =
+    useState<number>(0);
+
+  const web3 = getEthWeb3();
+
+  const networkWithdrawContract = new web3.eth.Contract(
+    getNetworkWithdrawContractAbi(),
+    getNetworkWithdrawContract(),
+    {}
+  );
 
   const udpatePoolData = useCallback(async () => {
     try {
-      const web3 = getEthWeb3();
-
-      const networkWithdrawContract = new web3.eth.Contract(
-        getNetworkWithdrawContractAbi(),
-        getNetworkWithdrawContract(),
-        {}
-      );
-
       const lsdTokenContract = new web3.eth.Contract(
         getLsdEthTokenContractAbi(),
         getLsdEthTokenContract(),
@@ -52,7 +62,55 @@ export function useUnstakingPoolData() {
         getEthDepositContract()
       );
 
-      const totalMissingAmountForWithdraw =
+      const nodeComissionFeeValue = await networkWithdrawContract.methods
+        .nodeCommissionRate()
+        .call()
+        .catch((err: any) => {
+          console.log({ err });
+        });
+      console.log('nodeComissionFeeValue', nodeComissionFeeValue);
+      setNodeCommissionValue(+Web3.utils.fromWei(nodeComissionFeeValue) * 100);
+
+      const platformCommissionValue = await networkWithdrawContract.methods
+        .platformCommissionRate()
+        .call()
+        .catch((err: any) => {
+          console.log({ err });
+        });
+      setPlatformCommissionRate(
+        +Web3.utils.fromWei(platformCommissionValue) * 100
+      );
+
+      const stackCommissionValue = await networkWithdrawContract.methods
+        .stackCommissionRate()
+        .call()
+        .catch((err: any) => {
+          console.log({ err });
+        });
+      setStackCommissionRate(+Web3.utils.fromWei(stackCommissionValue) * 100);
+
+      const totalPlatformClaimedAmountValue =
+        await networkWithdrawContract.methods
+          .totalPlatformClaimedAmount()
+          .call()
+          .catch((err: any) => {
+            console.log({ err });
+          });
+      setTotalPlatformClaimedAmount(
+        +Web3.utils.fromWei(totalPlatformClaimedAmountValue)
+      );
+
+      const totalPlatformCommissionValue = await networkWithdrawContract.methods
+        .totalPlatformCommission()
+        .call()
+        .catch((err: any) => {
+          console.log({ err });
+        });
+      setTotalPlatformCommission(
+        +Web3.utils.fromWei(totalPlatformCommissionValue)
+      );
+
+      const totalMissingAmountForWithdrawValue =
         await networkWithdrawContract.methods
           .totalMissingAmountForWithdraw()
           .call()
@@ -60,14 +118,21 @@ export function useUnstakingPoolData() {
             console.log({ err });
           });
 
+      setTotalMissingAmountForWithdraw(
+        +Web3.utils.fromWei(
+          formatScientificNumber(Number(totalMissingAmountForWithdrawValue))
+        )
+      );
+
       const poolEth = Web3.utils.fromWei(
         formatScientificNumber(
-          Number(userDepositBalance) - Number(totalMissingAmountForWithdraw)
-        ) + ""
+          Number(userDepositBalance) -
+            Number(totalMissingAmountForWithdrawValue)
+        ) + ''
       );
       setPoolEth(poolEth);
 
-      setUnstakeawableEth("0");
+      setUnstakeawableEth('0');
 
       const nextWithdrawIndex = await networkWithdrawContract.methods
         .nextWithdrawIndex()
@@ -84,12 +149,27 @@ export function useUnstakingPoolData() {
         });
 
       setWaitingStakers(
-        Number(nextWithdrawIndex) - Number(maxClaimableWithdrawIndex) + ""
+        Number(nextWithdrawIndex) - Number(maxClaimableWithdrawIndex) + ''
       );
     } catch (err: any) {
       console.log({ err });
     }
   }, []);
+
+  const withDraw = async (value: string) => {
+    try {
+      await networkWithdrawContract.methods
+        .platformClaim(value)
+        .send()
+        .catch((err: any) => {
+          console.log({ err });
+        });
+      return true;
+    } catch (err: any) {
+      console.log({ err });
+      return false;
+    }
+  };
 
   useEffect(() => {
     udpatePoolData();
@@ -100,5 +180,12 @@ export function useUnstakingPoolData() {
     unstakeawableEth,
     waitingStakers,
     ejectedValidators,
+    totalMissingAmountForWithdraw,
+    nodeCommissionValue,
+    platformCommissionRate,
+    stackCommissionRate,
+    totalPlatformClaimedAmount,
+    totalPlatformCommission,
+    withDraw,
   };
 }

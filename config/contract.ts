@@ -1,6 +1,6 @@
-import { isDev } from "./env";
-import appDevConfig from "./appConf/dev.json";
-import appProdConfig from "./appConf/prod.json";
+import { isDev } from './env';
+import appDevConfig from './appConf/dev.json';
+import appProdConfig from './appConf/prod.json';
 
 /**
  * get lsdETH token contract address
@@ -50,4 +50,24 @@ export function getNetworkWithdrawContract() {
     return appDevConfig.contracts.networkWithdrawContract.address;
   }
   return appProdConfig.contracts.networkWithdrawContract.address;
+}
+
+/**
+ * get networkProposal contract address
+ */
+export function getNetworkProposalContract() {
+  if (isDev()) {
+    return appDevConfig.contracts.networkProposalContract.address;
+  }
+  return appProdConfig.contracts.networkProposalContract.address;
+}
+
+/**
+ * get feePool contract address
+ */
+export function getFeePoolContract() {
+  if (isDev()) {
+    return appDevConfig.contracts.feePoolContract.address;
+  }
+  return appProdConfig.contracts.feePoolContract.address;
 }
