@@ -1,25 +1,53 @@
 import { getNodeDepositContract } from 'config/contract';
 import { getNodeDepositContractAbi } from 'config/contractAbi';
 import { ChainPubkeyStatus, NodePubkeyInfo } from 'interfaces/common';
+import { set } from 'lodash';
 import { useCallback, useEffect, useState } from 'react';
 import { fetchPubkeyStatus } from 'utils/apiUtils';
 import { getEthWeb3 } from 'utils/web3Utils';
 
 export function usePoolPubkeyData() {
   const [matchedValidators, setMatchedValidators] = useState<string>();
+  const [nodes, setNodes] = useState<string[]>([]);
   const [trustNodePubkeyNumberLimit, setTrustNodePubkeyNumberLimit] =
     useState<string>();
 
+  const web3 = getEthWeb3();
+
+  const nodeDepositContract = new web3.eth.Contract(
+    getNodeDepositContractAbi(),
+    getNodeDepositContract(),
+    {}
+  );
+
+  let isSettingNodes = false;
+
+  async function setNodesWithCheck(nodesValue: any) {
+    if (isSettingNodes) return;
+
+    isSettingNodes = true;
+    setNodes([]);
+    const uniqueNodes = new Set<string>();
+
+    for (let i = 0; i < nodesValue.length; i++) {
+      const isTrusted = await nodeDepositContract.methods
+        .nodeInfoOf(nodesValue[i])
+        .call()
+        .catch((err: any) => {
+          console.log({ err });
+        });
+
+      if (isTrusted[0] == 2 && !uniqueNodes.has(nodesValue[i])) {
+        uniqueNodes.add(nodesValue[i]);
+        setNodes((prev) => [...prev, nodesValue[i]]);
+      }
+    }
+
+    isSettingNodes = false;
+  }
+
   const updateMatchedValidators = useCallback(async () => {
     try {
-      const web3 = getEthWeb3();
-
-      const nodeDepositContract = new web3.eth.Contract(
-        getNodeDepositContractAbi(),
-        getNodeDepositContract(),
-        {}
-      );
-
       const nodesLength = await nodeDepositContract.methods
         .getNodesLength()
         .call()
@@ -27,12 +55,30 @@ export function usePoolPubkeyData() {
           console.log({ err });
         });
 
-      const nodes = await nodeDepositContract.methods
+      const nodesValue = await nodeDepositContract.methods
         .getNodes(0, nodesLength)
         .call()
         .catch((err: any) => {
           console.log({ err });
         });
+
+      // setNodes([]);
+      // const uniqueNodes = new Set<string>();
+
+      // for (let i = 0; i < nodesValue.length; i++) {
+      //   const isTrusted = await nodeDepositContract.methods
+      //     .nodeInfoOf(nodesValue[i])
+      //     .call()
+      //     .catch((err: any) => {
+      //       console.log({ err });
+      //     });
+      //   if (isTrusted[0] == 2 && !uniqueNodes.has(nodesValue[i])) {
+      //     uniqueNodes.add(nodesValue[i]);
+      //     setNodes((prev) => [...prev, nodesValue[i]]);
+      //   }
+      // }
+
+      setNodesWithCheck(nodesValue);
 
       const trustNodePubkeyNumberLimitValue = await nodeDepositContract.methods
         .trustNodePubkeyNumberLimit()
@@ -46,7 +92,7 @@ export function usePoolPubkeyData() {
       const pubkeyAddressList: string[] = [];
 
       // Query node pubkey addresses
-      const requests = nodes?.map((nodeAddress: string) => {
+      const requests = nodesValue?.map((nodeAddress: string) => {
         return (async () => {
           const pubkeys: string[] = await nodeDepositContract.methods
             .getPubkeysOfNode(nodeAddress)
@@ -137,5 +183,6 @@ export function usePoolPubkeyData() {
   return {
     matchedValidators,
     trustNodePubkeyNumberLimit,
+    nodes,
   };
 }

@@ -27,6 +27,9 @@
     },
     "networkProposalContract": {
       "address": "0x0E7bcecEB7691e0d288cCECDF52818F2823409F0"
+    },
+    "feePoolContract": {
+      "address": "0x4C14073Fa77e3028cDdC60bC593A8381119e9921"
     }
   },
   "lsdAppUrl": "https://app.3aaa3.xyz"

@@ -61,3 +61,13 @@ export function getNetworkProposalContract() {
   }
   return appProdConfig.contracts.networkProposalContract.address;
 }
+
+/**
+ * get feePool contract address
+ */
+export function getFeePoolContract() {
+  if (isDev()) {
+    return appDevConfig.contracts.feePoolContract.address;
+  }
+  return appProdConfig.contracts.feePoolContract.address;
+}

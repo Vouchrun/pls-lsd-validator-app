@@ -12,7 +12,7 @@ import { getEthWeb3 } from 'utils/web3Utils';
 
 export function useNetworkProposalData() {
   const [threshold, setThreshold] = useState<string>();
-  const [voters, setVoters] = useState<string>();
+  const [voters, setVoters] = useState<string[]>([]);
   const [admin, setAdmin] = useState<string>();
   const [treasuryBalance, setTreasuryBalance] = useState<string>();
 
@@ -46,7 +46,7 @@ export function useNetworkProposalData() {
         .catch((err: any) => {
           console.log({ err });
         });
-      setVoters(votersValue.length);
+      setVoters(votersValue);
 
       const adminWallet = await networkProposalContract.methods
         .admin()

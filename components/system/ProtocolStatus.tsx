@@ -109,7 +109,7 @@ export default function ProtocolStatus() {
         >
           <div className='text-color-text2'>Voter / Relay Threshold</div>
           <div className={robotoSemiBold.className}>
-            {threshold} of {voters}
+            {threshold} of {voters?.length}
           </div>
         </div>
         <div
