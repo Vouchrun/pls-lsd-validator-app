@@ -138,7 +138,8 @@ export const Navbar = () => {
             className='w-[4.3rem] h-[.42rem] p-[.04rem] grid items-stretch bg-color-bg2 rounded-[.6rem]'
             style={{
               gridTemplateColumns:
-                admin === metaMaskAccount || metaMaskAccount?.indexOf(voters)
+                admin === metaMaskAccount ||
+                voters.find((voter: string) => voter === metaMaskAccount)
                   ? '25% 25% 25% 25%'
                   : '40% 28% 32%',
             }}
@@ -181,21 +182,21 @@ export const Navbar = () => {
                 {getLsdTokenName()} Pool
               </div>
             </Link>
-            {admin === metaMaskAccount ||
-              (metaMaskAccount?.indexOf(voters) && (
-                <Link href={'/system'}>
-                  <div
-                    className={classNames(
-                      'h-[.34rem] cursor-pointer flex items-center justify-center text-[.16rem] rounded-[.6rem]',
-                      router.pathname.startsWith('/system')
-                        ? 'bg-color-selected text-text1 font-bold rounded-[.6rem] border-color-divider1 border-solid border-[0.01rem]'
-                        : 'text-color-text1'
-                    )}
-                  >
-                    System
-                  </div>
-                </Link>
-              ))}
+            {(admin === metaMaskAccount ||
+              voters.find((voter: string) => voter === metaMaskAccount)) && (
+              <Link href={'/system'}>
+                <div
+                  className={classNames(
+                    'h-[.34rem] cursor-pointer flex items-center justify-center text-[.16rem] rounded-[.6rem]',
+                    router.pathname.startsWith('/system')
+                      ? 'bg-color-selected text-text1 font-bold rounded-[.6rem] border-color-divider1 border-solid border-[0.01rem]'
+                      : 'text-color-text1'
+                  )}
+                >
+                  System
+                </div>
+              </Link>
+            )}
           </div>
 
           {/* <AuditComponent
