@@ -1,21 +1,21 @@
-import { UseQueryResult, useQuery } from "@tanstack/react-query";
-import { getTokenPriceUrl } from "utils/configUtils";
+import { UseQueryResult, useQuery } from '@tanstack/react-query';
+import { getTokenPriceUrl } from 'utils/configUtils';
 
 export function usePrice() {
   const tokenPriceResult: UseQueryResult<number> = useQuery({
-    queryKey: ["GetTokenPrice", getTokenPriceUrl()],
+    queryKey: ['GetTokenPrice', getTokenPriceUrl()],
     staleTime: 120000,
     queryFn: async () => {
       try {
         const response = await fetch(getTokenPriceUrl(), {
-          method: "GET",
+          method: 'GET',
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
         });
         const resJson = await response.json();
         if (resJson) {
-          const { usd } = resJson["ethereum"];
+          const { usd } = resJson['pulsechain'];
           // console.log({ usd });
           return usd;
         }
