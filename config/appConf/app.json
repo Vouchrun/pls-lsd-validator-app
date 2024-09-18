@@ -71,11 +71,11 @@
     },
     {
       "name": "DAO Forum",
-      "link": "https://vouch.run/" 
+      "link": "https://vouch.run/"
     },
     {
       "name": "Dune Dashboard",
-      "link": "https://vouch.run/" 
+      "link": "https://vouch.run/"
     }
   ],
   "contactList": [
@@ -96,7 +96,7 @@
       "link": "https://t.me/vouchrun"
     }
   ],
-  "tokenPriceUrl": "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd",
+  "tokenPriceUrl": "https://api.coingecko.com/api/v3/simple/price?ids=pulsechain&vs_currencies=usd",
   "docLinks": {
     "ejectionMechanism": "https://commonwealth.im/stafi/discussion/10127-withdrawal-design-for-reth-solution-for-upcoming-shanghai-upgrade",
     "delegationMechanism": "https://lsaas-docs.stafi.io/docs/developethlsd/validator.html"
