@@ -117,7 +117,7 @@ export const ValidatorStakeLoading = () => {
 
         <a
           className="my-[.32rem] underline text-color-text2 text-[.12rem]"
-          href="https://discord.com/invite/jB77etn"
+          href="https://t.me/vouchrun"
           target="_blank"
           rel="noreferrer"
         >
