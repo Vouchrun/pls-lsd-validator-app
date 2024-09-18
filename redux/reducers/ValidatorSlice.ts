@@ -1,40 +1,40 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import {
   getNetworkWithdrawContract,
   getNodeDepositContract,
-} from "config/contract";
+} from 'config/contract';
 import {
   getNetworkWithdrawContractAbi,
   getNodeDepositContractAbi,
-} from "config/contractAbi";
+} from 'config/contractAbi';
 import {
   getTrustValidatorDepositAmount,
   getValidatorTotalDepositAmount,
-} from "config/env";
-import { getEtherScanTxUrl } from "config/explorer";
+} from 'config/env';
+import { getEtherScanTxUrl } from 'config/explorer';
 import {
   CANCELLED_MESSAGE,
   COMMON_ERROR_MESSAGE,
   CONNECTION_ERROR_MESSAGE,
   TRANSACTION_FAILED_MESSAGE,
-} from "constants/common";
-import dayjs from "dayjs";
+} from 'constants/common';
+import dayjs from 'dayjs';
 import {
   IpfsRewardItem,
   NodePubkeyInfo,
   TokenWithdrawInfo,
   ValidatorClaimType,
-} from "interfaces/common";
-import { AppThunk } from "redux/store";
-import { fetchPubkeyStatus } from "utils/apiUtils";
-import { isEvmTxCancelError, uuid } from "utils/commonUtils";
-import { getTokenName } from "utils/configUtils";
-import { formatNumber, formatScientificNumber } from "utils/numberUtils";
-import snackbarUtil from "utils/snackbarUtils";
-import { getShortAddress } from "utils/stringUtils";
-import { createWeb3, getEthWeb3 } from "utils/web3Utils";
-import { parseEther } from "viem";
-import Web3 from "web3";
+} from 'interfaces/common';
+import { AppThunk } from 'redux/store';
+import { fetchPubkeyStatus } from 'utils/apiUtils';
+import { isEvmTxCancelError, uuid } from 'utils/commonUtils';
+import { getTokenName } from 'utils/configUtils';
+import { formatNumber, formatScientificNumber } from 'utils/numberUtils';
+import snackbarUtil from 'utils/snackbarUtils';
+import { getShortAddress } from 'utils/stringUtils';
+import { createWeb3, getEthWeb3 } from 'utils/web3Utils';
+import { parseEther } from 'viem';
+import Web3 from 'web3';
 import {
   addNotice,
   setDepositLoadingParams,
@@ -44,8 +44,8 @@ import {
   updateDepositLoadingParams,
   updateValidatorStakeLoadingParams,
   updateWithdrawLoadingParams,
-} from "./AppSlice";
-import { setEthTxLoading, updateEthBalance } from "./EthSlice";
+} from './AppSlice';
+import { setEthTxLoading, updateEthBalance } from './EthSlice';
 
 export interface ValidatorState {
   validatorWithdrawalCredentials: string;
@@ -55,14 +55,14 @@ export interface ValidatorState {
 }
 
 const initialState: ValidatorState = {
-  validatorWithdrawalCredentials: "--",
+  validatorWithdrawalCredentials: '--',
   claimRewardsLoading: false,
   withdrawLoading: false,
   nodePubkeys: undefined,
 };
 
 export const validatorSlice = createSlice({
-  name: "eth",
+  name: 'eth',
   initialState,
   reducers: {
     setValidatorWithdrawalCredentials: (
@@ -172,7 +172,7 @@ export const updateNodePubkeys = (): AppThunk => async (dispatch, getState) => {
     // );
     // const beaconStatusResJson = await beaconStatusResponse.json();
     const beaconStatusResJson = await fetchPubkeyStatus(
-      pubkeysOfNode.join(",")
+      pubkeysOfNode.join(',')
     );
 
     const nodePubkeyInfos: NodePubkeyInfo[] = pubkeyInfos.map((item, index) => {
@@ -188,7 +188,7 @@ export const updateNodePubkeys = (): AppThunk => async (dispatch, getState) => {
       //   )
       //     ? "trusted"
       //     : "solo";
-      const type = item._nodeDepositAmount === 0 ? "solo" : "trusted";
+      const type = item._nodeDepositAmount === 0 ? 'solo' : 'trusted';
       // console.log({ type });
       return {
         pubkeyAddress: pubkeysOfNode[index],
@@ -206,7 +206,7 @@ export const updateNodePubkeys = (): AppThunk => async (dispatch, getState) => {
 
 export const handleEthValidatorDeposit =
   (
-    type: "solo" | "trusted",
+    type: 'solo' | 'trusted',
     validatorKeys: any[],
     callback?: (success: boolean, result: any) => void
   ): AppThunk =>
@@ -221,7 +221,7 @@ export const handleEthValidatorDeposit =
       dispatch(
         setDepositLoadingParams({
           modalVisible: true,
-          status: "loading",
+          status: 'loading',
         })
       );
 
@@ -234,12 +234,12 @@ export const handleEthValidatorDeposit =
         }
       );
 
-      if (type === "solo") {
+      if (type === 'solo') {
         const depositEnabled = await nodeDepositContract.methods
           .soloNodeDepositEnabled()
           .call();
         if (!depositEnabled) {
-          throw Error("Solo node deposits are currently disabled");
+          throw Error('Solo node deposits are currently disabled');
         }
       } else {
         const nodeInfoOf = await nodeDepositContract.methods
@@ -247,7 +247,7 @@ export const handleEthValidatorDeposit =
           .call();
 
         if (nodeInfoOf._removed) {
-          throw Error("Node already removed");
+          throw Error('Node already removed');
         }
 
         const trustNodePubkeyNumberLimit = await nodeDepositContract.methods
@@ -265,14 +265,14 @@ export const handleEthValidatorDeposit =
           Number(trustNodePubkeyNumberLimit) <
           pubkeysOfNode.length + validatorKeys.length
         ) {
-          throw Error("Pubkey amount over limit");
+          throw Error('Pubkey amount over limit');
         }
 
         const depositEnabled = await nodeDepositContract.methods
           .trustNodeDepositEnabled()
           .call();
         if (!depositEnabled) {
-          throw Error("Trusted node deposits are currently disabled");
+          throw Error('Trusted node deposits are currently disabled');
         }
       }
 
@@ -281,16 +281,18 @@ export const handleEthValidatorDeposit =
       const depositDataRoots: string[] = [];
 
       validatorKeys.forEach((validatorKey) => {
-        pubkeys.push("0x" + validatorKey.pubkey);
-        signatures.push("0x" + validatorKey.signature);
-        depositDataRoots.push("0x" + validatorKey.deposit_data_root);
+        pubkeys.push('0x' + validatorKey.pubkey);
+        signatures.push('0x' + validatorKey.signature);
+        depositDataRoots.push('0x' + validatorKey.deposit_data_root);
       });
 
       let sendParams = {};
-      if (type === "solo") {
+      let solodepositAmount;
+      if (type === 'solo') {
         const res = await nodeDepositContract.methods
           .soloNodeDepositAmount()
           .call();
+        solodepositAmount = res;
         sendParams = {
           value: formatScientificNumber(res * validatorKeys.length),
         };
@@ -330,24 +332,25 @@ export const handleEthValidatorDeposit =
       if (result?.status) {
         dispatch(
           updateDepositLoadingParams({
-            status: "success",
+            status: 'success',
           })
         );
         dispatch(
           addNotice({
             id: result.transactionHash,
-            type: "Validator Deposit",
+            type: 'Validator Deposit',
             txDetail: {
               transactionHash: result.transactionHash,
-              sender: address || "",
+              sender: address || '',
             },
             data: {
-              type: "trusted",
-              amount: "0",
+              type: type === 'solo' ? 'solo' : 'trusted',
+              amount:
+                type === 'solo' ? Web3.utils.fromWei(solodepositAmount) : '0',
               pubkeys,
             },
             scanUrl: getEtherScanTxUrl(result.transactionHash),
-            status: "Confirmed",
+            status: 'Confirmed',
           })
         );
       } else {
@@ -362,7 +365,7 @@ export const handleEthValidatorDeposit =
         // snackbarUtil.error((err as any).message);
         dispatch(
           updateDepositLoadingParams({
-            status: "error",
+            status: 'error',
             customMsg: (err as any).message,
           })
         );
@@ -373,7 +376,7 @@ export const handleEthValidatorDeposit =
 export const handleEthValidatorStake =
   (
     validatorKeys: any[],
-    type: "solo" | "trusted",
+    type: 'solo' | 'trusted',
     callback?: (success: boolean, result: any) => void
   ): AppThunk =>
   async (dispatch, getState) => {
@@ -395,18 +398,18 @@ export const handleEthValidatorStake =
       const depositDataRoots: string[] = [];
 
       validatorKeys.forEach((validatorKey) => {
-        pubkeys.push("0x" + validatorKey.pubkey);
-        signatures.push("0x" + validatorKey.signature);
-        depositDataRoots.push("0x" + validatorKey.deposit_data_root);
+        pubkeys.push('0x' + validatorKey.pubkey);
+        signatures.push('0x' + validatorKey.signature);
+        depositDataRoots.push('0x' + validatorKey.deposit_data_root);
       });
 
       dispatch(setEthTxLoading(true));
       dispatch(
         setValidatorStakeLoadingParams({
           modalVisible: true,
-          status: "loading",
+          status: 'loading',
           stakeAmount:
-            getValidatorTotalDepositAmount() * validatorKeys.length + "",
+            getValidatorTotalDepositAmount() * validatorKeys.length + '',
         })
       );
 
@@ -420,25 +423,25 @@ export const handleEthValidatorStake =
       if (result?.status) {
         dispatch(
           updateValidatorStakeLoadingParams({
-            status: "success",
+            status: 'success',
             scanUrl: getEtherScanTxUrl(result.transactionHash),
           })
         );
         dispatch(
           addNotice({
             id: result.transactionHash,
-            type: "Validator Stake",
+            type: 'Validator Stake',
             txDetail: {
               transactionHash: result.transactionHash,
-              sender: address || "",
+              sender: address || '',
             },
             data: {
               type,
-              amount: getValidatorTotalDepositAmount() * pubkeys.length + "",
+              amount: getValidatorTotalDepositAmount() * pubkeys.length + '',
               pubkeys,
             },
             scanUrl: getEtherScanTxUrl(result.transactionHash),
-            status: "Confirmed",
+            status: 'Confirmed',
           })
         );
       } else {
@@ -452,7 +455,7 @@ export const handleEthValidatorStake =
       } else {
         dispatch(
           updateValidatorStakeLoadingParams({
-            status: "error",
+            status: 'error',
             customMsg: (err as any).message,
           })
         );
@@ -475,7 +478,7 @@ export const claimValidatorRewards =
     try {
       const metaMaskAccount = getState().wallet.metaMaskAccount;
       if (!metaMaskAccount) {
-        throw new Error("Please connect MetaMask");
+        throw new Error('Please connect MetaMask');
       }
 
       const web3 = createWeb3();
@@ -490,8 +493,8 @@ export const claimValidatorRewards =
       dispatch(setClaimRewardsLoading(true));
 
       const formatProofs = ipfsRewardItem.proof
-        .split(":")
-        .map((item) => "0x" + item);
+        .split(':')
+        .map((item) => '0x' + item);
 
       const claimParams = [
         ipfsRewardItem.index,
@@ -511,13 +514,13 @@ export const claimValidatorRewards =
         const txHash = result.transactionHash;
         dispatch(
           addNotice({
-            id: noticeUuid || "",
-            type: "Claim Rewards",
+            id: noticeUuid || '',
+            type: 'Claim Rewards',
             data: {
               rewardAmount: formatNumber(myClaimableReward),
               rewardTokenName: getTokenName(),
             },
-            status: "Confirmed",
+            status: 'Confirmed',
             scanUrl: getEtherScanTxUrl(txHash),
           })
         );
@@ -535,7 +538,7 @@ export const claimValidatorRewards =
         // };
         // addEthValidatorWithdrawRecords(withdrawInfo);
 
-        snackbarUtil.success("Claim rewards success");
+        snackbarUtil.success('Claim rewards success');
         callback && callback(true, {});
         dispatch(setUpdateFlag(dayjs().unix()));
       } else {
@@ -572,7 +575,7 @@ export const withdrawValidatorEth =
     try {
       const metaMaskAccount = getState().wallet.metaMaskAccount;
       if (!metaMaskAccount) {
-        throw new Error("Please connect MetaMask");
+        throw new Error('Please connect MetaMask');
       }
 
       const web3 = createWeb3();
@@ -588,7 +591,7 @@ export const withdrawValidatorEth =
       dispatch(
         setWithdrawLoadingParams({
           modalVisible: true,
-          status: "loading",
+          status: 'loading',
           tokenAmount: withdrawAmount,
           customMsg: `Withdraw processing, please wait for a moment`,
         })
@@ -603,8 +606,8 @@ export const withdrawValidatorEth =
       );
 
       const formatProofs = ipfsRewardItem.proof
-        .split(":")
-        .map((item) => "0x" + item);
+        .split(':')
+        .map((item) => '0x' + item);
 
       const claimParams = [
         ipfsRewardItem.index,
@@ -624,7 +627,7 @@ export const withdrawValidatorEth =
         dispatch(
           updateWithdrawLoadingParams(
             {
-              status: "success",
+              status: 'success',
               txHash: txHash,
               scanUrl: getEtherScanTxUrl(txHash),
               customMsg: undefined,
@@ -632,12 +635,12 @@ export const withdrawValidatorEth =
             (newParams) => {
               dispatch(
                 addNotice({
-                  id: noticeUuid || "",
-                  type: "Withdraw",
+                  id: noticeUuid || '',
+                  type: 'Withdraw',
                   data: {
                     tokenAmount: withdrawAmount,
                   },
-                  status: "Confirmed",
+                  status: 'Confirmed',
                   scanUrl: getEtherScanTxUrl(txHash),
                 })
               );
@@ -647,7 +650,7 @@ export const withdrawValidatorEth =
 
         const withdrawInfo: TokenWithdrawInfo = {
           depositAmount: Web3.utils.toWei(
-            Math.max(0, Number(withdrawAmount) - Number(myClaimableReward)) + ""
+            Math.max(0, Number(withdrawAmount) - Number(myClaimableReward)) + ''
           ),
           rewardAmount: Web3.utils.toWei(myClaimableReward),
           totalAmount: Web3.utils.toWei(withdrawAmount),
@@ -674,8 +677,8 @@ export const withdrawValidatorEth =
         }
         dispatch(
           updateWithdrawLoadingParams({
-            status: "error",
-            customMsg: displayMsg || "Unstake failed",
+            status: 'error',
+            customMsg: displayMsg || 'Unstake failed',
           })
         );
       }
