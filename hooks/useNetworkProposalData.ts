@@ -9,6 +9,7 @@ import {
 import { useCallback, useEffect, useState } from 'react';
 
 import { getEthWeb3 } from 'utils/web3Utils';
+import { useWalletAccount } from './useWalletAccount';
 
 export function useNetworkProposalData() {
   const [threshold, setThreshold] = useState<string>();
@@ -18,11 +19,14 @@ export function useNetworkProposalData() {
   const [treasuryBalance, setTreasuryBalance] = useState<number>(0);
 
   const web3 = getEthWeb3();
+  const { metaMaskAccount } = useWalletAccount();
 
   const networkProposalContract = new web3.eth.Contract(
     getNetworkProposalContractAbi(),
     getNetworkProposalContract(),
-    {}
+    {
+      from: metaMaskAccount,
+    }
   );
 
   const updateNetworkProposalData = useCallback(async () => {
@@ -72,7 +76,7 @@ export function useNetworkProposalData() {
     try {
       await networkProposalContract.methods
         .addVoter(value)
-        .send()
+        .send({ from: metaMaskAccount })
         .catch((err: any) => {
           console.log({ err });
         });
@@ -87,7 +91,7 @@ export function useNetworkProposalData() {
     try {
       await networkProposalContract.methods
         .removeVoter(value)
-        .send()
+        .send({ from: metaMaskAccount })
         .catch((err: any) => {
           console.log({ err });
         });

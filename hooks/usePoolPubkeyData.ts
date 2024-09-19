@@ -4,6 +4,7 @@ import { ChainPubkeyStatus, NodePubkeyInfo } from 'interfaces/common';
 import { useCallback, useEffect, useState } from 'react';
 import { fetchPubkeyStatus } from 'utils/apiUtils';
 import { getEthWeb3 } from 'utils/web3Utils';
+import { useWalletAccount } from './useWalletAccount';
 
 export function usePoolPubkeyData() {
   const [matchedValidators, setMatchedValidators] = useState<string>();
@@ -12,11 +13,14 @@ export function usePoolPubkeyData() {
     useState<string>();
 
   const web3 = getEthWeb3();
+  const { metaMaskAccount } = useWalletAccount();
 
   const nodeDepositContract = new web3.eth.Contract(
     getNodeDepositContractAbi(),
     getNodeDepositContract(),
-    {}
+    {
+      from: metaMaskAccount,
+    }
   );
 
   let isSettingNodes = false;
@@ -178,7 +182,7 @@ export function usePoolPubkeyData() {
     try {
       await nodeDepositContract.methods
         .addTrustNode(value)
-        .send()
+        .send({ from: metaMaskAccount })
         .catch((err: any) => {
           console.log({ err });
         });
@@ -193,7 +197,7 @@ export function usePoolPubkeyData() {
     try {
       await nodeDepositContract.methods
         .removeTrustNode(value)
-        .send()
+        .send({ from: metaMaskAccount })
         .catch((err: any) => {
           console.log({ err });
         });
