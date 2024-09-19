@@ -99,6 +99,6 @@
   "tokenPriceUrl": "https://api.coingecko.com/api/v3/simple/price?ids=pulsechain&vs_currencies=usd",
   "docLinks": {
     "ejectionMechanism": "https://commonwealth.im/stafi/discussion/10127-withdrawal-design-for-reth-solution-for-upcoming-shanghai-upgrade",
-    "delegationMechanism": "https://lsaas-docs.stafi.io/docs/developethlsd/validator.html"
+    "delegationMechanism": "https://vouch.run/docs/validator_guide/getting_started.html"
   }
 }

@@ -108,7 +108,7 @@ export const MyDataPubkeys = () => {
           width='1.43rem'
           onClick={() => {
             openLink(
-              'https://lsaas-docs.stafi.io/docs/developethlsd/validator.html'
+              'https://vouch.run/docs/validator_guide/getting_started.html'
             );
           }}
         >
