@@ -1,7 +1,6 @@
 import { getNodeDepositContract } from 'config/contract';
 import { getNodeDepositContractAbi } from 'config/contractAbi';
 import { ChainPubkeyStatus, NodePubkeyInfo } from 'interfaces/common';
-import { set } from 'lodash';
 import { useCallback, useEffect, useState } from 'react';
 import { fetchPubkeyStatus } from 'utils/apiUtils';
 import { getEthWeb3 } from 'utils/web3Utils';
@@ -127,7 +126,6 @@ export function usePoolPubkeyData() {
               .catch((err: any) => {
                 console.log({ err });
               });
-
             return pubkeyInfo;
           })();
         }
@@ -176,6 +174,36 @@ export function usePoolPubkeyData() {
     }
   }, []);
 
+  const addTrustNode = async (value: string) => {
+    try {
+      await nodeDepositContract.methods
+        .addTrustNode(value)
+        .send()
+        .catch((err: any) => {
+          console.log({ err });
+        });
+      return true;
+    } catch (err: any) {
+      console.log({ err });
+      return false;
+    }
+  };
+
+  const removeTrustNode = async (value: string) => {
+    try {
+      await nodeDepositContract.methods
+        .removeTrustNode(value)
+        .send()
+        .catch((err: any) => {
+          console.log({ err });
+        });
+      return true;
+    } catch (err: any) {
+      console.log({ err });
+      return false;
+    }
+  };
+
   useEffect(() => {
     updateMatchedValidators();
   }, [updateMatchedValidators]);
@@ -184,5 +212,7 @@ export function usePoolPubkeyData() {
     matchedValidators,
     trustNodePubkeyNumberLimit,
     nodes,
+    addTrustNode,
+    removeTrustNode,
   };
 }
