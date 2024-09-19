@@ -3,6 +3,7 @@ import classNames from 'classnames';
 import { useAppSlice } from 'hooks/selector';
 import { robotoSemiBold } from 'config/font';
 import { usePoolPubkeyData } from 'hooks/usePoolPubkeyData';
+import { CustomButton } from 'components/common/CustomButton';
 
 export default function Validater() {
   const { darkMode } = useAppSlice();
@@ -33,6 +34,34 @@ export default function Validater() {
               {/* <div className={robotoSemiBold.className}>57</div> */}
             </div>
           ))}
+          <div className='text-[.14rem] text-color-text1 mt-5 text-center mb-[10px] max-w-[422px] mx-auto'>
+          <input
+            type='text'
+            placeholder='Enter Trusted Node Address'
+
+            className={
+              darkMode
+                ? 'w-full rounded-[35px] bg-[#1B1B1F] text-center h-[42px] border-[0.01rem] border-[#6C86AD80]'
+                : 'w-full rounded-[35px] bg-[#fff] text-center h-[42px] border-[0.01rem] border-[#6C86AD80]'
+            }
+          />
+          <div className='mt-[10px] max-w-[100%] mx-auto flex items-center gap-1 w-[100%] justify-center'>
+            <CustomButton
+              type='small'
+              height='.42rem'
+              width='130px'
+            >
+              Add
+            </CustomButton>
+            <CustomButton
+              type='small'
+              height='.42rem'
+              width='130px'
+            >
+              Remove
+            </CustomButton>
+          </div>
+        </div>
       </div>
     </div>
   );

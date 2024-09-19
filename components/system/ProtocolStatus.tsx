@@ -130,6 +130,20 @@ export default function ProtocolStatus() {
             {trustNodePubkeyNumberLimit}
           </div>
         </div>
+        <div
+          className={
+            darkMode
+              ? 'flex items-center justify-between px-[20px] py-[8px] border-b-[0.01rem] border-[#303745] text-[.14rem] text-color-text1'
+              : 'flex items-center justify-between px-[20px] py-[5px] border-b-[0.01rem] border-[#ffffff] text-[.14rem] text-color-text1'
+          }
+        >
+          <div className='text-color-text2'>
+          Withdrawal Cycle (hours)
+          </div>
+          <div className={robotoSemiBold.className}>
+            8
+          </div>
+        </div>
       </div>
     </div>
   );
