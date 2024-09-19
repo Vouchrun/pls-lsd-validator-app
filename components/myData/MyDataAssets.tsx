@@ -140,7 +140,7 @@ export const MyDataAssets = () => {
             type='stroke'
             onClick={() => {
               openLink(
-                'https://lsaas-docs.stafi.io/docs/developethlsd/validator.html'
+                'https://vouch.run/docs/validator_guide/getting_started.html'
               );
             }}
           >

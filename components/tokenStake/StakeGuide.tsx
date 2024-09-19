@@ -19,7 +19,7 @@ export const StakeGuide = () => {
     <div className=''>
       <a
         className='text-[.24rem] text-color-text1 inline-flex items-center'
-        href='https://lsaas-docs.stafi.io/docs/developethlsd/validator.html'
+        href='https://vouch.run/docs/validator_guide/getting_started.html'
         target='_blank'
         rel='noreferrer'
       >
