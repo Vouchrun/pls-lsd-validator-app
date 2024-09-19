@@ -19,6 +19,7 @@ export default function ProtocolStatus() {
     nodeCommissionValue,
     platformCommissionRate,
     stackCommissionRate,
+    withdrawCycleSeconds,
   } = useUnstakingPoolData();
   const { threshold, voters } = useNetworkProposalData();
 
@@ -137,11 +138,9 @@ export default function ProtocolStatus() {
               : 'flex items-center justify-between px-[20px] py-[5px] border-b-[0.01rem] border-[#ffffff] text-[.14rem] text-color-text1'
           }
         >
-          <div className='text-color-text2'>
-          Withdrawal Cycle (hours)
-          </div>
+          <div className='text-color-text2'>Withdrawal Cycle (hours)</div>
           <div className={robotoSemiBold.className}>
-            8
+            {withdrawCycleSeconds && +withdrawCycleSeconds / 3600}
           </div>
         </div>
       </div>
