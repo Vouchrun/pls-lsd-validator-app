@@ -5,29 +5,32 @@ import { usePoolPubkeyData } from 'hooks/usePoolPubkeyData';
 import { CustomButton } from 'components/common/CustomButton';
 import { useWalletAccount } from 'hooks/useWalletAccount';
 import { useNetworkProposalData } from 'hooks/useNetworkProposalData';
+import { addTrustNode, removeTrustNode } from 'redux/reducers/ValidatorSlice';
+import { useAppDispatch } from 'hooks/common';
 
 export default function Validater() {
+  const dispatch = useAppDispatch();
   const { darkMode } = useAppSlice();
-  const { nodes, addTrustNode, removeTrustNode } = usePoolPubkeyData();
+  const { nodes } = usePoolPubkeyData();
   const { metaMaskAccount } = useWalletAccount();
   const { admin } = useNetworkProposalData();
   const [voterAddress, setVoterAddress] = React.useState('');
 
-  const addNodeAddress = async () => {
-    try {
-      await addTrustNode(voterAddress);
-    } catch (error) {
-      console.log('error', error);
-    }
-  };
+  // const addNodeAddress = async () => {
+  //   try {
+  //     await addTrustNode(voterAddress);
+  //   } catch (error) {
+  //     console.log('error', error);
+  //   }
+  // };
 
-  const removeNodeAddress = async () => {
-    try {
-      await removeTrustNode(voterAddress);
-    } catch (error) {
-      console.log('error', error);
-    }
-  };
+  // const removeNodeAddress = async () => {
+  //   try {
+  //     await removeTrustNode(voterAddress);
+  //   } catch (error) {
+  //     console.log('error', error);
+  //   }
+  // };
 
   return (
     <div className='bg-color-bg2 border-[0.01rem] border-color-border1 rounded-[.3rem]'>
@@ -73,7 +76,9 @@ export default function Validater() {
               height='.42rem'
               width='130px'
               disabled={admin !== metaMaskAccount}
-              onClick={addNodeAddress}
+              onClick={() => {
+                dispatch(addTrustNode(voterAddress));
+              }}
             >
               Add
             </CustomButton>
@@ -82,7 +87,9 @@ export default function Validater() {
               height='.42rem'
               width='130px'
               disabled={admin !== metaMaskAccount}
-              onClick={removeNodeAddress}
+              onClick={() => {
+                dispatch(removeTrustNode(voterAddress));
+              }}
             >
               Remove
             </CustomButton>

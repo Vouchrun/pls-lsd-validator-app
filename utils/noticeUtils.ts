@@ -3,8 +3,8 @@ import {
   saveStorage,
   STORAGE_KEY_NOTICE,
   STORAGE_KEY_UNREAD_NOTICE,
-} from "./storageUtils";
-import dayjs from "dayjs";
+} from './storageUtils';
+import dayjs from 'dayjs';
 
 export interface LocalNotice {
   id: string;
@@ -17,12 +17,13 @@ export interface LocalNotice {
 }
 
 export type NoticeType =
-  | "Validator Deposit"
-  | "Validator Stake"
-  | "Withdraw"
-  | "Claim Rewards";
+  | 'Validator Deposit'
+  | 'Validator Stake'
+  | 'Withdraw'
+  | 'Add Trust Node'
+  | 'Claim Rewards';
 
-export type NoticeStatus = "Pending" | "Error" | "Cancelled" | "Confirmed";
+export type NoticeStatus = 'Pending' | 'Error' | 'Cancelled' | 'Confirmed';
 
 export interface NoticeTxDetail {
   sender: string;
@@ -35,7 +36,7 @@ export type NoticeDataType =
   | NoticeWithdrawData;
 
 export interface NoticeValidatorDepositData {
-  type: "solo" | "trusted";
+  type: 'solo' | 'trusted';
   amount: string;
   pubkeys: string[];
 }
@@ -78,7 +79,7 @@ export function addNoticeInternal(newNotice: LocalNotice) {
     }
 
     saveStorage(STORAGE_KEY_NOTICE, JSON.stringify(noticeList));
-    saveStorage(STORAGE_KEY_UNREAD_NOTICE, "1");
+    saveStorage(STORAGE_KEY_UNREAD_NOTICE, '1');
   }
 }
 
@@ -102,7 +103,7 @@ export function updateNoticeInternal(
     noticeList.unshift(matched);
 
     saveStorage(STORAGE_KEY_NOTICE, JSON.stringify(noticeList));
-    saveStorage(STORAGE_KEY_UNREAD_NOTICE, "1");
+    saveStorage(STORAGE_KEY_UNREAD_NOTICE, '1');
   }
 }
 

@@ -3,7 +3,7 @@ import { getNodeDepositContractAbi } from 'config/contractAbi';
 import { ChainPubkeyStatus, NodePubkeyInfo } from 'interfaces/common';
 import { useCallback, useEffect, useState } from 'react';
 import { fetchPubkeyStatus } from 'utils/apiUtils';
-import { getEthWeb3 } from 'utils/web3Utils';
+import { createWeb3, getEthWeb3 } from 'utils/web3Utils';
 import { useWalletAccount } from './useWalletAccount';
 
 export function usePoolPubkeyData() {
@@ -13,16 +13,12 @@ export function usePoolPubkeyData() {
     useState<string>();
 
   const web3 = getEthWeb3();
-  const { metaMaskAccount } = useWalletAccount();
 
   const nodeDepositContract = new web3.eth.Contract(
     getNodeDepositContractAbi(),
     getNodeDepositContract(),
-    {
-      from: metaMaskAccount,
-    }
+    {}
   );
-
   let isSettingNodes = false;
 
   async function setNodesWithCheck(nodesValue: any) {
@@ -178,35 +174,35 @@ export function usePoolPubkeyData() {
     }
   }, []);
 
-  const addTrustNode = async (value: string) => {
-    try {
-      await nodeDepositContract.methods
-        .addTrustNode(value)
-        .send({ from: metaMaskAccount })
-        .catch((err: any) => {
-          console.log({ err });
-        });
-      return true;
-    } catch (err: any) {
-      console.log({ err });
-      return false;
-    }
-  };
+  // const addTrustNode = async (value: string) => {
+  //   try {
+  //     await nodeDepositContract.methods
+  //       .addTrustNode(value)
+  //       .send({ from: metaMaskAccount })
+  //       .catch((err: any) => {
+  //         console.log({ err });
+  //       });
+  //     return true;
+  //   } catch (err: any) {
+  //     console.log({ err });
+  //     return false;
+  //   }
+  // };
 
-  const removeTrustNode = async (value: string) => {
-    try {
-      await nodeDepositContract.methods
-        .removeTrustNode(value)
-        .send({ from: metaMaskAccount })
-        .catch((err: any) => {
-          console.log({ err });
-        });
-      return true;
-    } catch (err: any) {
-      console.log({ err });
-      return false;
-    }
-  };
+  // const removeTrustNode = async (value: string) => {
+  //   try {
+  //     await nodeDepositContract.methods
+  //       .removeTrustNode(value)
+  //       .send({ from: metaMaskAccount })
+  //       .catch((err: any) => {
+  //         console.log({ err });
+  //       });
+  //     return true;
+  //   } catch (err: any) {
+  //     console.log({ err });
+  //     return false;
+  //   }
+  // };
 
   useEffect(() => {
     updateMatchedValidators();
@@ -216,7 +212,7 @@ export function usePoolPubkeyData() {
     matchedValidators,
     trustNodePubkeyNumberLimit,
     nodes,
-    addTrustNode,
-    removeTrustNode,
+    // addTrustNode,
+    // removeTrustNode,
   };
 }

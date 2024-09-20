@@ -83,6 +83,12 @@ export const validatorSlice = createSlice({
     ) => {
       state.withdrawLoading = action.payload;
     },
+    setAddTrusNodeLoading: (
+      state: ValidatorState,
+      action: PayloadAction<boolean>
+    ) => {
+      state.withdrawLoading = action.payload;
+    },
     setNodePubkeys: (
       state: ValidatorState,
       action: PayloadAction<NodePubkeyInfo[]>
@@ -96,6 +102,7 @@ export const {
   setValidatorWithdrawalCredentials,
   setClaimRewardsLoading,
   setWithdrawLoading,
+  setAddTrusNodeLoading,
   setNodePubkeys,
 } = validatorSlice.actions;
 
@@ -679,6 +686,122 @@ export const withdrawValidatorEth =
           updateWithdrawLoadingParams({
             status: 'error',
             customMsg: displayMsg || 'Unstake failed',
+          })
+        );
+      }
+    } finally {
+      dispatch(setWithdrawLoading(false));
+      dispatch(updateEthBalance());
+    }
+  };
+
+export const addTrustNode =
+  (
+    trustNodeAddress: string,
+    callback?: (success: boolean, result: any) => void
+  ): AppThunk =>
+  async (dispatch, getState) => {
+    try {
+      const metaMaskAccount = getState().wallet.metaMaskAccount;
+      if (!metaMaskAccount) {
+        throw new Error('Please connect MetaMask');
+      }
+
+      const web3 = createWeb3();
+      const contract = new web3.eth.Contract(
+        getNodeDepositContractAbi(),
+        getNodeDepositContract(),
+        {
+          from: metaMaskAccount,
+        }
+      );
+
+      dispatch(setAddTrusNodeLoading(true));
+
+      const result = await contract.methods
+        .addTrustNode(trustNodeAddress)
+        .send();
+
+      callback && callback(result.status, result);
+      dispatch(updateEthBalance());
+      if (result && result.status) {
+        const txHash = result.transactionHash;
+        console.log(txHash);
+      } else {
+        throw new Error(TRANSACTION_FAILED_MESSAGE);
+      }
+    } catch (err: any) {
+      {
+        let displayMsg = err.message || TRANSACTION_FAILED_MESSAGE;
+        if (err.code === -32603) {
+          displayMsg = CONNECTION_ERROR_MESSAGE;
+        } else if (err.code === 4001) {
+          snackbarUtil.error(CANCELLED_MESSAGE);
+          dispatch(setWithdrawLoadingParams(undefined));
+          return;
+        }
+        dispatch(
+          updateWithdrawLoadingParams({
+            status: 'error',
+            customMsg: displayMsg || 'Add Trust Node Address failed',
+          })
+        );
+      }
+    } finally {
+      dispatch(setWithdrawLoading(false));
+      dispatch(updateEthBalance());
+    }
+  };
+
+export const removeTrustNode =
+  (
+    trustNodeAddress: string,
+    callback?: (success: boolean, result: any) => void
+  ): AppThunk =>
+  async (dispatch, getState) => {
+    try {
+      const metaMaskAccount = getState().wallet.metaMaskAccount;
+      if (!metaMaskAccount) {
+        throw new Error('Please connect MetaMask');
+      }
+
+      const web3 = createWeb3();
+      const contract = new web3.eth.Contract(
+        getNodeDepositContractAbi(),
+        getNodeDepositContract(),
+        {
+          from: metaMaskAccount,
+        }
+      );
+
+      dispatch(setAddTrusNodeLoading(true));
+
+      const result = await contract.methods
+        .removeTrustNode(trustNodeAddress)
+        .send();
+
+      callback && callback(result.status, result);
+      dispatch(updateEthBalance());
+      if (result && result.status) {
+        const txHash = result.transactionHash;
+        console.log(txHash);
+      } else {
+        throw new Error(TRANSACTION_FAILED_MESSAGE);
+      }
+    } catch (err: any) {
+      {
+        let displayMsg = err.message || TRANSACTION_FAILED_MESSAGE;
+        if (err.code === -32603) {
+          displayMsg = CONNECTION_ERROR_MESSAGE;
+        } else if (err.code === 4001) {
+          dispatch(setWithdrawLoadingParams(undefined));
+          snackbarUtil.error(CANCELLED_MESSAGE);
+          return;
+        }
+        dispatch(
+          updateWithdrawLoadingParams({
+            status: 'error',
+            customMsg: displayMsg || 'Remove Trust Node Address failed',
           })
         );
       }
