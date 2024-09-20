@@ -111,8 +111,8 @@ export default function ProtocolRevenue() {
           value={distributionAddress}
           className={
             darkMode
-              ? 'w-full rounded-[35px] bg-[#1B1B1F] text-center h-[42px] border-[0.01rem] border-[#6C86AD80]'
-              : 'w-full rounded-[35px] bg-[#fff] text-center h-[42px] border-[0.01rem] border-[#6C86AD80]'
+              ? 'w-full rounded-[35px] bg-[#1B1B1F] text-center h-[42px] border-[0.01rem] border-[#6C86AD80] text-white'
+              : 'w-full rounded-[35px] bg-[#fff] text-center h-[42px] border-[0.01rem] border-[#6C86AD80] text-black'
           }
         />
         <div className='mt-[10px] max-w-[250px] mx-auto'>
