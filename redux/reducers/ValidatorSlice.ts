@@ -1,9 +1,11 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import {
+  getNetworkProposalContract,
   getNetworkWithdrawContract,
   getNodeDepositContract,
 } from 'config/contract';
 import {
+  getNetworkProposalContractAbi,
   getNetworkWithdrawContractAbi,
   getNodeDepositContractAbi,
 } from 'config/contractAbi';
@@ -684,6 +686,243 @@ export const withdrawValidatorEth =
       }
     } finally {
       dispatch(setWithdrawLoading(false));
+      dispatch(updateEthBalance());
+    }
+  };
+
+export const addTrustNode =
+  (
+    trustNodeAddress: string,
+    callback?: (success: boolean, result: any) => void
+  ): AppThunk =>
+  async (dispatch, getState) => {
+    try {
+      const metaMaskAccount = getState().wallet.metaMaskAccount;
+      if (!metaMaskAccount) {
+        throw new Error('Please connect MetaMask');
+      }
+
+      const web3 = createWeb3();
+      const contract = new web3.eth.Contract(
+        getNodeDepositContractAbi(),
+        getNodeDepositContract(),
+        {
+          from: metaMaskAccount,
+        }
+      );
+
+      const result = await contract.methods
+        .addTrustNode(trustNodeAddress)
+        .send();
+
+      callback && callback(result.status, result);
+      dispatch(updateEthBalance());
+      if (result && result.status) {
+        const txHash = result.transactionHash;
+        console.log(txHash);
+      } else {
+        throw new Error(TRANSACTION_FAILED_MESSAGE);
+      }
+    } catch (err: any) {
+      {
+        let displayMsg = err.message || TRANSACTION_FAILED_MESSAGE;
+        if (err.code === -32603) {
+          displayMsg = CONNECTION_ERROR_MESSAGE;
+        } else if (err.code === 4001) {
+          snackbarUtil.error(CANCELLED_MESSAGE);
+
+          return;
+        }
+      }
+    } finally {
+      dispatch(updateEthBalance());
+    }
+  };
+
+export const removeTrustNode =
+  (
+    trustNodeAddress: string,
+    callback?: (success: boolean, result: any) => void
+  ): AppThunk =>
+  async (dispatch, getState) => {
+    try {
+      const metaMaskAccount = getState().wallet.metaMaskAccount;
+      if (!metaMaskAccount) {
+        throw new Error('Please connect MetaMask');
+      }
+
+      const web3 = createWeb3();
+      const contract = new web3.eth.Contract(
+        getNodeDepositContractAbi(),
+        getNodeDepositContract(),
+        {
+          from: metaMaskAccount,
+        }
+      );
+
+      const result = await contract.methods
+        .removeTrustNode(trustNodeAddress)
+        .send();
+
+      callback && callback(result.status, result);
+      dispatch(updateEthBalance());
+      if (result && result.status) {
+        const txHash = result.transactionHash;
+        console.log(txHash);
+      } else {
+        throw new Error(TRANSACTION_FAILED_MESSAGE);
+      }
+    } catch (err: any) {
+      {
+        let displayMsg = err.message || TRANSACTION_FAILED_MESSAGE;
+        if (err.code === -32603) {
+          displayMsg = CONNECTION_ERROR_MESSAGE;
+        } else if (err.code === 4001) {
+          snackbarUtil.error(CANCELLED_MESSAGE);
+          return;
+        }
+      }
+    } finally {
+      dispatch(updateEthBalance());
+    }
+  };
+
+export const removeAddress =
+  (
+    voterAddress: string,
+    callback?: (success: boolean, result: any) => void
+  ): AppThunk =>
+  async (dispatch, getState) => {
+    try {
+      const metaMaskAccount = getState().wallet.metaMaskAccount;
+      if (!metaMaskAccount) {
+        throw new Error('Please connect MetaMask');
+      }
+
+      const web3 = createWeb3();
+      const contract = new web3.eth.Contract(
+        getNetworkProposalContractAbi(),
+        getNetworkProposalContract(),
+        {
+          from: metaMaskAccount,
+        }
+      );
+
+      const result = await contract.methods.removeAddress(voterAddress).send();
+
+      callback && callback(result.status, result);
+      dispatch(updateEthBalance());
+      if (result && result.status) {
+        const txHash = result.transactionHash;
+        console.log(txHash);
+      } else {
+        throw new Error(TRANSACTION_FAILED_MESSAGE);
+      }
+    } catch (err: any) {
+      {
+        let displayMsg = err.message || TRANSACTION_FAILED_MESSAGE;
+        if (err.code === -32603) {
+          displayMsg = CONNECTION_ERROR_MESSAGE;
+        } else if (err.code === 4001) {
+          snackbarUtil.error(CANCELLED_MESSAGE);
+          return;
+        }
+      }
+    } finally {
+      dispatch(updateEthBalance());
+    }
+  };
+
+export const addAddress =
+  (
+    voterAddress: string,
+    callback?: (success: boolean, result: any) => void
+  ): AppThunk =>
+  async (dispatch, getState) => {
+    try {
+      const metaMaskAccount = getState().wallet.metaMaskAccount;
+      if (!metaMaskAccount) {
+        throw new Error('Please connect MetaMask');
+      }
+
+      const web3 = createWeb3();
+      const contract = new web3.eth.Contract(
+        getNetworkProposalContractAbi(),
+        getNetworkProposalContract(),
+        {
+          from: metaMaskAccount,
+        }
+      );
+
+      const result = await contract.methods.addAddress(voterAddress).send();
+
+      callback && callback(result.status, result);
+      dispatch(updateEthBalance());
+      if (result && result.status) {
+        const txHash = result.transactionHash;
+        console.log(txHash);
+      } else {
+        throw new Error(TRANSACTION_FAILED_MESSAGE);
+      }
+    } catch (err: any) {
+      {
+        let displayMsg = err.message || TRANSACTION_FAILED_MESSAGE;
+        if (err.code === -32603) {
+          displayMsg = CONNECTION_ERROR_MESSAGE;
+        } else if (err.code === 4001) {
+          snackbarUtil.error(CANCELLED_MESSAGE);
+          return;
+        }
+      }
+    } finally {
+      dispatch(updateEthBalance());
+    }
+  };
+
+export const withDrawAdmin =
+  (
+    distributionAddress: string,
+    callback?: (success: boolean, result: any) => void
+  ): AppThunk =>
+  async (dispatch, getState) => {
+    try {
+      const metaMaskAccount = getState().wallet.metaMaskAccount;
+      if (!metaMaskAccount) {
+        throw new Error('Please connect MetaMask');
+      }
+
+      const web3 = createWeb3();
+      const contract = new web3.eth.Contract(
+        getNetworkWithdrawContractAbi(),
+        getNetworkWithdrawContract(),
+        {
+          from: metaMaskAccount,
+        }
+      );
+
+      const result = await contract.methods
+        .platformClaim(distributionAddress)
+        .send();
+
+      callback && callback(result.status, result);
+      dispatch(updateEthBalance());
+      if (result && result.status) {
+        const txHash = result.transactionHash;
+        console.log(txHash);
+      } else {
+        throw new Error(TRANSACTION_FAILED_MESSAGE);
+      }
+    } catch (err: any) {
+      {
+        let displayMsg = err.message || TRANSACTION_FAILED_MESSAGE;
+        if (err.code === -32603) {
+          displayMsg = CONNECTION_ERROR_MESSAGE;
+        } else if (err.code === 4001) {
+          snackbarUtil.error(CANCELLED_MESSAGE);
+          return;
+        }
+      }
+    } finally {
       dispatch(updateEthBalance());
     }
   };

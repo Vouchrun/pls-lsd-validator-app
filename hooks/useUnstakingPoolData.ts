@@ -27,6 +27,7 @@ export function useUnstakingPoolData() {
     useState<number>(0);
   const [totalPlatformCommission, setTotalPlatformCommission] =
     useState<number>(0);
+  const [withdrawCycleSeconds, setWithdrawCycleSeconds] = useState<string>();
 
   const web3 = getEthWeb3();
 
@@ -151,25 +152,18 @@ export function useUnstakingPoolData() {
       setWaitingStakers(
         Number(nextWithdrawIndex) - Number(maxClaimableWithdrawIndex) + ''
       );
+      const withdrawCycleSecondsValue = await networkWithdrawContract.methods
+        .withdrawCycleSeconds()
+        .call()
+        .catch((err: any) => {
+          console.log({ err });
+        });
+
+      setWithdrawCycleSeconds(withdrawCycleSecondsValue);
     } catch (err: any) {
       console.log({ err });
     }
   }, []);
-
-  const withDraw = async (value: string) => {
-    try {
-      await networkWithdrawContract.methods
-        .platformClaim(value)
-        .send()
-        .catch((err: any) => {
-          console.log({ err });
-        });
-      return true;
-    } catch (err: any) {
-      console.log({ err });
-      return false;
-    }
-  };
 
   useEffect(() => {
     udpatePoolData();
@@ -186,6 +180,6 @@ export function useUnstakingPoolData() {
     stackCommissionRate,
     totalPlatformClaimedAmount,
     totalPlatformCommission,
-    withDraw,
+    withdrawCycleSeconds,
   };
 }

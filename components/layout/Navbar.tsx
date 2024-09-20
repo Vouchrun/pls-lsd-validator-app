@@ -90,11 +90,11 @@ export const Navbar = () => {
     setPageWidth(clientW);
   };
 
-  useEffect(() => {
-    if (admin === metaMaskAccount || metaMaskAccount?.indexOf(voters)) {
-      router.push('/');
-    }
-  }, [voters, admin]);
+  // useEffect(() => {
+  //   if (admin === metaMaskAccount || metaMaskAccount?.indexOf(voters)) {
+  //     router.push('/');
+  //   }
+  // }, [voters, admin]);
 
   useEffect(() => {
     window.addEventListener('resize', resizeListener);
