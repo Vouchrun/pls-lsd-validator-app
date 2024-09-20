@@ -165,21 +165,6 @@ export function useUnstakingPoolData() {
     }
   }, []);
 
-  const withDraw = async (value: string) => {
-    try {
-      await networkWithdrawContract.methods
-        .platformClaim(value)
-        .send()
-        .catch((err: any) => {
-          console.log({ err });
-        });
-      return true;
-    } catch (err: any) {
-      console.log({ err });
-      return false;
-    }
-  };
-
   useEffect(() => {
     udpatePoolData();
   }, [udpatePoolData]);
@@ -196,6 +181,5 @@ export function useUnstakingPoolData() {
     totalPlatformClaimedAmount,
     totalPlatformCommission,
     withdrawCycleSeconds,
-    withDraw,
   };
 }

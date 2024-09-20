@@ -16,22 +16,6 @@ export default function Validater() {
   const { admin } = useNetworkProposalData();
   const [voterAddress, setVoterAddress] = React.useState('');
 
-  // const addNodeAddress = async () => {
-  //   try {
-  //     await addTrustNode(voterAddress);
-  //   } catch (error) {
-  //     console.log('error', error);
-  //   }
-  // };
-
-  // const removeNodeAddress = async () => {
-  //   try {
-  //     await removeTrustNode(voterAddress);
-  //   } catch (error) {
-  //     console.log('error', error);
-  //   }
-  // };
-
   return (
     <div className='bg-color-bg2 border-[0.01rem] border-color-border1 rounded-[.3rem]'>
       <div className='h-[.7rem] flex items-center justify-between font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[.16rem] text-color-text2 px-[30px]'>

@@ -1,33 +1,18 @@
 import React from 'react';
 import classNames from 'classnames';
 import { useAppSlice } from 'hooks/selector';
-import { robotoSemiBold } from 'config/font';
 import { useNetworkProposalData } from 'hooks/useNetworkProposalData';
 import { CustomButton } from 'components/common/CustomButton';
 import { useWalletAccount } from 'hooks/useWalletAccount';
+import { useAppDispatch } from 'hooks/common';
+import { addAddress, removeAddress } from 'redux/reducers/ValidatorSlice';
 
 export default function Voter() {
+  const dispatch = useAppDispatch();
   const { darkMode } = useAppSlice();
-  const { voters, voteManagerAddress, addVoter, removeVoter } =
-    useNetworkProposalData();
+  const { voters, voteManagerAddress } = useNetworkProposalData();
   const { metaMaskAccount } = useWalletAccount();
   const [voterAddress, setVoterAddress] = React.useState('');
-
-  const removeAddress = async () => {
-    try {
-      await removeVoter(voterAddress);
-    } catch (error) {
-      console.log('error', error);
-    }
-  };
-
-  const addAddress = async () => {
-    try {
-      await addVoter(voterAddress);
-    } catch (error) {
-      console.log('error', error);
-    }
-  };
 
   return (
     <div className='bg-color-bg2 border-[0.01rem] border-color-border1 rounded-[.3rem]'>
@@ -73,7 +58,9 @@ export default function Voter() {
               height='.42rem'
               width='130px'
               disabled={metaMaskAccount !== voteManagerAddress}
-              onClick={() => addAddress()}
+              onClick={() => {
+                dispatch(addAddress(voterAddress));
+              }}
             >
               Add
             </CustomButton>
@@ -82,7 +69,9 @@ export default function Voter() {
               height='.42rem'
               width='130px'
               disabled={metaMaskAccount !== voteManagerAddress}
-              onClick={() => removeAddress()}
+              onClick={() => {
+                dispatch(removeAddress(voterAddress));
+              }}
             >
               Remove
             </CustomButton>

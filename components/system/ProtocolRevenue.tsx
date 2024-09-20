@@ -7,28 +7,21 @@ import { useUnstakingPoolData } from 'hooks/useUnstakingPoolData';
 import { useNetworkProposalData } from 'hooks/useNetworkProposalData';
 import { useWalletAccount } from 'hooks/useWalletAccount';
 import millify from 'millify';
+import { useAppDispatch } from 'hooks/common';
+import { withDrawAdmin } from 'redux/reducers/ValidatorSlice';
 
 export default function ProtocolRevenue() {
+  const dispatch = useAppDispatch();
   const { darkMode } = useAppSlice();
   const {
     totalPlatformClaimedAmount,
     totalPlatformCommission,
     stackCommissionRate,
-    withDraw,
   } = useUnstakingPoolData();
   const { treasuryBalance, admin } = useNetworkProposalData();
   const [distributionAddress, setDistributionAddress] = React.useState('');
 
   const { metaMaskAccount } = useWalletAccount();
-
-  const withDrawAdmin = async () => {
-    const status = await withDraw(distributionAddress);
-    if (status) {
-      alert('Commissions distributed successfully');
-    } else {
-      alert('Commissions distribution failed');
-    }
-  };
 
   return (
     <div className='bg-color-bg2 border-[0.01rem] border-color-border1 rounded-[.3rem]'>
@@ -127,7 +120,9 @@ export default function ProtocolRevenue() {
             type='small'
             height='.42rem'
             disabled={admin !== metaMaskAccount}
-            onClick={() => withDrawAdmin()}
+            onClick={() => {
+              dispatch(withDrawAdmin(distributionAddress));
+            }}
           >
             Distribute Commissions
           </CustomButton>

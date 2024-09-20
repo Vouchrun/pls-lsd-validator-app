@@ -72,36 +72,6 @@ export function useNetworkProposalData() {
     }
   }, []);
 
-  const addVoter = async (value: string) => {
-    try {
-      await networkProposalContract.methods
-        .addVoter(value)
-        .send({ from: metaMaskAccount })
-        .catch((err: any) => {
-          console.log({ err });
-        });
-      return true;
-    } catch (err: any) {
-      console.log({ err });
-      return false;
-    }
-  };
-
-  const removeVoter = async (value: string) => {
-    try {
-      await networkProposalContract.methods
-        .removeVoter(value)
-        .send({ from: metaMaskAccount })
-        .catch((err: any) => {
-          console.log({ err });
-        });
-      return true;
-    } catch (err: any) {
-      console.log({ err });
-      return false;
-    }
-  };
-
   useEffect(() => {
     updateNetworkProposalData();
   }, [updateNetworkProposalData]);
@@ -112,7 +82,5 @@ export function useNetworkProposalData() {
     treasuryBalance,
     admin,
     voteManagerAddress,
-    addVoter,
-    removeVoter,
   };
 }
