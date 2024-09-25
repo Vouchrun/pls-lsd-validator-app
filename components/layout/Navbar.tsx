@@ -36,6 +36,7 @@ import {
 } from 'redux/reducers/AppSlice';
 import {
   disconnectWallet,
+  setMetaMaskAccount,
   setMetaMaskDisconnected,
 } from 'redux/reducers/WalletSlice';
 import { RootState } from 'redux/store';
@@ -43,7 +44,7 @@ import { getLsdTokenName } from 'utils/configUtils';
 import { getChainIcon } from 'utils/iconUtils';
 import snackbarUtil from 'utils/snackbarUtils';
 import { getShortAddress } from 'utils/stringUtils';
-import { useConnect } from 'wagmi';
+import { useAccount, useConnect } from 'wagmi';
 import { useNetworkProposalData } from 'hooks/useNetworkProposalData';
 
 export const Navbar = () => {
@@ -95,6 +96,20 @@ export const Navbar = () => {
   //     router.push('/');
   //   }
   // }, [voters, admin]);
+
+  const { isDisconnected, address } = useAccount();
+
+  useEffect(() => {
+    if (isDisconnected) {
+      dispatch(setMetaMaskDisconnected(true));
+      dispatch(setMetaMaskAccount(undefined));
+    } else {
+      if (address) {
+        dispatch(setMetaMaskAccount(address));
+        dispatch(setMetaMaskDisconnected(false));
+      }
+    }
+  }, [isDisconnected, address]);
 
   useEffect(() => {
     window.addEventListener('resize', resizeListener);
@@ -212,11 +227,12 @@ export const Navbar = () => {
               isGalleryHomePage ? 'hidden' : ''
             )}
           >
-            {displayAddress ? (
+            {/* {displayAddress ? (
               <UserInfo auditExpand={auditExpand} />
             ) : (
-              <ConnectButton />
-            )}
+              <w3m-button />
+            )} */}
+            <w3m-button />
           </div>
 
           <div

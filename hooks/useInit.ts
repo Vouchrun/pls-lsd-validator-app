@@ -71,13 +71,15 @@ export function useInit() {
     dispatch(setUpdateFlag(dayjs().unix()));
   }, 6000); // 6s
 
-  useEffect(() => {
-    if (!metaMaskAccount) {
-      metaMask.connectEagerly();
-    }
-    // dispatch(setMetaMaskAccount("0x99F7C7c951dEF272ee5638eA7Cc731b1f09B12e0"));
-    dispatch(setMetaMaskAccount(metaMaskAccount));
-  }, [dispatch, metaMaskAccount]);
+  // useEffect(() => {
+  //   if (!metaMaskAccount) {
+  //     metaMask.connectEagerly();
+  //   }
+  //   // dispatch(setMetaMaskAccount("0x99F7C7c951dEF272ee5638eA7Cc731b1f09B12e0"));
+  //   if (metaMaskAccount) {
+  //     dispatch(setMetaMaskAccount(metaMaskAccount));
+  //   }
+  // }, [dispatch, metaMaskAccount]);
 
   useEffect(() => {
     dispatch(setMetaMaskChainId(chainId + ''));
