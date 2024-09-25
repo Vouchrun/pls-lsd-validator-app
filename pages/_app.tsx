@@ -74,7 +74,7 @@ const networks = [
     chainNamespace: 'eip155',
     name: 'Pulsechain Testnet V4',
     currency: 'tPLS',
-    explorerUrl: 'https://otter-testnet-pulsechain.g4mm4.io/',
+    explorerUrl: 'https://otter-testnet-pulsechain.g4mm4.io',
     rpcUrl: 'https://rpc-testnet-pulsechain.g4mm4.io',
     network: 'testnet',
     imageUrl: 'https://avatars.githubusercontent.com/u/179229932',
