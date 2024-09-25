@@ -1,56 +1,56 @@
-import LinearProgress from "@mui/material/LinearProgress";
-import classNames from "classnames";
-import { BackNavigation } from "components/common/BackNavigation";
-import { CardContainer } from "components/common/CardContainer";
-import { CustomButton } from "components/common/CustomButton";
-import { DataLoading } from "components/common/DataLoading";
-import { PrimaryLoading } from "components/common/PrimaryLoading";
-import { Icomoon } from "components/icon/Icomoon";
-import { ConfirmModal } from "components/modal/ConfirmModal";
-import { DepositGuide } from "components/tokenStake/DepositGuide";
-import { ValidatorKeyUpload } from "components/tokenStake/ValidatorKeyUpload";
-import { getNodeDepositContract } from "config/contract";
-import { getNodeDepositContractAbi } from "config/contractAbi";
+import LinearProgress from '@mui/material/LinearProgress';
+import classNames from 'classnames';
+import { BackNavigation } from 'components/common/BackNavigation';
+import { CardContainer } from 'components/common/CardContainer';
+import { CustomButton } from 'components/common/CustomButton';
+import { DataLoading } from 'components/common/DataLoading';
+import { PrimaryLoading } from 'components/common/PrimaryLoading';
+import { Icomoon } from 'components/icon/Icomoon';
+import { ConfirmModal } from 'components/modal/ConfirmModal';
+import { DepositGuide } from 'components/tokenStake/DepositGuide';
+import { ValidatorKeyUpload } from 'components/tokenStake/ValidatorKeyUpload';
+import { getNodeDepositContract } from 'config/contract';
+import { getNodeDepositContractAbi } from 'config/contractAbi';
 import {
   getEthereumChainId,
   getNetworkName,
   getTrustValidatorDepositAmount,
-} from "config/env";
-import { robotoBold } from "config/font";
-import { FILE_NETWORK_NAME_KEY } from "constants/common";
-import { useAppDispatch, useAppSelector } from "hooks/common";
-import { useAppSlice } from "hooks/selector";
-import { useIsTrustedValidator } from "hooks/useIsTrustedValidator";
-import { useSoloDepositAmount } from "hooks/useSoloDepositAmount";
-import { useUnmatchedToken } from "hooks/useUnmatchedToken";
-import { useWalletAccount } from "hooks/useWalletAccount";
-import Image from "next/image";
-import { useRouter } from "next/router";
-import fileIcon from "public/images/file.svg";
-import refreshIcon from "public/images/refresh_icon.svg";
-import errorIcon from "public/images/tx_error.png";
-import uploadIcon from "public/images/upload.svg";
-import { useMemo, useState } from "react";
-import { updateEthBalance } from "redux/reducers/EthSlice";
-import { handleEthValidatorDeposit } from "redux/reducers/ValidatorSlice";
-import { setMetaMaskDisconnected } from "redux/reducers/WalletSlice";
-import { RootState } from "redux/store";
-import { openLink } from "utils/commonUtils";
-import { getTokenName } from "utils/configUtils";
-import { formatNumber } from "utils/numberUtils";
-import { getEthWeb3 } from "utils/web3Utils";
-import { parseEther } from "viem";
-import { useConnect, useSwitchNetwork } from "wagmi";
+} from 'config/env';
+import { robotoBold } from 'config/font';
+import { FILE_NETWORK_NAME_KEY } from 'constants/common';
+import { useAppDispatch, useAppSelector } from 'hooks/common';
+import { useAppSlice } from 'hooks/selector';
+import { useIsTrustedValidator } from 'hooks/useIsTrustedValidator';
+import { useSoloDepositAmount } from 'hooks/useSoloDepositAmount';
+import { useUnmatchedToken } from 'hooks/useUnmatchedToken';
+import { useWalletAccount } from 'hooks/useWalletAccount';
+import Image from 'next/image';
+import { useRouter } from 'next/router';
+import fileIcon from 'public/images/file.svg';
+import refreshIcon from 'public/images/refresh_icon.svg';
+import errorIcon from 'public/images/tx_error.png';
+import uploadIcon from 'public/images/upload.svg';
+import { useMemo, useState } from 'react';
+import { updateEthBalance } from 'redux/reducers/EthSlice';
+import { handleEthValidatorDeposit } from 'redux/reducers/ValidatorSlice';
+import { setMetaMaskDisconnected } from 'redux/reducers/WalletSlice';
+import { RootState } from 'redux/store';
+import { openLink } from 'utils/commonUtils';
+import { getTokenName } from 'utils/configUtils';
+import { formatNumber } from 'utils/numberUtils';
+import { getEthWeb3 } from 'utils/web3Utils';
+import { parseEther } from 'viem';
+import { useConnect, useSwitchChain } from 'wagmi';
 
 const SoloDepositPage = () => {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { darkMode } = useAppSlice();
   const [validatorKeys, setValidatorKeys] = useState<any[]>([]);
-  const [fileName, setFileName] = useState<string>("");
+  const [fileName, setFileName] = useState<string>('');
   const [uploadingStatus, setUploadingStatus] = useState<
-    "normal" | "loading" | "error"
-  >("normal");
+    'normal' | 'loading' | 'error'
+  >('normal');
   const [deleteConfirmModalVisible, setDeleteConfirmModalVisible] =
     useState(false);
 
@@ -58,7 +58,8 @@ const SoloDepositPage = () => {
   const { soloDepositAmountInWei } = useSoloDepositAmount();
 
   const { metaMaskAccount, metaMaskChainId } = useWalletAccount();
-  const { switchNetworkAsync } = useSwitchNetwork();
+
+  const { switchChain } = useSwitchChain();
   const { connectAsync, connectors } = useConnect();
 
   const { validatorWithdrawalCredentials, ethTxLoading } = useAppSelector(
@@ -82,15 +83,15 @@ const SoloDepositPage = () => {
       !validatorKey.signature ||
       !validatorKey.pubkey
     ) {
-      throw new Error("Miss deposit_data_root or signature or pubkey");
+      throw new Error('Miss deposit_data_root or signature or pubkey');
     }
 
     if (
-      parseEther((validatorKey.amount + "") as `${number}`, "gwei") !==
-      BigInt(soloDepositAmountInWei || "0")
+      parseEther((validatorKey.amount + '') as `${number}`, 'gwei') !==
+      BigInt(soloDepositAmountInWei || '0')
     ) {
       throw new Error(
-        "Please use deposit_data file of trusted validator to deposit"
+        'Please use deposit_data file of trusted validator to deposit'
       );
     }
 
@@ -107,12 +108,12 @@ const SoloDepositPage = () => {
 
   const checkKeys = async (validatorKeys: any[]) => {
     try {
-      setUploadingStatus("loading");
+      setUploadingStatus('loading');
 
       const pubkeys: string[] = [];
 
       validatorKeys.forEach((validatorKey) => {
-        pubkeys.push("0x" + validatorKey.pubkey);
+        pubkeys.push('0x' + validatorKey.pubkey);
       });
 
       const web3 = getEthWeb3();
@@ -142,39 +143,39 @@ const SoloDepositPage = () => {
       });
 
       if (hasRepeat) {
-        setUploadingStatus("error");
+        setUploadingStatus('error');
         setValidatorKeys([]);
       } else {
-        setUploadingStatus("normal");
+        setUploadingStatus('normal');
         setValidatorKeys(validatorKeys);
       }
     } catch (err: any) {
-      setUploadingStatus("error");
+      setUploadingStatus('error');
       setValidatorKeys([]);
     }
   };
 
   return (
-    <div className="w-smallContentW xl:w-contentW 2xl:w-largeContentW mx-auto">
+    <div className='w-smallContentW xl:w-contentW 2xl:w-largeContentW mx-auto'>
       <BackNavigation
         onClick={() => {
-          router.replace("/tokenStake/chooseType");
+          router.replace('/tokenStake/chooseType');
         }}
       />
 
-      <div className="flex mt-[.24rem] items-start">
-        <CardContainer width="6.2rem" title="Solo Validator Deposit">
-          <div className="flex flex-col items-center pb-[.24rem]">
-            <div className="mt-[.32rem] flex items-center text-[.14rem]">
+      <div className='flex mt-[.24rem] items-start'>
+        <CardContainer width='6.2rem' title='Solo Validator Deposit'>
+          <div className='flex flex-col items-center pb-[.24rem]'>
+            <div className='mt-[.32rem] flex items-center text-[.14rem]'>
               <div
                 className={classNames(
                   robotoBold.className,
-                  "text-color-text1 flex items-center"
+                  'text-color-text1 flex items-center'
                 )}
               >
-                <div className="mr-[.04rem]">
+                <div className='mr-[.04rem]'>
                   {unmatchedEth === undefined ? (
-                    <DataLoading height=".14rem" />
+                    <DataLoading height='.14rem' />
                   ) : (
                     formatNumber(unmatchedEth, { hideDecimalsForZero: true })
                   )}
@@ -183,26 +184,26 @@ const SoloDepositPage = () => {
                 {getTokenName()}
               </div>
 
-              <div className="ml-[.06rem] text-color-text2">
+              <div className='ml-[.06rem] text-color-text2'>
                 is waiting to be staked
               </div>
 
               <div
-                className="ml-[.12rem] flex items-center text-[.14rem] text-color-text2 cursor-pointer"
+                className='ml-[.12rem] flex items-center text-[.14rem] text-color-text2 cursor-pointer'
                 onClick={() => {
-                  router.push("/poolData");
+                  router.push('/poolData');
                 }}
               >
-                <div className="mr-[.06rem]">Pool Status</div>
+                <div className='mr-[.06rem]'>Pool Status</div>
                 <Icomoon
-                  icon="arrow-right"
-                  size=".13rem"
-                  color={darkMode ? "#ffffff80" : "#6C86AD"}
+                  icon='arrow-right'
+                  size='.13rem'
+                  color={darkMode ? '#ffffff80' : '#6C86AD'}
                 />
               </div>
             </div>
 
-            <div className="mt-[.46rem]">
+            <div className='mt-[.46rem]'>
               {!fileName ? (
                 <ValidatorKeyUpload
                   disabled={!soloDepositAmountInWei}
@@ -213,82 +214,82 @@ const SoloDepositPage = () => {
                   }}
                 >
                   <div>
-                    <div className="flex flex-col items-center">
-                      <div className="w-[.5rem] h-[.6rem] relative">
-                        <Image src={uploadIcon} alt="upload" layout="fill" />
+                    <div className='flex flex-col items-center'>
+                      <div className='w-[.5rem] h-[.6rem] relative'>
+                        <Image src={uploadIcon} alt='upload' layout='fill' />
                       </div>
 
-                      <div className="text-color-text2 text-[.14rem] mt-[.15rem]">
+                      <div className='text-color-text2 text-[.14rem] mt-[.15rem]'>
                         Drag and drop file
                       </div>
                     </div>
                   </div>
                 </ValidatorKeyUpload>
               ) : (
-                <div className="max-h-[3rem] overflow-auto">
+                <div className='max-h-[3rem] overflow-auto'>
                   <div
                     className={classNames(
-                      "rounded-[.16rem] h-[.66rem] w-[4.5rem] flex items-center relative",
-                      uploadingStatus === "error"
-                        ? "bg-[#FF52C41A] border-dashed border-[0.01rem] border-[#FF52C4]"
-                        : "bg-color-bgPage"
+                      'rounded-[.16rem] h-[.66rem] w-[4.5rem] flex items-center relative',
+                      uploadingStatus === 'error'
+                        ? 'bg-[#FF52C41A] border-dashed border-[0.01rem] border-[#FF52C4]'
+                        : 'bg-color-bgPage'
                     )}
                   >
-                    {uploadingStatus === "normal" ? (
-                      <div className="ml-[.2rem] w-[.22rem] h-[.27rem] relative">
-                        <Image src={fileIcon} layout="fill" alt="file" />
+                    {uploadingStatus === 'normal' ? (
+                      <div className='ml-[.2rem] w-[.22rem] h-[.27rem] relative'>
+                        <Image src={fileIcon} layout='fill' alt='file' />
                       </div>
-                    ) : uploadingStatus === "loading" ? (
-                      <div className="ml-[.2rem] w-[.22rem] h-[.22rem] relative">
-                        <PrimaryLoading size=".22rem" />
+                    ) : uploadingStatus === 'loading' ? (
+                      <div className='ml-[.2rem] w-[.22rem] h-[.22rem] relative'>
+                        <PrimaryLoading size='.22rem' />
                       </div>
                     ) : (
-                      <div className="ml-[.2rem] w-[.22rem] h-[.22rem] relative">
-                        <Image src={errorIcon} alt="error" layout="fill" />
+                      <div className='ml-[.2rem] w-[.22rem] h-[.22rem] relative'>
+                        <Image src={errorIcon} alt='error' layout='fill' />
                       </div>
                     )}
 
-                    <div className="ml-[.2rem]">
+                    <div className='ml-[.2rem]'>
                       <div
-                        className="text-color-text2 text-[.12rem] mr-[.4rem] leading-normal"
+                        className='text-color-text2 text-[.12rem] mr-[.4rem] leading-normal'
                         style={{
                           maxLines: 2,
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
                           WebkitLineClamp: 2,
                           lineClamp: 2,
-                          display: "-webkit-box",
-                          WebkitBoxOrient: "vertical",
+                          display: '-webkit-box',
+                          WebkitBoxOrient: 'vertical',
                         }}
                       >
-                        File{" "}
+                        File{' '}
                         <span
                           className={classNames(
-                            "text-color-text1",
+                            'text-color-text1',
                             robotoBold.className
                           )}
                         >
                           {fileName}
-                        </span>{" "}
-                        {uploadingStatus === "normal"
-                          ? " uploaded successfully!"
-                          : uploadingStatus === "loading"
-                          ? "is uploading"
-                          : "already exist"}
+                        </span>{' '}
+                        {uploadingStatus === 'normal'
+                          ? ' uploaded successfully!'
+                          : uploadingStatus === 'loading'
+                          ? 'is uploading'
+                          : 'already exist'}
                       </div>
 
-                      {uploadingStatus === "loading" && (
-                        <div className="mt-[.08rem]">
+                      {uploadingStatus === 'loading' && (
+                        <div className='mt-[.08rem]'>
                           <LinearProgress
                             sx={{
-                              color: "#80CAFF",
-                              borderRadius: ".04rem",
-                              backgroundColor: "white",
+                              color: '#80CAFF',
+                              borderRadius: '.04rem',
+                              backgroundColor: 'white',
                               // "& .MuiLinearProgress-barColorPrimary": {
                               //   backgroundColor: "white",
                               // },
-                              "& .MuiLinearProgress-bar": {
-                                backgroundColor: "#80CAFF",
+                              '& .MuiLinearProgress-bar': {
+                                backgroundColor: '#80CAFF',
                               },
                             }}
                           />
@@ -298,9 +299,9 @@ const SoloDepositPage = () => {
                       )}
                     </div>
 
-                    {uploadingStatus !== "loading" && (
+                    {uploadingStatus !== 'loading' && (
                       <div
-                        className="absolute right-[.06rem] top-[.06rem] cursor-pointer"
+                        className='absolute right-[.06rem] top-[.06rem] cursor-pointer'
                         onClick={() => {
                           // setFileName("");
                           // setValidatorKeys([]);
@@ -308,9 +309,9 @@ const SoloDepositPage = () => {
                         }}
                       >
                         <Icomoon
-                          icon="close1"
-                          size=".11rem"
-                          color={darkMode ? "#ffffff80" : "#6C86AD"}
+                          icon='close1'
+                          size='.11rem'
+                          color={darkMode ? '#ffffff80' : '#6C86AD'}
                         />
                       </div>
                     )}
@@ -319,8 +320,8 @@ const SoloDepositPage = () => {
               )}
             </div>
 
-            {uploadingStatus === "error" && (
-              <div className="mt-[.2rem] flex items-center">
+            {uploadingStatus === 'error' && (
+              <div className='mt-[.2rem] flex items-center'>
                 <ValidatorKeyUpload
                   checkValidatorKey={checkFileKeyFormat}
                   onSuccess={(validatorKeys, fileName) => {
@@ -328,25 +329,25 @@ const SoloDepositPage = () => {
                     checkKeys(validatorKeys);
                   }}
                 >
-                  <div className="w-[.14rem] h-[.14rem] relative">
-                    <Image src={refreshIcon} alt="refresh" layout="fill" />
+                  <div className='w-[.14rem] h-[.14rem] relative'>
+                    <Image src={refreshIcon} alt='refresh' layout='fill' />
                   </div>
                 </ValidatorKeyUpload>
 
                 <div
-                  className="ml-[.28rem] cursor-pointer"
+                  className='ml-[.28rem] cursor-pointer'
                   onClick={() => {
                     setDeleteConfirmModalVisible(true);
                   }}
                 >
-                  <Icomoon icon="delete" size=".14rem" color="#FF52C4" />
+                  <Icomoon icon='delete' size='.14rem' color='#FF52C4' />
                 </div>
               </div>
             )}
 
-            <div className="self-stretch mx-[.24rem] mt-[.46rem]">
+            <div className='self-stretch mx-[.24rem] mt-[.46rem]'>
               <CustomButton
-                height=".56rem"
+                height='.56rem'
                 loading={ethTxLoading}
                 disabled={
                   !!metaMaskAccount &&
@@ -357,17 +358,16 @@ const SoloDepositPage = () => {
                 }
                 type={
                   !metaMaskAccount || isWrongMetaMaskNetwork
-                    ? "secondary"
-                    : "primary"
+                    ? 'secondary'
+                    : 'primary'
                 }
                 onClick={async () => {
                   if (isWrongMetaMaskNetwork) {
-                    await (switchNetworkAsync &&
-                      switchNetworkAsync(getEthereumChainId()));
+                    await switchChain({ chainId: getEthereumChainId() });
                     return;
                   } else if (!metaMaskAccount) {
                     const metamaskConnector = connectors.find(
-                      (c) => c.name === "MetaMask"
+                      (c) => c.name === 'MetaMask'
                     );
                     if (!metamaskConnector) {
                       return;
@@ -389,7 +389,7 @@ const SoloDepositPage = () => {
 
                   dispatch(
                     handleEthValidatorDeposit(
-                      "solo",
+                      'solo',
                       validatorKeys,
                       (success, result) => {
                         dispatch(updateEthBalance());
@@ -397,11 +397,11 @@ const SoloDepositPage = () => {
                           const pubkeys: string[] = [];
 
                           validatorKeys.forEach((validatorKey) => {
-                            pubkeys.push("0x" + validatorKey.pubkey);
+                            pubkeys.push('0x' + validatorKey.pubkey);
                           });
 
                           setValidatorKeys([]);
-                          setFileName("");
+                          setFileName('');
 
                           // router.push(
                           //   {
@@ -421,32 +421,32 @@ const SoloDepositPage = () => {
                 }}
               >
                 {!metaMaskAccount
-                  ? "Connect Wallet"
+                  ? 'Connect Wallet'
                   : isWrongMetaMaskNetwork
-                  ? "Switch Network"
+                  ? 'Switch Network'
                   : validatorKeys.length === 0
-                  ? "Please Upload 1 json file"
+                  ? 'Please Upload 1 json file'
                   : ethTxLoading
-                  ? "Depositing, please wait for a moment..."
+                  ? 'Depositing, please wait for a moment...'
                   : !isNaN(Number(unmatchedEth)) &&
                     Number(unmatchedEth) < validatorKeys.length
                   ? `Insufficient ${getTokenName()} in pool`
-                  : "Deposit"}
+                  : 'Deposit'}
               </CustomButton>
             </div>
 
             {validatorKeys.length > 0 && (
-              <div className="mt-[.24rem] text-color-text2 text-[.14rem]">
-                <span className={classNames("text-color-text1")}>
+              <div className='mt-[.24rem] text-color-text2 text-[.14rem]'>
+                <span className={classNames('text-color-text1')}>
                   {validatorKeys.length} Node Number
-                </span>{" "}
+                </span>{' '}
                 according to the file uploaded
               </div>
             )}
           </div>
         </CardContainer>
 
-        <div className="ml-[.85rem]">
+        <div className='ml-[.85rem]'>
           <DepositGuide />
         </div>
       </div>
@@ -458,13 +458,13 @@ const SoloDepositPage = () => {
         }}
         onConfirm={() => {
           setValidatorKeys([]);
-          setFileName("");
+          setFileName('');
           setDeleteConfirmModalVisible(false);
-          setUploadingStatus("normal");
+          setUploadingStatus('normal');
         }}
-        title="Sure Delete?"
-        content="Sure you want to delete this file?"
-        confirmText="Yes, Delete"
+        title='Sure Delete?'
+        content='Sure you want to delete this file?'
+        confirmText='Yes, Delete'
       />
     </div>
   );
