@@ -99,6 +99,8 @@ createAppKit({
     email: false, // default to true
     socials: [],
     emailShowWallets: false, // default to true
+    swaps: false,
+    onramp: false,
   },
 });
 
