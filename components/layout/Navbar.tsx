@@ -482,16 +482,17 @@ const ConnectButton = () => {
   };
 
   return (
-    <CustomButton
-      type='small'
-      height='.42rem'
-      onClick={() => {
-        clickConnectWallet();
-      }}
-      // textColor={darkMode ? "#E8EFFD" : ""}
-    >
-      Connect Wallet
-    </CustomButton>
+    // <CustomButton
+    //   type='small'
+    //   height='.42rem'
+    //   onClick={() => {
+    //     clickConnectWallet();
+    //   }}
+    //   // textColor={darkMode ? "#E8EFFD" : ""}
+    // >
+    //   Connect Wallet
+    // </CustomButton>
+    <w3m-button />
   );
 };
 
