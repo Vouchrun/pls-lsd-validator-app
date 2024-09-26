@@ -69,6 +69,12 @@ export function useInit() {
 
   useInterval(() => {
     dispatch(setUpdateFlag(dayjs().unix()));
+  }, 15000); // 12s
+
+  useInterval(() => {
+    if (metaMaskAccount) {
+      dispatch(setUpdateFlag(dayjs().unix()));
+    }
   }, 6000); // 6s
 
   // useEffect(() => {
