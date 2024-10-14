@@ -48,6 +48,7 @@ import {
   updateWithdrawLoadingParams,
 } from './AppSlice';
 import { setEthTxLoading, updateEthBalance } from './EthSlice';
+import { waitForTransactionReceipt } from 'utils/web3receipt';
 
 export interface ValidatorState {
   validatorWithdrawalCredentials: string;
@@ -208,6 +209,7 @@ export const updateNodePubkeys = (): AppThunk => async (dispatch, getState) => {
 
 export const handleEthValidatorDeposit =
   (
+    writeContractAsync: Function,
     type: 'solo' | 'trusted',
     validatorKeys: any[],
     callback?: (success: boolean, result: any) => void
@@ -289,7 +291,7 @@ export const handleEthValidatorDeposit =
       });
 
       let sendParams = {};
-      let solodepositAmount;
+      let solodepositAmount: any;
       if (type === 'solo') {
         const res = await nodeDepositContract.methods
           .soloNodeDepositAmount()
@@ -324,40 +326,63 @@ export const handleEthValidatorDeposit =
         });
       }
 
-      const result = await nodeDepositContract.methods
-        .deposit(pubkeys, signatures, depositDataRoots)
-        .send(sendParams);
+      await writeContractAsync(
+        {
+          abi: getNodeDepositContractAbi(),
+          address: getNodeDepositContract() as `0x${string}`,
+          functionName: 'deposit',
+          args: [pubkeys, signatures, depositDataRoots],
+          ...sendParams,
+        },
+        {
+          onSuccess: (data: any) => {
+            if (data.Message == 'deny')
+              throw new Error(TRANSACTION_FAILED_MESSAGE);
+          },
+          onSettled: async (data: any, error: any) => {
+            if (error) {
+              console.error('Transaction settled with error:', error);
+            } else {
+              const result = await waitForTransactionReceipt(web3, data);
+              dispatch(setEthTxLoading(false));
+              callback && callback(result?.status, result);
 
-      dispatch(setEthTxLoading(false));
-      callback && callback(result?.status, result);
-
-      if (result?.status) {
-        dispatch(
-          updateDepositLoadingParams({
-            status: 'success',
-          })
-        );
-        dispatch(
-          addNotice({
-            id: result.transactionHash,
-            type: 'Validator Deposit',
-            txDetail: {
-              transactionHash: result.transactionHash,
-              sender: address || '',
-            },
-            data: {
-              type: type === 'solo' ? 'solo' : 'trusted',
-              amount:
-                type === 'solo' ? Web3.utils.fromWei(solodepositAmount) : '0',
-              pubkeys,
-            },
-            scanUrl: getEtherScanTxUrl(result.transactionHash),
-            status: 'Confirmed',
-          })
-        );
-      } else {
-        throw new Error(TRANSACTION_FAILED_MESSAGE);
-      }
+              if (result?.status) {
+                dispatch(
+                  updateDepositLoadingParams({
+                    status: 'success',
+                  })
+                );
+                dispatch(
+                  addNotice({
+                    id: result.transactionHash,
+                    type: 'Validator Deposit',
+                    txDetail: {
+                      transactionHash: result.transactionHash,
+                      sender: address || '',
+                    },
+                    data: {
+                      type: type === 'solo' ? 'solo' : 'trusted',
+                      amount:
+                        type === 'solo'
+                          ? Web3.utils.fromWei(solodepositAmount)
+                          : '0',
+                      pubkeys,
+                    },
+                    scanUrl: getEtherScanTxUrl(result.transactionHash),
+                    status: 'Confirmed',
+                  })
+                );
+              } else {
+                throw new Error(TRANSACTION_FAILED_MESSAGE);
+              }
+            }
+          },
+          onError: (error: any) => {
+            throw new Error(TRANSACTION_FAILED_MESSAGE);
+          },
+        }
+      );
     } catch (err: unknown) {
       dispatch(setEthTxLoading(false));
       if (isEvmTxCancelError(err)) {
@@ -377,6 +402,7 @@ export const handleEthValidatorDeposit =
 
 export const handleEthValidatorStake =
   (
+    writeContractAsync: Function,
     validatorKeys: any[],
     type: 'solo' | 'trusted',
     callback?: (success: boolean, result: any) => void
@@ -386,14 +412,7 @@ export const handleEthValidatorStake =
       const address = getState().wallet.metaMaskAccount;
 
       dispatch(setEthTxLoading(true));
-      const web3 = createWeb3();
-      let nodeDepositContract = new web3.eth.Contract(
-        getNodeDepositContractAbi(),
-        getNodeDepositContract(),
-        {
-          from: address,
-        }
-      );
+      const web3 = getEthWeb3();
 
       const pubkeys: string[] = [];
       const signatures: string[] = [];
@@ -415,40 +434,61 @@ export const handleEthValidatorStake =
         })
       );
 
-      const result = await nodeDepositContract.methods
-        .stake(pubkeys, signatures, depositDataRoots)
-        .send();
+      await writeContractAsync(
+        {
+          abi: getNodeDepositContractAbi(),
+          address: getNodeDepositContract() as `0x${string}`,
+          functionName: 'stake',
+          args: [pubkeys, signatures, depositDataRoots],
+        },
+        {
+          onSuccess: (data: any) => {
+            if (data.Message == 'deny')
+              throw new Error(TRANSACTION_FAILED_MESSAGE);
+          },
+          onSettled: async (data: any, error: any) => {
+            if (error) {
+              console.error('Transaction settled with error:', error);
+            } else {
+              const result = await waitForTransactionReceipt(web3, data);
+              dispatch(setEthTxLoading(false));
+              callback && callback(result?.status, result);
 
-      dispatch(setEthTxLoading(false));
-      callback && callback(result?.status, result);
-
-      if (result?.status) {
-        dispatch(
-          updateValidatorStakeLoadingParams({
-            status: 'success',
-            scanUrl: getEtherScanTxUrl(result.transactionHash),
-          })
-        );
-        dispatch(
-          addNotice({
-            id: result.transactionHash,
-            type: 'Validator Stake',
-            txDetail: {
-              transactionHash: result.transactionHash,
-              sender: address || '',
-            },
-            data: {
-              type,
-              amount: getValidatorTotalDepositAmount() * pubkeys.length + '',
-              pubkeys,
-            },
-            scanUrl: getEtherScanTxUrl(result.transactionHash),
-            status: 'Confirmed',
-          })
-        );
-      } else {
-        throw new Error(TRANSACTION_FAILED_MESSAGE);
-      }
+              if (result?.status) {
+                dispatch(
+                  updateValidatorStakeLoadingParams({
+                    status: 'success',
+                    scanUrl: getEtherScanTxUrl(result.transactionHash),
+                  })
+                );
+                dispatch(
+                  addNotice({
+                    id: result.transactionHash,
+                    type: 'Validator Stake',
+                    txDetail: {
+                      transactionHash: result.transactionHash,
+                      sender: address || '',
+                    },
+                    data: {
+                      type,
+                      amount:
+                        getValidatorTotalDepositAmount() * pubkeys.length + '',
+                      pubkeys,
+                    },
+                    scanUrl: getEtherScanTxUrl(result.transactionHash),
+                    status: 'Confirmed',
+                  })
+                );
+              } else {
+                throw new Error(TRANSACTION_FAILED_MESSAGE);
+              }
+            }
+          },
+          onError: (error: any) => {
+            throw new Error(TRANSACTION_FAILED_MESSAGE);
+          },
+        }
+      );
     } catch (err: unknown) {
       dispatch(setEthTxLoading(false));
       if (isEvmTxCancelError(err)) {
@@ -467,6 +507,7 @@ export const handleEthValidatorStake =
 
 export const claimValidatorRewards =
   (
+    writeContractAsync: Function,
     ipfsRewardItem: IpfsRewardItem | undefined,
     myClaimableReward: string,
     callback?: (success: boolean, result: any) => void
@@ -483,14 +524,7 @@ export const claimValidatorRewards =
         throw new Error('Please connect MetaMask');
       }
 
-      const web3 = createWeb3();
-      const contract = new web3.eth.Contract(
-        getNetworkWithdrawContractAbi(),
-        getNetworkWithdrawContract(),
-        {
-          from: metaMaskAccount,
-        }
-      );
+      const web3 = getEthWeb3();
 
       dispatch(setClaimRewardsLoading(true));
 
@@ -506,46 +540,69 @@ export const claimValidatorRewards =
         formatProofs,
         ValidatorClaimType.ClaimReward,
       ];
-      const result = await contract.methods.nodeClaim(...claimParams).send();
 
-      callback && callback(result.status, result);
-      dispatch(updateEthBalance());
-      dispatch(setClaimRewardsLoading(false));
+      await writeContractAsync(
+        {
+          abi: getNetworkWithdrawContractAbi(),
+          address: getNetworkWithdrawContract() as `0x${string}`,
+          functionName: 'nodeClaim',
+          args: [...claimParams],
+        },
+        {
+          onSuccess: (data: any) => {
+            if (data.Message == 'deny')
+              throw new Error(TRANSACTION_FAILED_MESSAGE);
+          },
+          onSettled: async (data: any, error: any) => {
+            if (error) {
+              console.error('Transaction settled with error:', error);
+            } else {
+              const result = await waitForTransactionReceipt(web3, data);
+              callback && callback(result.status, result);
+              dispatch(updateEthBalance());
+              dispatch(setClaimRewardsLoading(false));
 
-      if (result && result.status) {
-        const txHash = result.transactionHash;
-        dispatch(
-          addNotice({
-            id: noticeUuid || '',
-            type: 'Claim Rewards',
-            data: {
-              rewardAmount: formatNumber(myClaimableReward),
-              rewardTokenName: getTokenName(),
-            },
-            status: 'Confirmed',
-            scanUrl: getEtherScanTxUrl(txHash),
-          })
-        );
+              if (result && result.status) {
+                const txHash = result.transactionHash;
+                dispatch(
+                  addNotice({
+                    id: noticeUuid || '',
+                    type: 'Claim Rewards',
+                    data: {
+                      rewardAmount: formatNumber(myClaimableReward),
+                      rewardTokenName: getTokenName(),
+                    },
+                    status: 'Confirmed',
+                    scanUrl: getEtherScanTxUrl(txHash),
+                  })
+                );
 
-        // const withdrawInfo: TokenWithdrawInfo = {
-        //   depositAmount: "0",
-        //   rewardAmount: Web3.utils.toWei(myClaimableReward),
-        //   totalAmount: Web3.utils.toWei(myClaimableReward),
-        //   txHash,
-        //   receivedAddress: metaMaskAccount,
-        //   operateTimestamp: dayjs().unix(),
-        //   timeLeft: 0,
-        //   explorerUrl: getEtherScanTxUrl(txHash),
-        //   status: 3,
-        // };
-        // addEthValidatorWithdrawRecords(withdrawInfo);
+                // const withdrawInfo: TokenWithdrawInfo = {
+                //   depositAmount: "0",
+                //   rewardAmount: Web3.utils.toWei(myClaimableReward),
+                //   totalAmount: Web3.utils.toWei(myClaimableReward),
+                //   txHash,
+                //   receivedAddress: metaMaskAccount,
+                //   operateTimestamp: dayjs().unix(),
+                //   timeLeft: 0,
+                //   explorerUrl: getEtherScanTxUrl(txHash),
+                //   status: 3,
+                // };
+                // addEthValidatorWithdrawRecords(withdrawInfo);
 
-        snackbarUtil.success('Claim rewards success');
-        callback && callback(true, {});
-        dispatch(setUpdateFlag(dayjs().unix()));
-      } else {
-        throw new Error(TRANSACTION_FAILED_MESSAGE);
-      }
+                snackbarUtil.success('Claim rewards success');
+                callback && callback(true, {});
+                dispatch(setUpdateFlag(dayjs().unix()));
+              } else {
+                throw new Error(TRANSACTION_FAILED_MESSAGE);
+              }
+            }
+          },
+          onError: (error: any) => {
+            throw new Error(TRANSACTION_FAILED_MESSAGE);
+          },
+        }
+      );
     } catch (err: any) {
       let displayMsg = err.message || TRANSACTION_FAILED_MESSAGE;
       if (err.code === -32603) {
@@ -562,6 +619,7 @@ export const claimValidatorRewards =
 
 export const withdrawValidatorEth =
   (
+    writeContractAsync: Function,
     ipfsRewardItem: IpfsRewardItem | undefined,
     withdrawAmount: string,
     myClaimableReward: string,
@@ -580,14 +638,7 @@ export const withdrawValidatorEth =
         throw new Error('Please connect MetaMask');
       }
 
-      const web3 = createWeb3();
-      const contract = new web3.eth.Contract(
-        getNetworkWithdrawContractAbi(),
-        getNetworkWithdrawContract(),
-        {
-          from: metaMaskAccount,
-        }
-      );
+      const web3 = getEthWeb3();
 
       dispatch(setWithdrawLoading(true));
       dispatch(
@@ -620,53 +671,78 @@ export const withdrawValidatorEth =
         ValidatorClaimType.ClaimAll,
       ];
 
-      const result = await contract.methods.nodeClaim(...claimParams).send();
+      await writeContractAsync(
+        {
+          abi: getNetworkWithdrawContractAbi(),
+          address: getNetworkWithdrawContract() as `0x${string}`,
+          functionName: 'nodeClaim',
+          args: [...claimParams],
+        },
+        {
+          onSuccess: (data: any) => {
+            if (data.Message == 'deny')
+              throw new Error(TRANSACTION_FAILED_MESSAGE);
+          },
+          onSettled: async (data: any, error: any) => {
+            if (error) {
+              console.error('Transaction settled with error:', error);
+            } else {
+              const result = await waitForTransactionReceipt(web3, data);
+              callback && callback(result.status, result);
+              dispatch(updateEthBalance());
+              if (result && result.status) {
+                const txHash = result.transactionHash;
+                dispatch(
+                  updateWithdrawLoadingParams(
+                    {
+                      status: 'success',
+                      txHash: txHash,
+                      scanUrl: getEtherScanTxUrl(txHash),
+                      customMsg: undefined,
+                    },
+                    (newParams) => {
+                      dispatch(
+                        addNotice({
+                          id: noticeUuid || '',
+                          type: 'Withdraw',
+                          data: {
+                            tokenAmount: withdrawAmount,
+                          },
+                          status: 'Confirmed',
+                          scanUrl: getEtherScanTxUrl(txHash),
+                        })
+                      );
+                    }
+                  )
+                );
 
-      callback && callback(result.status, result);
-      dispatch(updateEthBalance());
-      if (result && result.status) {
-        const txHash = result.transactionHash;
-        dispatch(
-          updateWithdrawLoadingParams(
-            {
-              status: 'success',
-              txHash: txHash,
-              scanUrl: getEtherScanTxUrl(txHash),
-              customMsg: undefined,
-            },
-            (newParams) => {
-              dispatch(
-                addNotice({
-                  id: noticeUuid || '',
-                  type: 'Withdraw',
-                  data: {
-                    tokenAmount: withdrawAmount,
-                  },
-                  status: 'Confirmed',
-                  scanUrl: getEtherScanTxUrl(txHash),
-                })
-              );
+                const withdrawInfo: TokenWithdrawInfo = {
+                  depositAmount: Web3.utils.toWei(
+                    Math.max(
+                      0,
+                      Number(withdrawAmount) - Number(myClaimableReward)
+                    ) + ''
+                  ),
+                  rewardAmount: Web3.utils.toWei(myClaimableReward),
+                  totalAmount: Web3.utils.toWei(withdrawAmount),
+                  txHash,
+                  receivedAddress: metaMaskAccount,
+                  operateTimestamp: dayjs().unix(),
+                  timeLeft: 0,
+                  explorerUrl: getEtherScanTxUrl(txHash),
+                  status: 4,
+                };
+                // addEthValidatorWithdrawRecords(withdrawInfo);
+              } else {
+                throw new Error(TRANSACTION_FAILED_MESSAGE);
+              }
             }
-          )
-        );
-
-        const withdrawInfo: TokenWithdrawInfo = {
-          depositAmount: Web3.utils.toWei(
-            Math.max(0, Number(withdrawAmount) - Number(myClaimableReward)) + ''
-          ),
-          rewardAmount: Web3.utils.toWei(myClaimableReward),
-          totalAmount: Web3.utils.toWei(withdrawAmount),
-          txHash,
-          receivedAddress: metaMaskAccount,
-          operateTimestamp: dayjs().unix(),
-          timeLeft: 0,
-          explorerUrl: getEtherScanTxUrl(txHash),
-          status: 4,
-        };
-        // addEthValidatorWithdrawRecords(withdrawInfo);
-      } else {
-        throw new Error(TRANSACTION_FAILED_MESSAGE);
-      }
+          },
+          onError: (error: any) => {
+            throw new Error(TRANSACTION_FAILED_MESSAGE);
+          },
+        }
+      );
     } catch (err: any) {
       {
         let displayMsg = err.message || TRANSACTION_FAILED_MESSAGE;
@@ -692,6 +768,7 @@ export const withdrawValidatorEth =
 
 export const addTrustNode =
   (
+    writeContractAsync: Function,
     trustNodeAddress: string,
     callback?: (success: boolean, result: any) => void
   ): AppThunk =>
@@ -702,27 +779,42 @@ export const addTrustNode =
         throw new Error('Please connect MetaMask');
       }
 
-      const web3 = createWeb3();
-      const contract = new web3.eth.Contract(
-        getNodeDepositContractAbi(),
-        getNodeDepositContract(),
+      const web3 = getEthWeb3();
+
+      await writeContractAsync(
         {
-          from: metaMaskAccount,
+          abi: getNodeDepositContractAbi(),
+          address: getNodeDepositContract() as `0x${string}`,
+          functionName: 'addTrustNode',
+          args: [trustNodeAddress],
+        },
+        {
+          onSuccess: (data: any) => {
+            if (data.Message == 'deny')
+              throw new Error(TRANSACTION_FAILED_MESSAGE);
+          },
+          onSettled: async (data: any, error: any) => {
+            if (error) {
+              console.error('Transaction settled with error:', error);
+            } else {
+              const result = await waitForTransactionReceipt(web3, data);
+              if (result.status) {
+                callback && callback(result.status, result);
+                dispatch(updateEthBalance());
+                if (result && result.status) {
+                  const txHash = result.transactionHash;
+                  console.log(txHash);
+                } else {
+                  throw new Error(TRANSACTION_FAILED_MESSAGE);
+                }
+              }
+            }
+          },
+          onError: (error: any) => {
+            throw new Error(TRANSACTION_FAILED_MESSAGE);
+          },
         }
       );
-
-      const result = await contract.methods
-        .addTrustNode(trustNodeAddress)
-        .send();
-
-      callback && callback(result.status, result);
-      dispatch(updateEthBalance());
-      if (result && result.status) {
-        const txHash = result.transactionHash;
-        console.log(txHash);
-      } else {
-        throw new Error(TRANSACTION_FAILED_MESSAGE);
-      }
     } catch (err: any) {
       {
         let displayMsg = err.message || TRANSACTION_FAILED_MESSAGE;
@@ -741,6 +833,7 @@ export const addTrustNode =
 
 export const removeTrustNode =
   (
+    writeContractAsync: Function,
     trustNodeAddress: string,
     callback?: (success: boolean, result: any) => void
   ): AppThunk =>
@@ -751,27 +844,42 @@ export const removeTrustNode =
         throw new Error('Please connect MetaMask');
       }
 
-      const web3 = createWeb3();
-      const contract = new web3.eth.Contract(
-        getNodeDepositContractAbi(),
-        getNodeDepositContract(),
+      const web3 = getEthWeb3();
+
+      await writeContractAsync(
         {
-          from: metaMaskAccount,
+          abi: getNodeDepositContractAbi(),
+          address: getNodeDepositContract() as `0x${string}`,
+          functionName: 'removeTrustNode',
+          args: [trustNodeAddress],
+        },
+        {
+          onSuccess: (data: any) => {
+            if (data.Message == 'deny')
+              throw new Error(TRANSACTION_FAILED_MESSAGE);
+          },
+          onSettled: async (data: any, error: any) => {
+            if (error) {
+              console.error('Transaction settled with error:', error);
+            } else {
+              const result = await waitForTransactionReceipt(web3, data);
+              if (result.status) {
+                callback && callback(result.status, result);
+                dispatch(updateEthBalance());
+                if (result && result.status) {
+                  const txHash = result.transactionHash;
+                  console.log(txHash);
+                } else {
+                  throw new Error(TRANSACTION_FAILED_MESSAGE);
+                }
+              }
+            }
+          },
+          onError: (error: any) => {
+            throw new Error(TRANSACTION_FAILED_MESSAGE);
+          },
         }
       );
-
-      const result = await contract.methods
-        .removeTrustNode(trustNodeAddress)
-        .send();
-
-      callback && callback(result.status, result);
-      dispatch(updateEthBalance());
-      if (result && result.status) {
-        const txHash = result.transactionHash;
-        console.log(txHash);
-      } else {
-        throw new Error(TRANSACTION_FAILED_MESSAGE);
-      }
     } catch (err: any) {
       {
         let displayMsg = err.message || TRANSACTION_FAILED_MESSAGE;
@@ -789,6 +897,7 @@ export const removeTrustNode =
 
 export const removeAddress =
   (
+    writeContractAsync: Function,
     voterAddress: string,
     callback?: (success: boolean, result: any) => void
   ): AppThunk =>
@@ -799,25 +908,42 @@ export const removeAddress =
         throw new Error('Please connect MetaMask');
       }
 
-      const web3 = createWeb3();
-      const contract = new web3.eth.Contract(
-        getNetworkProposalContractAbi(),
-        getNetworkProposalContract(),
+      const web3 = getEthWeb3();
+
+      await writeContractAsync(
         {
-          from: metaMaskAccount,
+          abi: getNetworkProposalContractAbi(),
+          address: getNetworkProposalContract() as `0x${string}`,
+          functionName: 'removeAddress',
+          args: [voterAddress],
+        },
+        {
+          onSuccess: (data: any) => {
+            if (data.Message == 'deny')
+              throw new Error(TRANSACTION_FAILED_MESSAGE);
+          },
+          onSettled: async (data: any, error: any) => {
+            if (error) {
+              console.error('Transaction settled with error:', error);
+            } else {
+              const result = await waitForTransactionReceipt(web3, data);
+              if (result.status) {
+                callback && callback(result.status, result);
+                dispatch(updateEthBalance());
+                if (result && result.status) {
+                  const txHash = result.transactionHash;
+                  console.log(txHash);
+                } else {
+                  throw new Error(TRANSACTION_FAILED_MESSAGE);
+                }
+              }
+            }
+          },
+          onError: (error: any) => {
+            throw new Error(TRANSACTION_FAILED_MESSAGE);
+          },
         }
       );
-
-      const result = await contract.methods.removeAddress(voterAddress).send();
-
-      callback && callback(result.status, result);
-      dispatch(updateEthBalance());
-      if (result && result.status) {
-        const txHash = result.transactionHash;
-        console.log(txHash);
-      } else {
-        throw new Error(TRANSACTION_FAILED_MESSAGE);
-      }
     } catch (err: any) {
       {
         let displayMsg = err.message || TRANSACTION_FAILED_MESSAGE;
@@ -835,6 +961,7 @@ export const removeAddress =
 
 export const addAddress =
   (
+    writeContractAsync: Function,
     voterAddress: string,
     callback?: (success: boolean, result: any) => void
   ): AppThunk =>
@@ -845,25 +972,42 @@ export const addAddress =
         throw new Error('Please connect MetaMask');
       }
 
-      const web3 = createWeb3();
-      const contract = new web3.eth.Contract(
-        getNetworkProposalContractAbi(),
-        getNetworkProposalContract(),
+      const web3 = getEthWeb3();
+
+      await writeContractAsync(
         {
-          from: metaMaskAccount,
+          abi: getNetworkProposalContractAbi(),
+          address: getNetworkProposalContract() as `0x${string}`,
+          functionName: 'addAddress',
+          args: [voterAddress],
+        },
+        {
+          onSuccess: (data: any) => {
+            if (data.Message == 'deny')
+              throw new Error(TRANSACTION_FAILED_MESSAGE);
+          },
+          onSettled: async (data: any, error: any) => {
+            if (error) {
+              console.error('Transaction settled with error:', error);
+            } else {
+              const result = await waitForTransactionReceipt(web3, data);
+              if (result.status) {
+                callback && callback(result.status, result);
+                dispatch(updateEthBalance());
+                if (result && result.status) {
+                  const txHash = result.transactionHash;
+                  console.log(txHash);
+                } else {
+                  throw new Error(TRANSACTION_FAILED_MESSAGE);
+                }
+              }
+            }
+          },
+          onError: (error: any) => {
+            throw new Error(TRANSACTION_FAILED_MESSAGE);
+          },
         }
       );
-
-      const result = await contract.methods.addAddress(voterAddress).send();
-
-      callback && callback(result.status, result);
-      dispatch(updateEthBalance());
-      if (result && result.status) {
-        const txHash = result.transactionHash;
-        console.log(txHash);
-      } else {
-        throw new Error(TRANSACTION_FAILED_MESSAGE);
-      }
     } catch (err: any) {
       {
         let displayMsg = err.message || TRANSACTION_FAILED_MESSAGE;
@@ -881,6 +1025,7 @@ export const addAddress =
 
 export const withDrawAdmin =
   (
+    writeContractAsync: Function,
     distributionAddress: string,
     callback?: (success: boolean, result: any) => void
   ): AppThunk =>
@@ -892,26 +1037,41 @@ export const withDrawAdmin =
       }
 
       const web3 = createWeb3();
-      const contract = new web3.eth.Contract(
-        getNetworkWithdrawContractAbi(),
-        getNetworkWithdrawContract(),
+
+      await writeContractAsync(
         {
-          from: metaMaskAccount,
+          abi: getNetworkWithdrawContractAbi(),
+          address: getNetworkWithdrawContract() as `0x${string}`,
+          functionName: 'platformClaim',
+          args: [distributionAddress],
+        },
+        {
+          onSuccess: (data: any) => {
+            if (data.Message == 'deny')
+              throw new Error(TRANSACTION_FAILED_MESSAGE);
+          },
+          onSettled: async (data: any, error: any) => {
+            if (error) {
+              console.error('Transaction settled with error:', error);
+            } else {
+              const result = await waitForTransactionReceipt(web3, data);
+              if (result.status) {
+                callback && callback(result.status, result);
+                dispatch(updateEthBalance());
+                if (result && result.status) {
+                  const txHash = result.transactionHash;
+                  console.log(txHash);
+                } else {
+                  throw new Error(TRANSACTION_FAILED_MESSAGE);
+                }
+              }
+            }
+          },
+          onError: (error: any) => {
+            throw new Error(TRANSACTION_FAILED_MESSAGE);
+          },
         }
       );
-
-      const result = await contract.methods
-        .platformClaim(distributionAddress)
-        .send();
-
-      callback && callback(result.status, result);
-      dispatch(updateEthBalance());
-      if (result && result.status) {
-        const txHash = result.transactionHash;
-        console.log(txHash);
-      } else {
-        throw new Error(TRANSACTION_FAILED_MESSAGE);
-      }
     } catch (err: any) {
       {
         let displayMsg = err.message || TRANSACTION_FAILED_MESSAGE;

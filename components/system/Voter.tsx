@@ -6,6 +6,7 @@ import { CustomButton } from 'components/common/CustomButton';
 import { useWalletAccount } from 'hooks/useWalletAccount';
 import { useAppDispatch } from 'hooks/common';
 import { addAddress, removeAddress } from 'redux/reducers/ValidatorSlice';
+import { useWriteContract } from 'wagmi';
 
 export default function Voter() {
   const dispatch = useAppDispatch();
@@ -13,7 +14,7 @@ export default function Voter() {
   const { voters, voteManagerAddress } = useNetworkProposalData();
   const { metaMaskAccount } = useWalletAccount();
   const [voterAddress, setVoterAddress] = React.useState('');
-
+  const { writeContractAsync } = useWriteContract();
   return (
     <div className='bg-color-bg2 border-[0.01rem] border-color-border1 rounded-[.3rem]'>
       <div className='h-[.7rem] flex items-center justify-between font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[.16rem] text-color-text2 px-[30px]'>
@@ -59,7 +60,7 @@ export default function Voter() {
               width='130px'
               disabled={metaMaskAccount !== voteManagerAddress}
               onClick={() => {
-                dispatch(addAddress(voterAddress));
+                dispatch(addAddress(writeContractAsync, voterAddress));
               }}
             >
               Add
@@ -70,7 +71,7 @@ export default function Voter() {
               width='130px'
               disabled={metaMaskAccount !== voteManagerAddress}
               onClick={() => {
-                dispatch(removeAddress(voterAddress));
+                dispatch(removeAddress(writeContractAsync, voterAddress));
               }}
             >
               Remove

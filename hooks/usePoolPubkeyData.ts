@@ -174,36 +174,6 @@ export function usePoolPubkeyData() {
     }
   }, []);
 
-  // const addTrustNode = async (value: string) => {
-  //   try {
-  //     await nodeDepositContract.methods
-  //       .addTrustNode(value)
-  //       .send({ from: metaMaskAccount })
-  //       .catch((err: any) => {
-  //         console.log({ err });
-  //       });
-  //     return true;
-  //   } catch (err: any) {
-  //     console.log({ err });
-  //     return false;
-  //   }
-  // };
-
-  // const removeTrustNode = async (value: string) => {
-  //   try {
-  //     await nodeDepositContract.methods
-  //       .removeTrustNode(value)
-  //       .send({ from: metaMaskAccount })
-  //       .catch((err: any) => {
-  //         console.log({ err });
-  //       });
-  //     return true;
-  //   } catch (err: any) {
-  //     console.log({ err });
-  //     return false;
-  //   }
-  // };
-
   useEffect(() => {
     updateMatchedValidators();
   }, [updateMatchedValidators]);
@@ -212,7 +182,5 @@ export function usePoolPubkeyData() {
     matchedValidators,
     trustNodePubkeyNumberLimit,
     nodes,
-    // addTrustNode,
-    // removeTrustNode,
   };
 }

@@ -40,7 +40,7 @@ import { getTokenName } from 'utils/configUtils';
 import { formatNumber } from 'utils/numberUtils';
 import { getEthWeb3 } from 'utils/web3Utils';
 import { parseEther } from 'viem';
-import { useConnect, useSwitchChain } from 'wagmi';
+import { useConnect, useSwitchChain, useWriteContract } from 'wagmi';
 
 const SoloDepositPage = () => {
   const router = useRouter();
@@ -61,7 +61,7 @@ const SoloDepositPage = () => {
 
   const { switchChain } = useSwitchChain();
   const { connectAsync, connectors } = useConnect();
-
+  const { writeContractAsync } = useWriteContract();
   const { validatorWithdrawalCredentials, ethTxLoading } = useAppSelector(
     (state: RootState) => {
       return {
@@ -389,6 +389,7 @@ const SoloDepositPage = () => {
 
                   dispatch(
                     handleEthValidatorDeposit(
+                      writeContractAsync,
                       'solo',
                       validatorKeys,
                       (success, result) => {
