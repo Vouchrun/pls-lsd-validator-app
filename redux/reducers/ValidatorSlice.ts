@@ -229,7 +229,7 @@ export const handleEthValidatorDeposit =
         })
       );
 
-      const web3 = createWeb3();
+      const web3 = getEthWeb3();
       let nodeDepositContract = new web3.eth.Contract(
         getNodeDepositContractAbi(),
         getNodeDepositContract(),
@@ -290,7 +290,7 @@ export const handleEthValidatorDeposit =
         depositDataRoots.push('0x' + validatorKey.deposit_data_root);
       });
 
-      let sendParams = {};
+      let sendParams: any = {};
       let solodepositAmount: any;
       if (type === 'solo') {
         const res = await nodeDepositContract.methods
@@ -332,7 +332,9 @@ export const handleEthValidatorDeposit =
           address: getNodeDepositContract() as `0x${string}`,
           functionName: 'deposit',
           args: [pubkeys, signatures, depositDataRoots],
-          ...sendParams,
+          value: formatScientificNumber(
+            solodepositAmount * validatorKeys.length
+          ),
         },
         {
           onSuccess: (data: any) => {
@@ -379,6 +381,7 @@ export const handleEthValidatorDeposit =
             }
           },
           onError: (error: any) => {
+            console.log(error);
             throw new Error(TRANSACTION_FAILED_MESSAGE);
           },
         }
