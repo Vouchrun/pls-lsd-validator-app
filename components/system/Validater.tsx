@@ -7,6 +7,7 @@ import { useWalletAccount } from 'hooks/useWalletAccount';
 import { useNetworkProposalData } from 'hooks/useNetworkProposalData';
 import { addTrustNode, removeTrustNode } from 'redux/reducers/ValidatorSlice';
 import { useAppDispatch } from 'hooks/common';
+import { useWriteContract } from 'wagmi';
 
 export default function Validater() {
   const dispatch = useAppDispatch();
@@ -15,7 +16,7 @@ export default function Validater() {
   const { metaMaskAccount } = useWalletAccount();
   const { admin } = useNetworkProposalData();
   const [voterAddress, setVoterAddress] = React.useState('');
-
+  const { writeContractAsync } = useWriteContract();
   return (
     <div className='bg-color-bg2 border-[0.01rem] border-color-border1 rounded-[.3rem]'>
       <div className='h-[.7rem] flex items-center justify-between font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[.16rem] text-color-text2 px-[30px]'>
@@ -61,7 +62,7 @@ export default function Validater() {
               width='130px'
               disabled={admin !== metaMaskAccount}
               onClick={() => {
-                dispatch(addTrustNode(voterAddress));
+                dispatch(addTrustNode(writeContractAsync, voterAddress));
               }}
             >
               Add
@@ -72,7 +73,7 @@ export default function Validater() {
               width='130px'
               disabled={admin !== metaMaskAccount}
               onClick={() => {
-                dispatch(removeTrustNode(voterAddress));
+                dispatch(removeTrustNode(writeContractAsync, voterAddress));
               }}
             >
               Remove

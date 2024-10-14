@@ -69,7 +69,6 @@ export function useUnstakingPoolData() {
         .catch((err: any) => {
           console.log({ err });
         });
-      console.log('nodeComissionFeeValue', nodeComissionFeeValue);
       setNodeCommissionValue(+Web3.utils.fromWei(nodeComissionFeeValue) * 100);
 
       const platformCommissionValue = await networkWithdrawContract.methods

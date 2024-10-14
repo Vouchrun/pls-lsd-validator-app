@@ -42,7 +42,7 @@ import { getTokenName } from 'utils/configUtils';
 import { formatNumber } from 'utils/numberUtils';
 import { getEthWeb3 } from 'utils/web3Utils';
 import { parseEther } from 'viem';
-import { useConnect, useSwitchChain } from 'wagmi';
+import { useConnect, useSwitchChain, useWriteContract } from 'wagmi';
 
 const BorderLinearProgress = styled(LinearProgress)(({ theme }) => ({
   height: 6,
@@ -73,7 +73,7 @@ const TrustDepositPage = () => {
   const { metaMaskAccount, metaMaskChainId } = useWalletAccount();
   const { switchChain } = useSwitchChain();
   const { connectAsync, connectors } = useConnect();
-
+  const { writeContractAsync } = useWriteContract();
   const { validatorWithdrawalCredentials, ethTxLoading } = useAppSelector(
     (state: RootState) => {
       return {
@@ -405,6 +405,7 @@ const TrustDepositPage = () => {
                   }
                   dispatch(
                     handleEthValidatorDeposit(
+                      writeContractAsync,
                       'trusted',
                       validatorKeys,
                       (success, result) => {
