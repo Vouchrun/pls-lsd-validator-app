@@ -27,6 +27,7 @@ export function usePoolPubkeyData() {
     isSettingNodes = true;
     setNodes([]);
     const uniqueNodes = new Set<string>();
+    const nodesToUpdate: string[] = [];
 
     for (let i = 0; i < nodesValue.length; i++) {
       const isTrusted = await nodeDepositContract.methods
@@ -38,10 +39,10 @@ export function usePoolPubkeyData() {
 
       if (isTrusted[0] == 2 && !uniqueNodes.has(nodesValue[i])) {
         uniqueNodes.add(nodesValue[i]);
-        setNodes((prev: any) => [...prev, nodesValue[i]]);
+        nodesToUpdate.push(nodesValue[i]);
       }
     }
-
+    setNodes(nodesToUpdate);
     isSettingNodes = false;
   }
 
