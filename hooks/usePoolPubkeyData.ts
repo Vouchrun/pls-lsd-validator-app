@@ -8,7 +8,7 @@ import { useWalletAccount } from './useWalletAccount';
 
 export function usePoolPubkeyData() {
   const [matchedValidators, setMatchedValidators] = useState<string>();
-  const [nodes, setNodes] = useState<string[]>([]);
+  const [nodes, setNodes] = useState<any>([]);
   const [trustNodePubkeyNumberLimit, setTrustNodePubkeyNumberLimit] =
     useState<string>();
 
@@ -38,7 +38,7 @@ export function usePoolPubkeyData() {
 
       if (isTrusted[0] == 2 && !uniqueNodes.has(nodesValue[i])) {
         uniqueNodes.add(nodesValue[i]);
-        setNodes((prev) => [...prev, nodesValue[i]]);
+        setNodes((prev: any) => [...prev, nodesValue[i]]);
       }
     }
 

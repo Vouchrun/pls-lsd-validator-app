@@ -46,19 +46,20 @@ import snackbarUtil from 'utils/snackbarUtils';
 import { getShortAddress } from 'utils/stringUtils';
 import { useAccount, useConnect } from 'wagmi';
 import { useNetworkProposalData } from 'hooks/useNetworkProposalData';
+import { usePoolPubkeyData } from 'hooks/usePoolPubkeyData';
 
 export const Navbar = () => {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { darkMode, unreadNoticeFlag } = useAppSlice();
-  const [auditExpand, setAuditExpand] = useState(false);
   const { voters } = useNetworkProposalData();
+  const { nodes } = usePoolPubkeyData();
   const { admin } = useNetworkProposalData();
-
   const [pageWidth, setPageWidth] = useState(
     document.documentElement.clientWidth
   );
-  const { metaMaskAccount } = useWalletAccount();
+
+  const { address: metaMaskAccount } = useAccount();
   const { noticeDrawerOpen, settingsDrawerOpen } = useAppSelector(
     (state: RootState) => {
       return {
@@ -67,10 +68,6 @@ export const Navbar = () => {
       };
     }
   );
-
-  const displayAddress = useMemo(() => {
-    return metaMaskAccount;
-  }, [metaMaskAccount]);
 
   const isGalleryHomePage = useMemo(() => {
     return router.pathname === '/gallery/[eco]';
@@ -90,12 +87,6 @@ export const Navbar = () => {
     const clientW = document.documentElement.clientWidth;
     setPageWidth(clientW);
   };
-
-  useEffect(() => {
-    if (admin === metaMaskAccount || metaMaskAccount?.indexOf(voters)) {
-      router.push('/');
-    }
-  }, [voters, admin]);
 
   const { isDisconnected, address } = useAccount();
 
@@ -154,7 +145,8 @@ export const Navbar = () => {
             style={{
               gridTemplateColumns:
                 admin === metaMaskAccount ||
-                voters.find((voter: string) => voter === metaMaskAccount)
+                voters.find((voter: string) => voter === metaMaskAccount) ||
+                nodes.find((node: string) => node === metaMaskAccount)
                   ? '25% 25% 25% 25%'
                   : '40% 28% 32%',
             }}
@@ -198,7 +190,8 @@ export const Navbar = () => {
               </div>
             </Link>
             {(admin === metaMaskAccount ||
-              voters.find((voter: string) => voter === metaMaskAccount)) && (
+              voters.find((voter: string) => voter === metaMaskAccount) ||
+              nodes.find((node: string) => node === metaMaskAccount)) && (
               <Link href={'/system'}>
                 <div
                   className={classNames(

@@ -8,10 +8,9 @@ import { useAppDispatch } from 'hooks/common';
 import { addAddress, removeAddress } from 'redux/reducers/ValidatorSlice';
 import { useWriteContract } from 'wagmi';
 
-export default function Voter() {
+export default function Voter({ voters, voteManagerAddress }: any) {
   const dispatch = useAppDispatch();
   const { darkMode } = useAppSlice();
-  const { voters, voteManagerAddress } = useNetworkProposalData();
   const { metaMaskAccount } = useWalletAccount();
   const [voterAddress, setVoterAddress] = React.useState('');
   const { writeContractAsync } = useWriteContract();

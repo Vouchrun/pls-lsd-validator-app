@@ -11,15 +11,34 @@ import VouchContracts from 'components/system/VouchContracts';
 import { robotoBold } from 'config/font';
 import { useAppSlice } from 'hooks/selector';
 import { useApr } from 'hooks/useApr';
+import { useNetworkProposalData } from 'hooks/useNetworkProposalData';
 import { usePoolData } from 'hooks/usePoolData';
+import { usePoolPubkeyData } from 'hooks/usePoolPubkeyData';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
+import { useEffect } from 'react';
 import { getLsdTokenName } from 'utils/configUtils';
 import { getLsdTokenIcon } from 'utils/iconUtils';
 import { formatNumber } from 'utils/numberUtils';
+import { useAccount } from 'wagmi';
 
 const SystemPage = () => {
   const { apr } = useApr();
+  const { voters, voteManagerAddress } = useNetworkProposalData();
+  const { nodes } = usePoolPubkeyData();
+  const { admin } = useNetworkProposalData();
+  const { address: metaMaskAccount } = useAccount();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (
+      admin !== metaMaskAccount &&
+      metaMaskAccount?.indexOf(voters) === -1 &&
+      metaMaskAccount?.indexOf(nodes) === -1
+    ) {
+      router.push('/');
+    }
+  }, [voters, admin, nodes]);
 
   return (
     <div>
@@ -76,10 +95,10 @@ const SystemPage = () => {
         </div>
         <div className='grid grid-cols-1 lg:grid-cols-2 gap-1 mt-1'>
           <div>
-            <Voter />
+            <Voter voters={voters} voteManagerAddress={voteManagerAddress} />
           </div>
           <div>
-            <Validater />
+            <Validater nodes={nodes} />
           </div>
         </div>
       </div>

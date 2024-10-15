@@ -1,7 +1,6 @@
 import React from 'react';
 import classNames from 'classnames';
 import { useAppSlice } from 'hooks/selector';
-import { usePoolPubkeyData } from 'hooks/usePoolPubkeyData';
 import { CustomButton } from 'components/common/CustomButton';
 import { useWalletAccount } from 'hooks/useWalletAccount';
 import { useNetworkProposalData } from 'hooks/useNetworkProposalData';
@@ -9,10 +8,9 @@ import { addTrustNode, removeTrustNode } from 'redux/reducers/ValidatorSlice';
 import { useAppDispatch } from 'hooks/common';
 import { useWriteContract } from 'wagmi';
 
-export default function Validater() {
+export default function Validater({ nodes }: any) {
   const dispatch = useAppDispatch();
   const { darkMode } = useAppSlice();
-  const { nodes } = usePoolPubkeyData();
   const { metaMaskAccount } = useWalletAccount();
   const { admin } = useNetworkProposalData();
   const [voterAddress, setVoterAddress] = React.useState('');
