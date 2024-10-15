@@ -27,7 +27,7 @@ const SystemPage = () => {
   const { voters, voteManagerAddress } = useNetworkProposalData();
   const { nodes } = usePoolPubkeyData();
   const { admin } = useNetworkProposalData();
-  const { address: metaMaskAccount } = useAccount();
+  const { address: metaMaskAccount, isConnected } = useAccount();
   const router = useRouter();
   const [showPage, setShowPage] = useState<null | boolean>(null);
 
@@ -49,7 +49,10 @@ const SystemPage = () => {
     if (admin && metaMaskAccount && nodes.length > 0) {
       checkConditions();
     }
-  }, [nodes, voters, admin, metaMaskAccount, router]);
+    if (!isConnected) {
+      router.push('/');
+    }
+  }, [nodes, voters, admin, metaMaskAccount, router, isConnected]);
 
   if (showPage === null) {
     return null; // Render nothing while the condition is being checked
