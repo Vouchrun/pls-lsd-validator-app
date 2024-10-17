@@ -30,7 +30,11 @@
     },
     "feePoolContract": {
       "address": "0x4C14073Fa77e3028cDdC60bC593A8381119e9921"
-    }
+    },
+    "treasuryAddresses": [
+      "0x9A405F3fc036D3b687Cf4B311A46ef36D2fE91c1",
+      "0x6F4D6aC3dC79B14C1301F7BD396FC8c901C48c45"
+    ]
   },
   "lsdAppUrl": "https://app.vouch.run/"
 }

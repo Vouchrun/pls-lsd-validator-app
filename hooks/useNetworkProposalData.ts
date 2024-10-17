@@ -1,6 +1,7 @@
 import {
   getLsdEthTokenContract,
   getNetworkProposalContract,
+  getTreasuryAddresses,
 } from 'config/contract';
 import {
   getLsdEthTokenContractAbi,
@@ -17,7 +18,7 @@ export function useNetworkProposalData() {
   const [admin, setAdmin] = useState<string>();
   const [voteManagerAddress, setVoteManagerAddress] = useState<string>();
   const [treasuryBalance, setTreasuryBalance] = useState<number>(0);
-
+  const treasuryAddresses = getTreasuryAddresses();
   const web3 = getEthWeb3();
   const { metaMaskAccount } = useWalletAccount();
 
@@ -63,10 +64,13 @@ export function useNetworkProposalData() {
         });
       setVoteManagerAddress(voterManagerAddressValue);
 
-      const treasuryBalanceValue = await web3.eth.getBalance(
-        voterManagerAddressValue
-      );
-      setTreasuryBalance(+web3.utils.fromWei(treasuryBalanceValue));
+      setTreasuryBalance(0);
+      treasuryAddresses.forEach(async (address: string) => {
+        const treasuryBalanceValue = await web3.eth.getBalance(address);
+        setTreasuryBalance(
+          (prev) => prev + +web3.utils.fromWei(treasuryBalanceValue)
+        );
+      });
     } catch (err: any) {
       console.log({ err });
     }

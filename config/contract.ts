@@ -71,3 +71,13 @@ export function getFeePoolContract() {
   }
   return appProdConfig.contracts.feePoolContract.address;
 }
+
+/**
+ * get treasury addresses
+ */
+export function getTreasuryAddresses() {
+  if (isDev()) {
+    return appDevConfig.contracts.treasuryAddresses;
+  }
+  return appProdConfig.contracts.treasuryAddresses;
+}
