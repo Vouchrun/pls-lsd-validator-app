@@ -2,7 +2,12 @@
   "chain": {
     "id": 943,
     "name": "PulseChain Testnet v4",
-    "networkName": "pulsechain-testnet-v4"
+    "networkName": "pulsechain-testnet-v4",
+    "currency": {
+      "name": "Pulse",
+      "symbol": "tPLS",
+      "decimals": 18
+    }
   },
   "rpc": "https://rpc.v4.testnet.pulsechain.com",
   "beaconHost": "https://rpc-testnet-pulsechain.g4mm4.io/beacon-api",

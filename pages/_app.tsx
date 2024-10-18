@@ -15,8 +15,10 @@ import { MaterialDesignContent } from 'notistack';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { CaipNetwork, createAppKit } from '@reown/appkit/react';
 
-import { WagmiProvider } from 'wagmi';
+import { CreateConnectorFn, WagmiProvider } from 'wagmi';
+import { safe } from 'wagmi/connectors';
 import { WagmiAdapter } from '@reown/appkit-adapter-wagmi';
+import { getNetworkInformation } from 'config/contract';
 
 export type NextPageWithLayout<P = {}, IP = P> = NextPage<P, IP> & {
   getLayout?: (page: ReactElement) => ReactNode;
@@ -67,25 +69,25 @@ const metadata = {
   icons: ['https://val.vouch.run/_next/static/media/appIconDark.3c9ae27e.svg'],
 };
 
-const networks = [
-  {
-    id: 'eip155:943',
-    chainId: 943,
-    chainNamespace: 'eip155',
-    name: 'Pulsechain Testnet V4',
-    currency: 'tPLS',
-    explorerUrl: 'https://otter-testnet-pulsechain.g4mm4.io',
-    rpcUrl: 'https://rpc-testnet-pulsechain.g4mm4.io',
-    network: 'testnet',
-    imageUrl: 'https://avatars.githubusercontent.com/u/179229932',
-  } as CaipNetwork,
-];
+const networks = [getNetworkInformation() as CaipNetwork];
+
+// create the connectors (delete the ones you don't need)
+const connectors: CreateConnectorFn[] = [];
+
+connectors.push(
+  safe({
+    allowedDomains: [/testnet.pulsechainsafe.com$/],
+    debug: true,
+    shimDisconnect: true,
+  })
+);
 
 // 3. Create Wagmi Adapter
 const wagmiAdapter = new WagmiAdapter({
   ssr: true,
   networks,
   projectId,
+  connectors,
 });
 
 // 4. Create modal

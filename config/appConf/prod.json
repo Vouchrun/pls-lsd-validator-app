@@ -1,13 +1,18 @@
 {
   "chain": {
-    "id": 943,
-    "name": "PulseChain Testnet v4",
-    "networkName": "pulsechain-testnet-v4"
+    "id": 369,
+    "name": "PulseChain Mainnet",
+    "networkName": "pulsechain",
+    "currency": {
+      "name": "Pulse",
+      "symbol": "PLS",
+      "decimals": 18
+    }
   },
-  "rpc": "https://rpc.v4.testnet.pulsechain.com",
-  "beaconHost": "https://rpc-testnet-pulsechain.g4mm4.io/beacon-api",
-  "explorer": "https://scan.v4.testnet.pulsechain.com/#",
-  "validatorExplorer": "https://beacon.v4.testnet.pulsechain.com/",
+  "rpc": "https://rpc.pulsechain.com",
+  "beaconHost": "https://rpc-pulsechain.g4mm4.io/beacon-api",
+  "explorer": "https://otter.PulseChain.com/#",
+  "validatorExplorer": "https://beacon.pulsechain.com/",
   "blockSeconds": 10,
   "contracts": {
     "lsdTokenContract": {

@@ -81,3 +81,26 @@ export function getTreasuryAddresses() {
   }
   return appProdConfig.contracts.treasuryAddresses;
 }
+
+export function getNetworkInformation() {
+  if (isDev()) {
+    return {
+      id: 'eip155:' + appDevConfig.chain.id,
+      chainId: appDevConfig.chain.id,
+      chainNamespace: 'eip155',
+      name: appDevConfig.chain.name,
+      currency: appDevConfig.chain.currency.symbol,
+      explorerUrl: appDevConfig.explorer,
+      rpcUrl: appDevConfig.rpc,
+    };
+  }
+  return {
+    id: 'eip155:' + appProdConfig.chain.id,
+    chainId: appProdConfig.chain.id,
+    chainNamespace: 'eip155',
+    name: appProdConfig.chain.name,
+    currency: appProdConfig.chain.currency.symbol,
+    explorerUrl: appProdConfig.explorer,
+    rpcUrl: appProdConfig.rpc,
+  };
+}
