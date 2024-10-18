@@ -12,9 +12,11 @@ import { SnackbarUtilsConfigurator } from 'utils/snackbarUtils';
 import 'styles/globals.css';
 
 import { MaterialDesignContent } from 'notistack';
-import { WagmiConfig } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { wagmiConfig } from 'config/wagmi';
+import { CaipNetwork, createAppKit } from '@reown/appkit/react';
+
+import { WagmiProvider } from 'wagmi';
+import { WagmiAdapter } from '@reown/appkit-adapter-wagmi';
 
 export type NextPageWithLayout<P = {}, IP = P> = NextPage<P, IP> & {
   getLayout?: (page: ReactElement) => ReactNode;
@@ -53,6 +55,57 @@ function MyApp({ Component, pageProps }: AppPropsWithLayout) {
 export default MyApp;
 
 const queryClient = new QueryClient();
+
+// 1. Get projectId from https://cloud.reown.com
+const projectId = '773e240347e5c760d1cc49e512d0d86c';
+
+// 2. Create a metadata object - optional
+const metadata = {
+  name: 'Vouch',
+  description: 'Vouch Validator App',
+  url: 'https://val.vouch.run', // origin must match your domain & subdomain
+  icons: ['https://val.vouch.run/_next/static/media/appIconDark.3c9ae27e.svg'],
+};
+
+const networks = [
+  {
+    id: 'eip155:943',
+    chainId: 943,
+    chainNamespace: 'eip155',
+    name: 'Pulsechain Testnet V4',
+    currency: 'tPLS',
+    explorerUrl: 'https://otter-testnet-pulsechain.g4mm4.io',
+    rpcUrl: 'https://rpc-testnet-pulsechain.g4mm4.io',
+    network: 'testnet',
+    imageUrl: 'https://avatars.githubusercontent.com/u/179229932',
+  } as CaipNetwork,
+];
+
+// 3. Create Wagmi Adapter
+const wagmiAdapter = new WagmiAdapter({
+  ssr: true,
+  networks,
+  projectId,
+});
+
+// 4. Create modal
+createAppKit({
+  adapters: [wagmiAdapter],
+  networks: networks,
+  metadata,
+  projectId,
+  featuredWalletIds: [
+    'd69877e50c4aa2360d723065716609f1e2698e45fc210438da8c325b65922735',
+  ],
+  features: {
+    analytics: true, // Optional - defaults to your Cloud configuration
+    email: false, // default to true
+    socials: [],
+    emailShowWallets: false, // default to true
+    swaps: false,
+    onramp: false,
+  },
+});
 
 const MyAppWrapper = ({ Component, pageProps }: any) => {
   // Use the layout defined at the page level, if available
@@ -99,12 +152,12 @@ const MyAppWrapper = ({ Component, pageProps }: any) => {
           warning: StyledMaterialDesignContent,
         }}
       >
-        <WagmiConfig config={wagmiConfig}>
+        <WagmiProvider config={wagmiAdapter.wagmiConfig}>
           <QueryClientProvider client={queryClient}>
             <SnackbarUtilsConfigurator />
             <Layout>{getLayout(<Component {...pageProps} />)}</Layout>
           </QueryClientProvider>
-        </WagmiConfig>
+        </WagmiProvider>
       </SnackbarProvider>
     </ThemeProvider>
   );

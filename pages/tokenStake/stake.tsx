@@ -36,7 +36,7 @@ import { getTokenName } from 'utils/configUtils';
 import snackbarUtil from 'utils/snackbarUtils';
 import { getShortAddress } from 'utils/stringUtils';
 import { parseEther } from 'viem';
-import { useConnect, useSwitchNetwork } from 'wagmi';
+import { useConnect, useSwitchChain, useWriteContract } from 'wagmi';
 
 const StakePage = () => {
   const router = useRouter();
@@ -47,7 +47,8 @@ const StakePage = () => {
   const [validatorKeys, setValidatorKeys] = useState<any[]>([]);
 
   const { metaMaskAccount, metaMaskChainId } = useWalletAccount();
-  const { switchNetworkAsync } = useSwitchNetwork();
+  const { writeContractAsync } = useWriteContract();
+  const { switchChain } = useSwitchChain();
   const { connectAsync, connectors } = useConnect();
   const { soloDepositAmountInWei, soloDepositAmount } = useSoloDepositAmount();
   const { unmatchedEth } = useUnmatchedToken();
@@ -426,8 +427,7 @@ const StakePage = () => {
                   }
                   onClick={async () => {
                     if (isWrongMetaMaskNetwork) {
-                      await (switchNetworkAsync &&
-                        switchNetworkAsync(getEthereumChainId()));
+                      await switchChain({ chainId: getEthereumChainId() });
                       return;
                     } else if (!metaMaskAccount) {
                       const metamaskConnector = connectors.find(
@@ -484,6 +484,7 @@ const StakePage = () => {
 
                     dispatch(
                       handleEthValidatorStake(
+                        writeContractAsync,
                         validatorKeys,
                         type as 'solo' | 'trusted',
                         (success, result) => {

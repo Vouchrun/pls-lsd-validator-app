@@ -6,7 +6,7 @@ import { AbiItem } from 'web3-utils';
 declare const window: any;
 
 export function createWeb3(provider?: any) {
-  return new Web3(provider || Web3.givenProvider);
+  return new Web3(provider || (window.ethereum as any) || Web3.givenProvider);
 }
 
 let ethWeb3: Web3 | undefined = undefined;

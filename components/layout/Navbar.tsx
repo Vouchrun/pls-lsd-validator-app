@@ -36,6 +36,7 @@ import {
 } from 'redux/reducers/AppSlice';
 import {
   disconnectWallet,
+  setMetaMaskAccount,
   setMetaMaskDisconnected,
 } from 'redux/reducers/WalletSlice';
 import { RootState } from 'redux/store';
@@ -43,21 +44,22 @@ import { getLsdTokenName } from 'utils/configUtils';
 import { getChainIcon } from 'utils/iconUtils';
 import snackbarUtil from 'utils/snackbarUtils';
 import { getShortAddress } from 'utils/stringUtils';
-import { useConnect } from 'wagmi';
+import { useAccount, useConnect } from 'wagmi';
 import { useNetworkProposalData } from 'hooks/useNetworkProposalData';
+import { usePoolPubkeyData } from 'hooks/usePoolPubkeyData';
 
 export const Navbar = () => {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { darkMode, unreadNoticeFlag } = useAppSlice();
-  const [auditExpand, setAuditExpand] = useState(false);
   const { voters } = useNetworkProposalData();
+  const { nodes } = usePoolPubkeyData();
   const { admin } = useNetworkProposalData();
-
   const [pageWidth, setPageWidth] = useState(
     document.documentElement.clientWidth
   );
-  const { metaMaskAccount } = useWalletAccount();
+
+  const { address: metaMaskAccount } = useAccount();
   const { noticeDrawerOpen, settingsDrawerOpen } = useAppSelector(
     (state: RootState) => {
       return {
@@ -66,10 +68,6 @@ export const Navbar = () => {
       };
     }
   );
-
-  const displayAddress = useMemo(() => {
-    return metaMaskAccount;
-  }, [metaMaskAccount]);
 
   const isGalleryHomePage = useMemo(() => {
     return router.pathname === '/gallery/[eco]';
@@ -90,11 +88,19 @@ export const Navbar = () => {
     setPageWidth(clientW);
   };
 
-  // useEffect(() => {
-  //   if (admin === metaMaskAccount || metaMaskAccount?.indexOf(voters)) {
-  //     router.push('/');
-  //   }
-  // }, [voters, admin]);
+  const { isDisconnected, address } = useAccount();
+
+  useEffect(() => {
+    if (isDisconnected) {
+      dispatch(setMetaMaskDisconnected(true));
+      dispatch(setMetaMaskAccount(undefined));
+    } else {
+      if (address) {
+        dispatch(setMetaMaskAccount(address));
+        dispatch(setMetaMaskDisconnected(false));
+      }
+    }
+  }, [isDisconnected, address]);
 
   useEffect(() => {
     window.addEventListener('resize', resizeListener);
@@ -139,7 +145,8 @@ export const Navbar = () => {
             style={{
               gridTemplateColumns:
                 admin === metaMaskAccount ||
-                voters.find((voter: string) => voter === metaMaskAccount)
+                voters.find((voter: string) => voter === metaMaskAccount) ||
+                nodes.find((node: string) => node === metaMaskAccount)
                   ? '25% 25% 25% 25%'
                   : '40% 28% 32%',
             }}
@@ -183,7 +190,8 @@ export const Navbar = () => {
               </div>
             </Link>
             {(admin === metaMaskAccount ||
-              voters.find((voter: string) => voter === metaMaskAccount)) && (
+              voters.find((voter: string) => voter === metaMaskAccount) ||
+              nodes.find((node: string) => node === metaMaskAccount)) && (
               <Link href={'/system'}>
                 <div
                   className={classNames(
@@ -212,11 +220,12 @@ export const Navbar = () => {
               isGalleryHomePage ? 'hidden' : ''
             )}
           >
-            {displayAddress ? (
+            {/* {displayAddress ? (
               <UserInfo auditExpand={auditExpand} />
             ) : (
-              <ConnectButton />
-            )}
+              <w3m-button />
+            )} */}
+            <w3m-button />
           </div>
 
           <div
@@ -482,16 +491,17 @@ const ConnectButton = () => {
   };
 
   return (
-    <CustomButton
-      type='small'
-      height='.42rem'
-      onClick={() => {
-        clickConnectWallet();
-      }}
-      // textColor={darkMode ? "#E8EFFD" : ""}
-    >
-      Connect Wallet
-    </CustomButton>
+    // <CustomButton
+    //   type='small'
+    //   height='.42rem'
+    //   onClick={() => {
+    //     clickConnectWallet();
+    //   }}
+    //   // textColor={darkMode ? "#E8EFFD" : ""}
+    // >
+    //   Connect Wallet
+    // </CustomButton>
+    <w3m-button />
   );
 };
 

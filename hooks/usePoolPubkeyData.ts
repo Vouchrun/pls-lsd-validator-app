@@ -8,7 +8,7 @@ import { useWalletAccount } from './useWalletAccount';
 
 export function usePoolPubkeyData() {
   const [matchedValidators, setMatchedValidators] = useState<string>();
-  const [nodes, setNodes] = useState<string[]>([]);
+  const [nodes, setNodes] = useState<any>([]);
   const [trustNodePubkeyNumberLimit, setTrustNodePubkeyNumberLimit] =
     useState<string>();
 
@@ -27,6 +27,7 @@ export function usePoolPubkeyData() {
     isSettingNodes = true;
     setNodes([]);
     const uniqueNodes = new Set<string>();
+    const nodesToUpdate: string[] = [];
 
     for (let i = 0; i < nodesValue.length; i++) {
       const isTrusted = await nodeDepositContract.methods
@@ -38,10 +39,10 @@ export function usePoolPubkeyData() {
 
       if (isTrusted[0] == 2 && !uniqueNodes.has(nodesValue[i])) {
         uniqueNodes.add(nodesValue[i]);
-        setNodes((prev) => [...prev, nodesValue[i]]);
+        nodesToUpdate.push(nodesValue[i]);
       }
     }
-
+    setNodes(nodesToUpdate);
     isSettingNodes = false;
   }
 
@@ -174,36 +175,6 @@ export function usePoolPubkeyData() {
     }
   }, []);
 
-  // const addTrustNode = async (value: string) => {
-  //   try {
-  //     await nodeDepositContract.methods
-  //       .addTrustNode(value)
-  //       .send({ from: metaMaskAccount })
-  //       .catch((err: any) => {
-  //         console.log({ err });
-  //       });
-  //     return true;
-  //   } catch (err: any) {
-  //     console.log({ err });
-  //     return false;
-  //   }
-  // };
-
-  // const removeTrustNode = async (value: string) => {
-  //   try {
-  //     await nodeDepositContract.methods
-  //       .removeTrustNode(value)
-  //       .send({ from: metaMaskAccount })
-  //       .catch((err: any) => {
-  //         console.log({ err });
-  //       });
-  //     return true;
-  //   } catch (err: any) {
-  //     console.log({ err });
-  //     return false;
-  //   }
-  // };
-
   useEffect(() => {
     updateMatchedValidators();
   }, [updateMatchedValidators]);
@@ -212,7 +183,5 @@ export function usePoolPubkeyData() {
     matchedValidators,
     trustNodePubkeyNumberLimit,
     nodes,
-    // addTrustNode,
-    // removeTrustNode,
   };
 }

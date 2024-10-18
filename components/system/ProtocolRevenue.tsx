@@ -9,6 +9,7 @@ import { useWalletAccount } from 'hooks/useWalletAccount';
 import millify from 'millify';
 import { useAppDispatch } from 'hooks/common';
 import { withDrawAdmin } from 'redux/reducers/ValidatorSlice';
+import { useWriteContract } from 'wagmi';
 
 export default function ProtocolRevenue() {
   const dispatch = useAppDispatch();
@@ -20,7 +21,7 @@ export default function ProtocolRevenue() {
   } = useUnstakingPoolData();
   const { treasuryBalance, admin } = useNetworkProposalData();
   const [distributionAddress, setDistributionAddress] = React.useState('');
-
+  const { writeContractAsync } = useWriteContract();
   const { metaMaskAccount } = useWalletAccount();
 
   return (
@@ -121,7 +122,7 @@ export default function ProtocolRevenue() {
             height='.42rem'
             disabled={admin !== metaMaskAccount}
             onClick={() => {
-              dispatch(withDrawAdmin(distributionAddress));
+              dispatch(withDrawAdmin(writeContractAsync, distributionAddress));
             }}
           >
             Distribute Commissions

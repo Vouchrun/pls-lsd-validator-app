@@ -11,15 +11,52 @@ import VouchContracts from 'components/system/VouchContracts';
 import { robotoBold } from 'config/font';
 import { useAppSlice } from 'hooks/selector';
 import { useApr } from 'hooks/useApr';
+import { useNetworkProposalData } from 'hooks/useNetworkProposalData';
 import { usePoolData } from 'hooks/usePoolData';
+import { usePoolPubkeyData } from 'hooks/usePoolPubkeyData';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
+import { useEffect, useState } from 'react';
 import { getLsdTokenName } from 'utils/configUtils';
 import { getLsdTokenIcon } from 'utils/iconUtils';
 import { formatNumber } from 'utils/numberUtils';
+import { useAccount } from 'wagmi';
 
 const SystemPage = () => {
   const { apr } = useApr();
+  const { voters, voteManagerAddress } = useNetworkProposalData();
+  const { nodes } = usePoolPubkeyData();
+  const { admin } = useNetworkProposalData();
+  const { address: metaMaskAccount, isConnected } = useAccount();
+  const router = useRouter();
+  const [showPage, setShowPage] = useState<null | boolean>(null);
+
+  useEffect(() => {
+    // Check the conditions before rendering the page
+
+    const checkConditions = async () => {
+      if (
+        admin === metaMaskAccount || // Allow if the user is the admin
+        nodes.some((node: any) => metaMaskAccount === node) || // Allow if the user is in the nodes list
+        voters.some((voter: any) => metaMaskAccount === voter) // Allow if the user is a voter
+      ) {
+        setShowPage(true); // If condition passes, allow rendering the page
+      } else {
+        await router.push('/'); // Redirect if the condition fails
+      }
+    };
+
+    if (admin && metaMaskAccount && nodes.length > 0) {
+      checkConditions();
+    }
+    if (!isConnected) {
+      router.push('/');
+    }
+  }, [nodes, voters, admin, metaMaskAccount, router, isConnected]);
+
+  if (showPage === null) {
+    return null; // Render nothing while the condition is being checked
+  }
 
   return (
     <div>
@@ -76,10 +113,10 @@ const SystemPage = () => {
         </div>
         <div className='grid grid-cols-1 lg:grid-cols-2 gap-1 mt-1'>
           <div>
-            <Voter />
+            <Voter voters={voters} voteManagerAddress={voteManagerAddress} />
           </div>
           <div>
-            <Validater />
+            <Validater nodes={nodes} />
           </div>
         </div>
       </div>

@@ -14,6 +14,7 @@ import { openLink } from 'utils/commonUtils';
 import { getLsdTokenName, getTokenName } from 'utils/configUtils';
 import { getLsdTokenIcon } from 'utils/iconUtils';
 import { formatNumber } from 'utils/numberUtils';
+import { useWriteContract } from 'wagmi';
 
 export const MyDataAssets = () => {
   const dispatch = useAppDispatch();
@@ -27,7 +28,7 @@ export const MyDataAssets = () => {
     mySharePercentage,
   } = useMyData();
   const [claimRewardModalVisible, setClaimRewardModalVisible] = useState(false);
-
+  const { writeContractAsync } = useWriteContract();
   const { withdrawLoading, claimRewardsLoading } = useAppSelector(
     (state: RootState) => {
       return {
@@ -156,6 +157,7 @@ export const MyDataAssets = () => {
               onClick={() => {
                 dispatch(
                   withdrawValidatorEth(
+                    writeContractAsync,
                     ipfsMyRewardInfo,
                     availableExitDeposit || '0',
                     myRewardTokenAmount || '0',
