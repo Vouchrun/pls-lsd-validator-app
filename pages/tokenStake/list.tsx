@@ -47,12 +47,12 @@ const TokenStakeListPage = () => {
           >
             <FaqItem text='What are the factors that affect the staking rewards?'>
               <div>
-                Staking rewards in the StaFi protocol are influenced by various
+                Staking rewards in the Vouch protocol are influenced by various
                 factors including the total amount of native tokens staked and
                 redeemed, the staking rewards earned, slash occurrences,
                 penalties, and the commission ratio. Slashing events, caused by
                 disconnection or malicious behavior of validator nodes, could
-                potentially reduce rewards; however, StaFi mitigates this risk
+                potentially reduce rewards; however, Vouch mitigates this risk
                 by diversifying the staking funds across multiple validators
                 with clean records and requiring them to provide additional
                 deposits as collaterals. The staking reward claim status and the
@@ -67,17 +67,17 @@ const TokenStakeListPage = () => {
 
               <a
                 className='block mt-faqGap text-color-link'
-                href='https://docs.stafi.io/rtoken/#rtoken-exchange-rate'
+                href='https://vouch.run/docs/introduction/vPLS_Token.html'
                 target='_blank'
                 rel='noreferrer'
               >
-                https://docs.stafi.io/rtoken/#rtoken-exchange-rate
+                https://vouch.run/docs/introduction/vPLS_Token.html
               </a>
             </FaqItem>
 
             <FaqItem text='What are the commissions and fees associated with staking ETH?'>
               Staking Reward Commission: 10% of your staking reward. 5% will be
-              allocated to the StaFi DAO, 5% will be allocated to validators.
+              allocated to the Vouch DAO, 5% will be allocated to validator Nodes (Operators).
             </FaqItem>
           </div>
         </div>

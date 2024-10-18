@@ -1,6 +1,6 @@
-# eth-lsd-validator-app
+# pls-lsd-validator-app
 
-ETH LSD Validator App is a user interface where node operators can participate in as validators. As a convention in web3 all API users interact with are directly from the RPC configured in wallet, so the app is a pure DApp.
+PLS LSD Validator App is a user interface where node operators can participate in as validators. As a convention in web3 all API users interact with are directly from the RPC configured in wallet, so the app is a pure DApp.
 
 ## Setup Node.js env
 
@@ -27,4 +27,4 @@ Run `yarn build` or `yarn build:dev` to build your app, the static files will be
 
 ## Other resources
 
-You can find more details here: [lsaas-docs](https://lsaas-docs.stafi.io/docs/developethlsd/ethlsd_validator_app.html)
+You can find more details here: [Vouch-docs](https://vouch.run/)

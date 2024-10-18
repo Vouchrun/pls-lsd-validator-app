@@ -4,7 +4,7 @@
   "token": {
     "tokenName": "PLS",
     "lsdTokenName": "vPLS",
-    "lsdTokenIconUri": "https://cdn.stafi.io/rtoken/logo/rPLS.png",
+    "lsdTokenIconUri": "https://vouch.run/downloads/branding/vPLS_trans.svg",
     "tokenIcon": "/images/token/PLS.svg",
     "lsdTokenIcon": "/images/token/vPLS_trans.svg"
   },
@@ -27,21 +27,21 @@
         },
         {
           "type": "link",
-          "content": "https://docs.stafi.io/rtoken/#rtoken-exchange-rate\n",
-          "link": "https://docs.stafi.io/rtoken/#rtoken-exchange-rate"
+          "content": "https://vouch.run/docs/introduction/vPLS_Token.html\n",
+          "link": "https://vouch.run/docs/introduction/vPLS_Token.html"
         }
       ]
     },
     {
-      "title": "How much time is needed for ETH withdrawals?",
+      "title": "How much time is needed for PLS withdrawals?",
       "contents": [
         {
           "type": "text",
-          "content": "If the unstaking pool's ETH balance exceeds your withdrawal amount, you will instantly receive your ETH upon transaction approval.\n"
+          "content": "If the unstaking pool's PLS balance exceeds your withdrawal amount, you will instantly receive your PLS upon transaction approval.\n"
         },
         {
           "type": "text",
-          "content": "However, if the unstaking pool's ETH balance is less than your withdrawal amount, the withdrawal process will take 1-5 days. After this period, you can claim your ETH using the withdraw function.\n"
+          "content": "However, if the unstaking pool's PLS balance is less than your withdrawal amount, the withdrawal process will take 1-5 days. After this period, you can claim your PLS using the withdraw function.\n"
         }
       ]
     },
@@ -54,8 +54,8 @@
         },
         {
           "type": "link",
-          "content": "https://docs.stafi.io/rtoken/#rtoken-exchange-rate\n",
-          "link": "https://docs.stafi.io/rtoken/#rtoken-exchange-rate"
+          "content": "https://vouch.run/docs/introduction/vPLS_Token.html\n",
+          "link": "https://vouch.run/docs/introduction/vPLS_Token.html"
         }
       ]
     }
@@ -70,12 +70,12 @@
       "link": "https://vouch.run/"
     },
     {
-      "name": "DAO Forum",
-      "link": "https://vouch.run/"
+      "name": "DAO Forum (soon)",
+      "link": "https://vouch.run/" 
     },
     {
-      "name": "Dune Dashboard",
-      "link": "https://vouch.run/"
+      "name": "User App",
+      "link": "https://app.vouch.run/" 
     }
   ],
   "contactList": [
