@@ -9,7 +9,7 @@
     "lsdTokenIcon": "/images/token/vPLS_trans.svg"
   },
   "supportRestApi": true,
-  "apr": 8.1,
+  "apr": 0,
   "validatorTotalDepositAmount": 32000000,
   "trustValidatorDepositAmount": 1000000,
   "detailedInfo": {},
@@ -71,11 +71,11 @@
     },
     {
       "name": "DAO Forum (soon)",
-      "link": "https://vouch.run/" 
+      "link": "https://vouch.run/"
     },
     {
       "name": "User App",
-      "link": "https://app.vouch.run/" 
+      "link": "https://app.vouch.run/"
     }
   ],
   "contactList": [
