@@ -11,7 +11,7 @@
   },
   "rpc": "https://rpc.pulsechain.com",
   "beaconHost": "https://rpc-pulsechain.g4mm4.io/beacon-api",
-  "explorer": "https://otter.PulseChain.com/#",
+  "explorer": "https://scan.mypinata.cloud/ipfs/bafybeih3olry3is4e4lzm7rus5l3h6zrphcal5a7ayfkhzm5oivjro2cp4/#",
   "validatorExplorer": "https://beacon.pulsechain.com/",
   "blockSeconds": 10,
   "contracts": {
