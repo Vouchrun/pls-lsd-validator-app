@@ -1,19 +1,20 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { AppThunk } from "redux/store";
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { AppThunk } from 'redux/store';
 import {
   decodeBalancesUpdatedLog,
   getErc20AssetBalance,
   getEthWeb3,
-} from "utils/web3Utils";
+} from 'utils/web3Utils';
 import {
   getLsdEthTokenContract,
   getNetworkBalanceContract,
-} from "config/contract";
-import { getDefaultApr } from "utils/configUtils";
+} from 'config/contract';
+import { getDefaultApr } from 'utils/configUtils';
 import {
   getLsdEthTokenContractAbi,
   getNetworkBalanceContractAbi,
-} from "config/contractAbi";
+} from 'config/contractAbi';
+import { getBlockSeconds } from 'config/env';
 
 export interface LsdEthState {
   balance: string | undefined; // balance of lsdETH
@@ -30,7 +31,7 @@ const initialState: LsdEthState = {
 };
 
 export const lsdEthSlice = createSlice({
-  name: "lsdEth",
+  name: 'lsdEth',
   initialState,
   reducers: {
     setBalance: (
@@ -86,7 +87,7 @@ export const updateLsdEthBalance =
  */
 export const updateLsdEthRate = (): AppThunk => async (dispatch, getState) => {
   try {
-    let newRate = "--";
+    let newRate = '--';
 
     const web3 = getEthWeb3();
     let contract = new web3.eth.Contract(
@@ -94,7 +95,7 @@ export const updateLsdEthRate = (): AppThunk => async (dispatch, getState) => {
       getLsdEthTokenContract()
     );
     const result = await contract.methods.getRate().call();
-    newRate = web3.utils.fromWei(result + "", "ether");
+    newRate = web3.utils.fromWei(result + '', 'ether');
 
     dispatch(setRate(newRate));
   } catch (err: unknown) {}
@@ -113,10 +114,11 @@ export const updateApr = (): AppThunk => async (dispatch, getState) => {
       getNetworkBalanceContract()
     );
     const topics = web3.utils.sha3(
-      "BalancesUpdated(uint256,uint256,uint256,uint256)"
+      'BalancesUpdated(uint256,uint256,uint256,uint256)'
     );
-    const events = await contract.getPastEvents("allEvents", {
-      fromBlock: currentBlock - Math.floor((1 / 12) * 60 * 60 * 24 * 7),
+    const events = await contract.getPastEvents('allEvents', {
+      fromBlock:
+        currentBlock - Math.floor((1 / getBlockSeconds()) * 60 * 60 * 24 * 7),
       toBlock: currentBlock,
     });
     let apr = getDefaultApr();
@@ -138,7 +140,7 @@ export const updateApr = (): AppThunk => async (dispatch, getState) => {
       const endRate = endValues.totalEth / endValues.lsdTokenSupply;
       if (
         !isNaN(beginRate) &&
-        isNaN(endRate) &&
+        !isNaN(endRate) &&
         endRate !== 1 &&
         beginRate !== 1
       ) {

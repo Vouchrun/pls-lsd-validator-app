@@ -1,39 +1,44 @@
 {
   "chain": {
-    "id": 943,
-    "name": "PulseChain Testnet v4",
-    "networkName": "pulsechain-testnet-v4"
+    "id": 369,
+    "name": "PulseChain Mainnet",
+    "networkName": "pulsechain",
+    "currency": {
+      "name": "Pulse",
+      "symbol": "PLS",
+      "decimals": 18
+    }
   },
-  "rpc": "https://rpc.v4.testnet.pulsechain.com",
-  "beaconHost": "https://rpc-testnet-pulsechain.g4mm4.io/beacon-api",
-  "explorer": "https://scan.v4.testnet.pulsechain.com/#",
-  "validatorExplorer": "https://beacon.v4.testnet.pulsechain.com/",
+  "rpc": "https://rpc.pulsechain.com",
+  "beaconHost": "https://rpc-pulsechain.g4mm4.io/beacon-api",
+  "explorer": "https://otter.PulseChain.com/#",
+  "validatorExplorer": "https://beacon.pulsechain.com/",
   "blockSeconds": 10,
   "contracts": {
     "lsdTokenContract": {
-      "address": "0x61135C59A4Eb452b89963188eD6B6a7487049764"
+      "address": "0x79BB3A0Ee435f957ce4f54eE8c3CFADc7278da0C"
     },
     "depositContract": {
-      "address": "0x1B10731Ec91267e9Fd85c042a3a2961580837d1F"
+      "address": "0x2D7Dcc5A1d90d08D484E38a4C99B8394daaF4B9e"
     },
     "networkBalanceContract": {
-      "address": "0x47e97e7971D13936667EE0E0b44a4Fc1eBD871Ff"
+      "address": "0xC3116bB002F94d2E4bB8E4D83252ee021552dEB8"
     },
     "networkWithdrawContract": {
-      "address": "0x555E33C8782A0CeF14d2e9064598CE991f58Bc74"
+      "address": "0x1F082785Ca889388Ce523BF3de6781E40b99B060"
     },
     "nodeDepositContract": {
-      "address": "0x190e0458A673B6868148E6A9e540c93363C7c24B"
+      "address": "0x3f82615aE0C027d587FD0d04d9EaCc8f0BaCFf94"
     },
     "networkProposalContract": {
-      "address": "0x0E7bcecEB7691e0d288cCECDF52818F2823409F0"
+      "address": "0x7783D7040423f75aeF82a3Ec32ed366ca460Fa6c"
     },
     "feePoolContract": {
-      "address": "0x4C14073Fa77e3028cDdC60bC593A8381119e9921"
+      "address": "0x5eAd01d58067a68D0D700374500580eC5C961D0d"
     },
     "treasuryAddresses": [
       "0x104e6e24258eaE78221D3b6d494E551138F33113",
-      "0x515F9651014508aa132282dFe8Af5ff58F5f6095"
+      "0x9df4e2AB92a00B46B8181CF1BB441c722B12B6a2"
     ]
   },
   "lsdAppUrl": "https://app.vouch.run/"

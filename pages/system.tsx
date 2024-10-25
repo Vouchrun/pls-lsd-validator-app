@@ -77,14 +77,20 @@ const SystemPage = () => {
                 {getLsdTokenName()} Pool
               </div>
 
-              <CustomTag type='apr' ml='.12rem'>
-                {apr === undefined ? (
-                  <DataLoading height='.12rem' />
-                ) : (
-                  `${formatNumber(apr, { decimals: 2 })}%`
-                )}
-                <span className='ml-[.06rem]'>staking APR</span>
-              </CustomTag>
+              {apr === 0 ? (
+                <CustomTag type='apr' ml='.12rem'>
+                  <span className='ml-[.06rem]'>APR Pending Update</span>
+                </CustomTag>
+              ) : (
+                <CustomTag type='apr' ml='.12rem'>
+                  {apr === undefined ? (
+                    <DataLoading height='.12rem' />
+                  ) : (
+                    `${formatNumber(apr, { decimals: 2 })}%`
+                  )}
+                  <span className='ml-[.06rem]'>staking APR</span>
+                </CustomTag>
+              )}
             </div>
 
             <div className='ml-[.12rem] mt-[.12rem] text-[.12rem] text-color-text2 cursor-pointer'>
