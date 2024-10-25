@@ -37,7 +37,9 @@ const SystemPage = () => {
     const checkConditions = async () => {
       if (
         admin === metaMaskAccount || // Allow if the user is the admin
-        nodes.some((node: any) => metaMaskAccount === node) || // Allow if the user is in the nodes list
+        (nodes.length > 0
+          ? nodes.some((node: any) => metaMaskAccount === node)
+          : true) || // Allow if the user is in the nodes list
         voters.some((voter: any) => metaMaskAccount === voter) // Allow if the user is a voter
       ) {
         setShowPage(true); // If condition passes, allow rendering the page
@@ -46,10 +48,11 @@ const SystemPage = () => {
       }
     };
 
-    if (admin && metaMaskAccount && nodes.length > 0) {
+    if (admin && metaMaskAccount) {
       checkConditions();
     }
-    if (!isConnected) {
+
+    if (admin && !isConnected) {
       router.push('/');
     }
   }, [nodes, voters, admin, metaMaskAccount, router, isConnected]);
