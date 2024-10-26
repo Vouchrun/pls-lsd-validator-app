@@ -325,16 +325,13 @@ export const handleEthValidatorDeposit =
           }
         });
       }
-
       await writeContractAsync(
         {
           abi: getNodeDepositContractAbi(),
           address: getNodeDepositContract() as `0x${string}`,
           functionName: 'deposit',
           args: [pubkeys, signatures, depositDataRoots],
-          value: formatScientificNumber(
-            solodepositAmount * validatorKeys.length
-          ),
+          value: sendParams.value,
         },
         {
           onSuccess: (data: any) => {
