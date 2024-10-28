@@ -63,9 +63,9 @@ export const StakeGuide = () => {
               <span className={robotoBold.className}>
                 {soloNodeDepositAmount} {getTokenName()}
               </span>{' '}
-              to register as a delegated validator on StaFi;
+              to register as a delegated validator on Vouch;
               <div className='mt-[.1rem]' />
-              StaFi will match{' '}
+              Vouch will match{' '}
               <span className={robotoBold.className}>
                 {formatNumber(
                   getValidatorTotalDepositAmount() -
@@ -74,9 +74,9 @@ export const StakeGuide = () => {
                 )}{' '}
                 {getTokenName()}
               </span>{' '}
-              to your node so that it can meet the validator conditions of{' '}
+              to your node so that it can meet the validator{' '}
               {getTokenName()}
-              2.0.
+              staking requirement of 32Mil PLS.
               <div className='mt-[.1rem]' />
             </>
           )}
@@ -125,11 +125,9 @@ export const StakeGuide = () => {
           <span className={robotoBold.className}>
             {formatValidatorDespositAmount} {getTokenName()}
           </span>{' '}
-          to the deposit contract of{' '}
-          <span className={robotoBold.className}>{getTokenName()} 1.0</span>.
+          to the deposit contract of Pulsechain.
           <div className='mt-[.1rem]' />
-          After that, please wait for validating progress on{' '}
-          <span className={robotoBold.className}>{getTokenName()} 2.0</span>.
+          After that, please wait for validating progress on Pulsechain to complete.
         </div>
 
         <div className='ml-[.05rem] mt-[-0.04rem]'>
@@ -164,9 +162,7 @@ export const StakeGuide = () => {
           className='text-color-text2 text-[.14rem] px-[.2rem] py-[.1rem] mt-[.06rem] ml-[.1rem] leading-normal'
           style={{}}
         >
-          There is nothing we can do in this step, once you stake, we should{' '}
-          <span className={robotoBold.className}>wait for the queen</span>,
-          check the status on the{' '}
+          There is nothing we can do in this step, once staked, check the status on the{' '}
           <span
             className={classNames(
               'underline cursor-pointer',
