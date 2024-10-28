@@ -1,22 +1,22 @@
-import { getNodeDepositContract } from "config/contract";
-import { getNodeDepositContractAbi } from "config/contractAbi";
+import { getNodeDepositContract } from 'config/contract';
+import { getNodeDepositContractAbi } from 'config/contractAbi';
 import {
   getTrustValidatorDepositAmount,
   getValidatorTotalDepositAmount,
-} from "config/env";
+} from 'config/env';
 import {
   ChainPubkeyStatus,
   NodePubkeyInfo,
   PubkeyStatus,
-} from "interfaces/common";
-import { useEffect, useMemo, useState } from "react";
-import { getPubkeyDisplayStatus } from "utils/commonUtils";
-import { getEthWeb3 } from "utils/web3Utils";
-import { formatEther } from "viem";
-import { useAppSlice } from "./selector";
-import { useIsTrustedValidator } from "./useIsTrustedValidator";
-import { useUnmatchedToken } from "./useUnmatchedToken";
-import { useUserPubkeys } from "./useUserPubkeys";
+} from 'interfaces/common';
+import { useEffect, useMemo, useState } from 'react';
+import { getPubkeyDisplayStatus } from 'utils/commonUtils';
+import { getEthWeb3 } from 'utils/web3Utils';
+import { formatEther } from 'viem';
+import { useAppSlice } from './selector';
+import { useIsTrustedValidator } from './useIsTrustedValidator';
+import { useUnmatchedToken } from './useUnmatchedToken';
+import { useUserPubkeys } from './useUserPubkeys';
 
 export const usePubkeysHome = (
   nodeAddress: string | undefined,
@@ -88,15 +88,17 @@ export const usePubkeysHome = (
           canStake = true;
         }
 
-        const isUnmatch = displayStatus === "Unmatched";
+        const isUnmatch =
+          displayStatus === 'Unmatched' ||
+          (!canStake && displayStatus === 'Matched');
         const isStaked =
           item._status === ChainPubkeyStatus.Staked &&
-          item.beaconApiStatus !== "EXITED_UNSLASHED" &&
-          item.beaconApiStatus !== "EXITED_SLASHED" &&
-          item.beaconApiStatus !== "WITHDRAWAL_POSSIBLE" &&
-          item.beaconApiStatus !== "WITHDRAWAL_DONE" &&
-          item.beaconApiStatus !== "EXITED" &&
-          item.beaconApiStatus !== "WITHDRAWAL";
+          item.beaconApiStatus !== 'EXITED_UNSLASHED' &&
+          item.beaconApiStatus !== 'EXITED_SLASHED' &&
+          item.beaconApiStatus !== 'WITHDRAWAL_POSSIBLE' &&
+          item.beaconApiStatus !== 'WITHDRAWAL_DONE' &&
+          item.beaconApiStatus !== 'EXITED' &&
+          item.beaconApiStatus !== 'WITHDRAWAL';
 
         if (isUnmatch) {
           unmatchedCount++;
