@@ -126,8 +126,7 @@ export const StakeGuide = () => {
           to the <span className={robotoBold.className}>{getTokenName()}</span>{' '}
           deposit contract.
           <div className='mt-[.1rem]' />
-          Subsequently, you will need to await the validation progress on{' '}
-          <span className={robotoBold.className}>{getTokenName()}</span>.
+          Subsequently, you will need to await the validation progress on Pulsechain.
         </div>
 
         <div className='ml-[.05rem] mt-[-0.04rem] opacity-30'>
