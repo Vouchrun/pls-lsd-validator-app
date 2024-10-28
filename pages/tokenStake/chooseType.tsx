@@ -104,7 +104,7 @@ const ChooseTypePage = () => {
                     type='stroke'
                     disabled={!trustDepositEnabled}
                     onClick={() => {
-                      openLink('https://forms.gle/RtFK7qo9GzabQTCfA');
+                      openLink('https://t.me/vouchrun');
                     }}
                   >
                     Apply
