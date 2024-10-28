@@ -147,7 +147,7 @@ const ChooseTypePage = () => {
                   height='.48rem'
                   type='stroke'
                   onClick={() => {
-                    openLink('https://docs.stafi.io/dvt/#ssv-integration');
+                    openLink('https://ethereum.org/en/staking/dvt/');
                   }}
                 >
                   Instruction
