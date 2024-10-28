@@ -59,13 +59,12 @@ export const StakeGuide = () => {
         >
           {soloNodeDepositAmount && Number(soloNodeDepositAmount) > 0 && (
             <>
-              Deposit{' '}
+              Begin as a Solo validator with Vouch by depositing{' '}
               <span className={robotoBold.className}>
-                {soloNodeDepositAmount} {getTokenName()}
-              </span>{' '}
-              to register as a delegated validator on Vouch;
-              <div className='mt-[.1rem]' />
-              Vouch will match{' '}
+                {formatNumber(soloNodeDepositAmount, { fixedDecimals: false })}{' '}
+                {getTokenName()}
+              </span>
+              . Vouch will contribute an additional{' '}
               <span className={robotoBold.className}>
                 {formatNumber(
                   getValidatorTotalDepositAmount() -
@@ -73,16 +72,15 @@ export const StakeGuide = () => {
                   { fixedDecimals: false }
                 )}{' '}
                 {getTokenName()}
-              </span>{' '}
-              to your node so that it can meet the validator{' '}
-              {getTokenName()}
-              staking requirement of 32Mil PLS.
+              </span>
+              , ensuring your node fulfills the validator requirements for{' '}
+              <span className={robotoBold.className}>{getTokenName()}</span>
+              .
               <div className='mt-[.1rem]' />
             </>
           )}
-          If you are a{' '}
-          <span className={robotoBold.className}>trusted validator</span>, you
-          don't need to deposit {getTokenName()} yourself.
+          Note: <span className={robotoBold.className}>Trusted validators</span>{' '}
+          do not need to deposit {getTokenName()}.
         </div>
 
         <div className='ml-[.05rem] mt-[-0.04rem]'>
@@ -96,7 +94,7 @@ export const StakeGuide = () => {
         <div className='mt-[.06rem] flex items-center'>
           <div
             className={classNames(
-              'rounded-full w-[.2rem] h-[.2rem] bg-text1 dark:bg-text1Dark text-white dark:text-text1 text-[.16rem] flex items-center justify-center',
+              'opacity-50 rounded-full w-[.2rem] h-[.2rem] bg-text2 dark:bg-text2Dark text-white dark:text-text2 text-[.16rem] flex items-center justify-center',
               robotoBold.className
             )}
           >
@@ -105,7 +103,7 @@ export const StakeGuide = () => {
 
           <div
             className={classNames(
-              'ml-[.1rem] text-color-text1 text-[.16rem]',
+              'ml-[.1rem] text-color-text2 text-[.16rem]',
               robotoBold.className
             )}
           >
@@ -114,26 +112,28 @@ export const StakeGuide = () => {
         </div>
 
         <div
-          className='text-color-text2 text-[.14rem] px-[.2rem] py-[.1rem] mt-[.06rem] ml-[.1rem] leading-normal border-dashed border-l-[1px] border-l-text1 dark:border-l-text1Dark'
+          className='text-color-text2 text-[.14rem] px-[.2rem] py-[.1rem] mt-[.06rem] ml-[.1rem] leading-normal border-dashed border-l-[1px] border-l-text2/30 dark:border-l-text2Dark/30'
           style={{}}
         >
-          Once your node reaches{' '}
+          Once your node balance reaches{' '}
           <span className={robotoBold.className}>
             {formatValidatorDespositAmount} {getTokenName()}
           </span>
-          , you can deposit{' '}
+          , you may proceed to deploy a pool contract. This action allocates{' '}
           <span className={robotoBold.className}>
             {formatValidatorDespositAmount} {getTokenName()}
           </span>{' '}
-          to the deposit contract of Pulsechain.
+          to the <span className={robotoBold.className}>{getTokenName()}</span>{' '}
+          deposit contract.
           <div className='mt-[.1rem]' />
-          After that, please wait for validating progress on Pulsechain to complete.
+          Subsequently, you will need to await the validation progress on{' '}
+          <span className={robotoBold.className}>{getTokenName()}</span>.
         </div>
 
-        <div className='ml-[.05rem] mt-[-0.04rem]'>
+        <div className='ml-[.05rem] mt-[-0.04rem] opacity-30'>
           <Icomoon
             icon='arrow-down'
-            color={darkMode ? '#E8EFFD' : '#1B1B1F'}
+            color={darkMode ? '#ffffff80' : '#6C86AD'}
             size='.12rem'
           />
         </div>
@@ -162,7 +162,9 @@ export const StakeGuide = () => {
           className='text-color-text2 text-[.14rem] px-[.2rem] py-[.1rem] mt-[.06rem] ml-[.1rem] leading-normal'
           style={{}}
         >
-          There is nothing we can do in this step, once staked, check the status on the{' '}
+          After your stake is in place, our protocol takes over. There's nothing
+          more required from you. As a validator, you may monitor the status via
+          our user-friendly{' '}
           <span
             className={classNames(
               'underline cursor-pointer',
@@ -174,7 +176,7 @@ export const StakeGuide = () => {
           >
             dashboard
           </span>
-          .
+          . Patience is key here, as we await the network's nod of approval.
         </div>
       </div>
     </div>
