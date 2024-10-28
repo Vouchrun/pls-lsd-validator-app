@@ -93,28 +93,28 @@ export const StakeGuide = () => {
 
         <div className='mt-[.06rem] flex items-center'>
           <div
-            className={classNames(
-              'opacity-50 rounded-full w-[.2rem] h-[.2rem] bg-text2 dark:bg-text2Dark text-white dark:text-text2 text-[.16rem] flex items-center justify-center',
-              robotoBold.className
-            )}
-          >
-            2
+              className={classNames(
+                'rounded-full w-[.2rem] h-[.2rem] bg-text1 dark:bg-text1Dark text-white dark:text-text1 text-[.16rem] flex items-center justify-center',
+                robotoBold.className
+              )}
+            >
+              2
+            </div>
+
+            <div
+              className={classNames(
+                'ml-[.1rem] text-color-text1 text-[.16rem]',
+                robotoBold.className
+              )}
+            >
+              Stake
+            </div>
           </div>
 
           <div
-            className={classNames(
-              'ml-[.1rem] text-color-text2 text-[.16rem]',
-              robotoBold.className
-            )}
+            className='text-color-text2 text-[.14rem] px-[.2rem] py-[.1rem] mt-[.06rem] ml-[.1rem] leading-normal border-dashed border-l-[1px] border-l-text1 dark:border-l-text1Dark'
+            style={{}}
           >
-            Stake
-          </div>
-        </div>
-
-        <div
-          className='text-color-text2 text-[.14rem] px-[.2rem] py-[.1rem] mt-[.06rem] ml-[.1rem] leading-normal border-dashed border-l-[1px] border-l-text2/30 dark:border-l-text2Dark/30'
-          style={{}}
-        >
           Once your node balance reaches{' '}
           <span className={robotoBold.className}>
             {formatValidatorDespositAmount} {getTokenName()}
