@@ -59,12 +59,12 @@ export const DepositGuide = () => {
         >
           {soloNodeDepositAmount && Number(soloNodeDepositAmount) > 0 && (
             <>
-              Begin as a Solo validator with StaFi by depositing{' '}
+              Begin as a Solo validator with Vouch by depositing{' '}
               <span className={robotoBold.className}>
                 {formatNumber(soloNodeDepositAmount, { fixedDecimals: false })}{' '}
                 {getTokenName()}
               </span>
-              . StaFi will contribute an additional{' '}
+              . Vouch will contribute an additional{' '}
               <span className={robotoBold.className}>
                 {formatNumber(
                   getValidatorTotalDepositAmount() -
