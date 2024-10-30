@@ -1,20 +1,20 @@
 import {
   getNetworkWithdrawContract,
   getNodeDepositContract,
-} from "config/contract";
+} from 'config/contract';
 import {
   getNetworkWithdrawContractAbi,
   getNodeDepositContractAbi,
-} from "config/contractAbi";
-import { getBlockSeconds } from "config/env";
-import { NodePubkeyInfo } from "interfaces/common";
-import { useCallback, useEffect, useState } from "react";
-import { fetchBeaconCheckpoints, fetchPubkeyStatus } from "utils/apiUtils";
-import { getPubkeyDisplayStatus } from "utils/commonUtils";
-import { getEthWeb3 } from "utils/web3Utils";
-import Web3 from "web3";
-import { useUnmatchedToken } from "./useUnmatchedToken";
-import { useWalletAccount } from "./useWalletAccount";
+} from 'config/contractAbi';
+import { getBlockSeconds } from 'config/env';
+import { NodePubkeyInfo } from 'interfaces/common';
+import { useCallback, useEffect, useState } from 'react';
+import { fetchBeaconCheckpoints, fetchPubkeyStatus } from 'utils/apiUtils';
+import { getPubkeyDisplayStatus } from 'utils/commonUtils';
+import { getEthWeb3 } from 'utils/web3Utils';
+import Web3 from 'web3';
+import { useUnmatchedToken } from './useUnmatchedToken';
+import { useWalletAccount } from './useWalletAccount';
 
 export function usePubkeyDetail(pubkeyAddress: string | undefined) {
   const { metaMaskAccount } = useWalletAccount();
@@ -72,9 +72,9 @@ export function usePubkeyDetail(pubkeyAddress: string | undefined) {
         matchedBeaconData?.status?.toUpperCase() || undefined;
       const eligibilityEpoch =
         BigInt(matchedBeaconData?.validator?.activation_eligibility_epoch) >
-        BigInt("18000000000000000000")
-          ? "--"
-          : matchedBeaconData?.validator?.activation_eligibility_epoch || "--";
+        BigInt('18000000000000000000')
+          ? '--'
+          : matchedBeaconData?.validator?.activation_eligibility_epoch || '--';
 
       // const beaconCheckpointsResponse = await fetch(`/api/beaconCheckpoints`, {
       //   method: "GET",
@@ -86,8 +86,8 @@ export function usePubkeyDetail(pubkeyAddress: string | undefined) {
 
       const days =
         BigInt(matchedBeaconData?.validator?.activation_epoch) >
-        BigInt("18000000000000000000")
-          ? "--"
+        BigInt('18000000000000000000')
+          ? '--'
           : ((Number(currentEpoch) -
               Number(matchedBeaconData?.validator?.activation_epoch)) *
               32 *
@@ -97,10 +97,10 @@ export function usePubkeyDetail(pubkeyAddress: string | undefined) {
         pubkeyAddress: pubkeyAddress,
         beaconApiStatus,
         eligibilityEpoch,
-        days: !isNaN(Number(days)) ? Math.floor(Number(days)) + "" : "--",
+        days: !isNaN(Number(days)) ? Math.floor(Number(days)) + '' : '--',
         currentTokenAmount: matchedBeaconData
-          ? Web3.utils.fromWei(matchedBeaconData.balance, "gwei")
-          : "--",
+          ? Web3.utils.fromWei(matchedBeaconData.balance, 'gwei')
+          : '--',
         ...pubkeyInfo,
       };
 
@@ -109,7 +109,22 @@ export function usePubkeyDetail(pubkeyAddress: string | undefined) {
         Number(unmatchedEth)
       );
 
-      setPubkeyInfo({ ...newPubkeyInfo, displayStatus });
+      const res = await fetch(
+        `https://rpc-pulsechain.g4mm4.io/beacon-api/eth/v1/beacon/states/head/validators?id=0xb5c6445d982db024a2c10bcea6bf9e25be8b4bca65a19abbd6e37e25fbec7ff6461a5eb725f343c92f167d4b1b3761c2`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      const apidata = await res.json();
+      console.log(`apidata`, apidata);
+      setPubkeyInfo({
+        ...newPubkeyInfo,
+        displayStatus,
+        apiData: apidata.data[0],
+      });
     } catch (err: any) {
       console.log({ err });
     }

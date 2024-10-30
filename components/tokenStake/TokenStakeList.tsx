@@ -248,7 +248,7 @@ export const TokenStakeList = () => {
                 <div
                   className='flex items-center'
                   onClick={() => {
-                    openLink(getValidatorProfileUrl(metaMaskAccount || ''));
+                    router.push(`/pubkey/${pubkeyInfo.pubkeyAddress}`);
                   }}
                 >
                   <div className='mx-[.06rem]'>

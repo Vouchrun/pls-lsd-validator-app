@@ -27,7 +27,14 @@ export const PubkeyDetailAsset = (props: {
           gridTemplateColumns: '20% 20% 20% 20% 20%',
         }}
       >
-        <div className='flex items-center justify-center text-[.16rem] text-color-text2'></div>
+        <div className='flex items-center justify-center text-[.16rem] text-color-text2'>
+          Index:{' '}
+          {pubkeyInfo === undefined ? (
+            <DataLoading height='.16rem' />
+          ) : (
+            pubkeyInfo.apiData.index
+          )}
+        </div>
 
         <div className='flex items-center justify-center text-[.16rem] text-color-text2'>
           Current {getTokenName()}
@@ -103,7 +110,13 @@ export const PubkeyDetailAsset = (props: {
         </div>
 
         <div className='flex items-center justify-center text-[.16rem] text-error'>
-          --
+          {pubkeyInfo === undefined ? (
+            <DataLoading height='.16rem' />
+          ) : pubkeyInfo.apiData.validator.slashed ? (
+            'true'
+          ) : (
+            'false'
+          )}
         </div>
       </div>
     </div>
