@@ -16,6 +16,8 @@ import { isPubkeyStakeable, openLink } from 'utils/commonUtils';
 import snackbarUtil from 'utils/snackbarUtils';
 import { getShortAddress } from 'utils/stringUtils';
 import { TokenStakeListTabs } from './TokenStakeListTabs';
+import { updateValidatorStakeLoadingParams } from 'redux/reducers/AppSlice';
+import { useAppDispatch } from 'hooks/common';
 
 export const TokenStakeList = () => {
   const router = useRouter();
@@ -24,7 +26,7 @@ export const TokenStakeList = () => {
   const [page, setPage] = useState(1);
   const [selectedTab, setSelectedTab] = useState('All');
   const { isTrust } = useIsTrustedValidator();
-
+  const dispatch = useAppDispatch();
   const selectedStatus = useMemo(() => {
     switch (selectedTab) {
       case 'All':
@@ -246,7 +248,7 @@ export const TokenStakeList = () => {
                 <div
                   className='flex items-center'
                   onClick={() => {
-                    openLink(getValidatorProfileUrl(metaMaskAccount || ''));
+                    router.push(`/pubkey/${pubkeyInfo.pubkeyAddress}`);
                   }}
                 >
                   <div className='mx-[.06rem]'>
@@ -283,6 +285,11 @@ export const TokenStakeList = () => {
                       height='.42rem'
                       className='px-[.5rem]'
                       onClick={() => {
+                        dispatch(
+                          updateValidatorStakeLoadingParams({
+                            modalVisible: false,
+                          })
+                        );
                         router.push(
                           {
                             pathname: '/tokenStake/stake',

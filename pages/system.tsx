@@ -99,7 +99,7 @@ const SystemPage = () => {
             <div className='ml-[.12rem] mt-[.12rem] text-[.12rem] text-color-text2 cursor-pointer'>
               <div className='flex items-center'>
                 <div className='mr-[.06rem]'>
-                  Take part in rPool programs, earn tokens easily.
+                  Take part in vPLS programs, earn tokens easily.
                 </div>
               </div>
             </div>

@@ -47,7 +47,7 @@ export const ChooseTypeGuide = () => {
                 {formatNumber(soloNodeDepositAmount, { fixedDecimals: false })}{" "}
                 {getTokenName()}
               </span>{" "}
-              to register as a Solo validator on StaFi; StaFi will match{" "}
+              to register as a Solo validator on Vouch; Vouch will match{" "}
               <span className={robotoBold.className}>
                 {formatNumber(
                   getValidatorTotalDepositAmount() -

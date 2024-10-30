@@ -41,7 +41,6 @@ import { useConnect, useSwitchChain, useWriteContract } from 'wagmi';
 const StakePage = () => {
   const router = useRouter();
   const { type } = router.query;
-  console.log({ type });
   const dispatch = useAppDispatch();
   const { darkMode } = useAppSlice();
   const [validatorKeys, setValidatorKeys] = useState<any[]>([]);

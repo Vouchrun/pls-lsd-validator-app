@@ -4,8 +4,8 @@ export interface NavigationItem {
 }
 
 export enum ValidatorNodeType {
-  Solo = "1",
-  Trusted = "2",
+  Solo = '1',
+  Trusted = '2',
 }
 
 export interface RewardJsonResponse {
@@ -23,38 +23,38 @@ export interface IpfsRewardItem {
 }
 
 export enum ChainPubkeyStatus {
-  UnInitial = "0",
-  Deposited = "1",
-  Match = "2",
-  Staked = "3",
-  UnMatch = "4",
+  UnInitial = '0',
+  Deposited = '1',
+  Match = '2',
+  Staked = '3',
+  UnMatch = '4',
 }
 
 export enum PubkeyStatus {
-  Unmatched = "1",
-  Staked = "2",
-  Others = "3",
+  Unmatched = '1',
+  Staked = '2',
+  Others = '3',
 }
 
 export enum PubkeyStatusType {
-  Active = "1",
-  Pending = "2",
-  Exited = "3",
-  Others = "4",
+  Active = '1',
+  Pending = '2',
+  Exited = '3',
+  Others = '4',
 }
 
 export enum DisplayPubkeyStatus {
-  Waiting = "0",
-  Pending = "1",
-  Active = "2",
-  Exited = "3",
-  Withdrawal = "4",
+  Waiting = '0',
+  Pending = '1',
+  Active = '2',
+  Exited = '3',
+  Withdrawal = '4',
 }
 
 export interface NodePubkeyInfo {
   beaconApiStatus: string | undefined;
   pubkeyAddress: string;
-  type: "solo" | "trusted";
+  type: 'solo' | 'trusted';
   canStake?: boolean;
   displayStatus?: string;
   eligibilityEpoch?: string;
@@ -64,6 +64,7 @@ export interface NodePubkeyInfo {
   _owner: string;
   _nodeDepositAmount: string;
   _depositBlock: string;
+  apiData?: any;
 }
 
 export interface ClaimProof {

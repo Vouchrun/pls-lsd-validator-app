@@ -59,12 +59,12 @@ export const DepositGuide = () => {
         >
           {soloNodeDepositAmount && Number(soloNodeDepositAmount) > 0 && (
             <>
-              Begin as a Solo validator with StaFi by depositing{' '}
+              Begin as a Solo validator with Vouch by depositing{' '}
               <span className={robotoBold.className}>
                 {formatNumber(soloNodeDepositAmount, { fixedDecimals: false })}{' '}
                 {getTokenName()}
               </span>
-              . StaFi will contribute an additional{' '}
+              . Vouch will contribute an additional{' '}
               <span className={robotoBold.className}>
                 {formatNumber(
                   getValidatorTotalDepositAmount() -
@@ -126,8 +126,7 @@ export const DepositGuide = () => {
           to the <span className={robotoBold.className}>{getTokenName()}</span>{' '}
           deposit contract.
           <div className='mt-[.1rem]' />
-          Subsequently, you will need to await the validation progress on{' '}
-          <span className={robotoBold.className}>{getTokenName()}</span>.
+          Subsequently, you will need to await the validation progress on Pulsechain.
         </div>
 
         <div className='ml-[.05rem] mt-[-0.04rem] opacity-30'>

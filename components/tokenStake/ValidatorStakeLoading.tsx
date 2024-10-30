@@ -121,7 +121,7 @@ export const ValidatorStakeLoading = () => {
           target="_blank"
           rel="noreferrer"
         >
-          Go for community help
+          Visit the Vouch community for help.
         </a>
       </div>
     </CardContainer>

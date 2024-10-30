@@ -50,3 +50,4 @@ conf_goerli.toml
 conf.api.toml
 
 out/
+yarn.lock
