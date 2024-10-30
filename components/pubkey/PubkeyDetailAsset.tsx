@@ -2,11 +2,11 @@ import classNames from 'classnames';
 import { CustomButton } from 'components/common/CustomButton';
 import { DataLoading } from 'components/common/DataLoading';
 import { Icomoon } from 'components/icon/Icomoon';
-import { getLsdAppUrl } from 'config/env';
+import { getBeaconHost, getLsdAppUrl } from 'config/env';
 import { usePubkeyDetail } from 'hooks/usePubkeyDetail';
 import { NodePubkeyInfo } from 'interfaces/common';
 import Image from 'next/image';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { openLink } from 'utils/commonUtils';
 import { getLsdTokenName, getTokenName } from 'utils/configUtils';
 import { getLsdTokenIcon } from 'utils/iconUtils';
@@ -17,7 +17,31 @@ export const PubkeyDetailAsset = (props: {
   pubkeyAddress: string | undefined;
   pubkeyInfo: NodePubkeyInfo | undefined;
 }) => {
-  const { pubkeyInfo } = props;
+  const { pubkeyInfo, pubkeyAddress } = props;
+  const [apiData, setApiData] = useState<any>(null);
+  useEffect(() => {
+    const getData = async () => {
+      if (!pubkeyAddress) {
+        return;
+      }
+
+      const res = await fetch(
+        `${getBeaconHost()}/eth/v1/beacon/states/head/validators?id=` +
+          pubkeyAddress,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      const apires = await res.json();
+
+      setApiData(apires.data[0]);
+    };
+
+    getData();
+  }, [pubkeyAddress]);
 
   return (
     <div className='mt-[.24rem] bg-color-bg2 border-[0.01rem] border-color-border1 rounded-[.3rem]'>
@@ -28,12 +52,7 @@ export const PubkeyDetailAsset = (props: {
         }}
       >
         <div className='flex items-center justify-center text-[.16rem] text-color-text2'>
-          Index:{' '}
-          {pubkeyInfo === undefined ? (
-            <DataLoading height='.16rem' />
-          ) : (
-            pubkeyInfo.apiData.index
-          )}
+          Index: {!apiData ? '--' : apiData?.index}
         </div>
 
         <div className='flex items-center justify-center text-[.16rem] text-color-text2'>
@@ -110,13 +129,7 @@ export const PubkeyDetailAsset = (props: {
         </div>
 
         <div className='flex items-center justify-center text-[.16rem] text-error'>
-          {pubkeyInfo === undefined ? (
-            <DataLoading height='.16rem' />
-          ) : pubkeyInfo.apiData.validator.slashed ? (
-            'true'
-          ) : (
-            'false'
-          )}
+          {!apiData ? '--' : apiData?.validator?.slashed ? 'true' : 'false'}
         </div>
       </div>
     </div>

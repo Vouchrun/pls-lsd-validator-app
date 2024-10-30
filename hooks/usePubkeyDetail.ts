@@ -109,21 +109,9 @@ export function usePubkeyDetail(pubkeyAddress: string | undefined) {
         Number(unmatchedEth)
       );
 
-      const res = await fetch(
-        `https://rpc-pulsechain.g4mm4.io/beacon-api/eth/v1/beacon/states/head/validators?id=0xb5c6445d982db024a2c10bcea6bf9e25be8b4bca65a19abbd6e37e25fbec7ff6461a5eb725f343c92f167d4b1b3761c2`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-      const apidata = await res.json();
-      console.log(`apidata`, apidata);
       setPubkeyInfo({
         ...newPubkeyInfo,
         displayStatus,
-        apiData: apidata.data[0],
       });
     } catch (err: any) {
       console.log({ err });
