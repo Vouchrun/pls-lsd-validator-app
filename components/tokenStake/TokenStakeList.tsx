@@ -18,6 +18,7 @@ import { getShortAddress } from 'utils/stringUtils';
 import { TokenStakeListTabs } from './TokenStakeListTabs';
 import { updateValidatorStakeLoadingParams } from 'redux/reducers/AppSlice';
 import { useAppDispatch } from 'hooks/common';
+import { getValidatorInfoURL } from 'config/env';
 
 export const TokenStakeList = () => {
   const router = useRouter();
@@ -250,11 +251,10 @@ export const TokenStakeList = () => {
                   }}
                 />
 
-                <div
+                <a
                   className='flex items-center'
-                  onClick={() => {
-                    router.push(`/pubkey/${pubkeyInfo.pubkeyAddress}`);
-                  }}
+                  href={getValidatorInfoURL() + 'validator/' + pubkeyInfo.pubkeyAddress}
+                  target='_blank'
                 >
                   <div className='mx-[.06rem]'>
                     {getShortAddress(metaMaskAccount, 4)}
@@ -265,7 +265,7 @@ export const TokenStakeList = () => {
                     size='.12rem'
                     color={darkMode ? '#ffffff80' : '#6C86AD'}
                   />
-                </div>
+                </a>
               </div>
 
               <div

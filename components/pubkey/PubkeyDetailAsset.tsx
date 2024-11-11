@@ -2,7 +2,7 @@ import classNames from 'classnames';
 import { CustomButton } from 'components/common/CustomButton';
 import { DataLoading } from 'components/common/DataLoading';
 import { Icomoon } from 'components/icon/Icomoon';
-import { getBeaconHost, getLsdAppUrl } from 'config/env';
+import { getBeaconHost, getValidatorInfoURL, getLsdAppUrl } from 'config/env';
 import { usePubkeyDetail } from 'hooks/usePubkeyDetail';
 import { NodePubkeyInfo } from 'interfaces/common';
 import Image from 'next/image';
@@ -68,7 +68,7 @@ export const PubkeyDetailAsset = (props: {
         </div>
 
         <div className='flex items-center justify-center text-[.16rem] text-color-text2'>
-          Slashed {getTokenName()}
+          Slashed Health
         </div>
       </div>
 
@@ -128,9 +128,13 @@ export const PubkeyDetailAsset = (props: {
           --
         </div>
 
-        <div className='flex items-center justify-center text-[.16rem] text-error'>
-          {!apiData ? '--' : apiData?.validator?.slashed ? 'true' : 'false'}
-        </div>
+        <a
+          className='flex items-center justify-center text-[.16rem] text-error'
+          href={getValidatorInfoURL() + '/validator/' + pubkeyInfo?.pubkeyAddress}
+          target='_blank'
+        >
+          {!apiData ? '--' : apiData?.validator?.slashed ? '🔴' : '🟢'}
+        </a>
       </div>
     </div>
   );

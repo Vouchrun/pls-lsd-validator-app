@@ -41,5 +41,6 @@
       "0x9df4e2AB92a00B46B8181CF1BB441c722B12B6a2"
     ]
   },
-  "lsdAppUrl": "https://app.vouch.run/"
+  "lsdAppUrl": "https://app.vouch.run/",
+  "ValidatorInfoURL": "https://www.g4mm4.io/"
 }
