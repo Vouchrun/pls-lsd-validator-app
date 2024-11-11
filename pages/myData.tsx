@@ -1,16 +1,16 @@
-import classNames from "classnames";
-import { FaqItem } from "components/common/FaqItem";
-import { PageTitleContainer } from "components/common/PageTitleContainer";
-import { MyDataAssets } from "components/myData/MyDataAssets";
-import { MyDataHistory } from "components/myData/MyDataHistory";
-import { MyDataPubkeys } from "components/myData/MyDataPubkeys";
-import { MyDataTabs } from "components/myData/MyDataTabs";
-import { robotoBold } from "config/font";
-import Image from "next/image";
-import { useRouter } from "next/router";
-import tokenStakeIcon from "public/images/token_stake.svg";
-import { useMemo, useState } from "react";
-import { getTokenName } from "utils/configUtils";
+import classNames from 'classnames';
+import { FaqItem } from 'components/common/FaqItem';
+import { PageTitleContainer } from 'components/common/PageTitleContainer';
+import { MyDataAssets } from 'components/myData/MyDataAssets';
+import { MyDataHistory } from 'components/myData/MyDataHistory';
+import { MyDataPubkeys } from 'components/myData/MyDataPubkeys';
+import { MyDataTabs } from 'components/myData/MyDataTabs';
+import { robotoBold } from 'config/font';
+import Image from 'next/image';
+import { useRouter } from 'next/router';
+import tokenStakeIcon from 'public/images/token_stake.svg';
+import { useMemo, useState } from 'react';
+import { getTokenName } from 'utils/configUtils';
 
 const MyDataPage = () => {
   const router = useRouter();
@@ -19,28 +19,28 @@ const MyDataPage = () => {
     const tabParam = router.query.tab;
     if (tabParam) {
       switch (tabParam) {
-        case "assets":
-        case "pubkeys":
-        case "history":
+        case 'assets':
+        case 'pubkeys':
+        case 'history':
           return tabParam;
         default:
-          return "assets";
+          return 'assets';
       }
     }
-    return "assets";
+    return 'assets';
   }, [router.query]);
 
   return (
     <div>
       <PageTitleContainer>
-        <div className="h-full flex items-center w-smallContentW xl:w-contentW 2xl:w-largeContentW">
-          <div className="w-[.68rem] h-[.68rem] relative">
-            <Image src={tokenStakeIcon} layout="fill" alt="icon" />
+        <div className='h-full flex items-center w-smallContentW xl:w-contentW 2xl:w-largeContentW'>
+          <div className='w-[.68rem] h-[.68rem] relative'>
+            <Image src={tokenStakeIcon} layout='fill' alt='icon' />
           </div>
           <div
             className={classNames(
               robotoBold.className,
-              "text-[.34rem] ml-[.12rem] text-color-text1"
+              'text-[.34rem] ml-[.12rem] text-color-text1'
             )}
           >
             My Data
@@ -48,28 +48,28 @@ const MyDataPage = () => {
         </div>
       </PageTitleContainer>
 
-      <div className="w-smallContentW xl:w-contentW 2xl:w-largeContentW mx-auto">
-        <div className="pt-[.24rem] flex items-center justify-between">
-          <div className="flex items-center">
+      <div className='w-smallContentW xl:w-contentW 2xl:w-largeContentW mx-auto'>
+        <div className='pt-[.24rem] flex items-center justify-between'>
+          <div className='flex items-center'>
             <MyDataTabs />
           </div>
         </div>
 
-        {selectedTab === "assets" && <MyDataAssets />}
+        {selectedTab === 'assets' && <MyDataAssets />}
 
-        {selectedTab === "pubkeys" && <MyDataPubkeys />}
+        {selectedTab === 'pubkeys' && <MyDataPubkeys />}
 
-        {selectedTab === "history" && <MyDataHistory />}
+        {/* {selectedTab === "history" && <MyDataHistory />} */}
 
-        <div className={classNames("mt-[.56rem] mr-[.16rem] pb-[.56rem]")}>
-          <div className="mt-[.16rem] text-[.24rem] text-color-text1">FAQ</div>
+        <div className={classNames('mt-[.56rem] mr-[.16rem] pb-[.56rem]')}>
+          <div className='mt-[.16rem] text-[.24rem] text-color-text1'>FAQ</div>
 
           <div
-            className="grid items-start mt-[.16rem]"
+            className='grid items-start mt-[.16rem]'
             style={{
-              gridTemplateColumns: "48% 48%",
-              columnGap: "4%",
-              rowGap: ".16rem",
+              gridTemplateColumns: '48% 48%',
+              columnGap: '4%',
+              rowGap: '.16rem',
             }}
           >
             <FaqItem text='What are the factors that affect the staking rewards?'>
@@ -104,7 +104,8 @@ const MyDataPage = () => {
 
             <FaqItem text='What are the commissions and fees associated with staking PLS?'>
               Staking Reward Commission: 10% of your staking reward. 5% will be
-              allocated to the Vouch DAO, 5% will be allocated to validator Nodes (Operators).
+              allocated to the Vouch DAO, 5% will be allocated to validator
+              Nodes (Operators).
             </FaqItem>
           </div>
         </div>

@@ -1,6 +1,6 @@
-import classNames from "classnames";
-import { useRouter } from "next/router";
-import { useMemo, useState } from "react";
+import classNames from 'classnames';
+import { useRouter } from 'next/router';
+import { useMemo, useState } from 'react';
 
 interface MyDataTabsProps {}
 
@@ -11,15 +11,15 @@ export const MyDataTabs = (props: MyDataTabsProps) => {
     const tabParam = router.query.tab;
     if (tabParam) {
       switch (tabParam) {
-        case "assets":
-        case "pubkeys":
-        case "history":
+        case 'assets':
+        case 'pubkeys':
+        case 'history':
           return tabParam;
         default:
-          return "assets";
+          return 'assets';
       }
     }
-    return "assets";
+    return 'assets';
   }, [router.query]);
 
   const updateTab = (tab: string) => {
@@ -39,16 +39,16 @@ export const MyDataTabs = (props: MyDataTabsProps) => {
   };
 
   return (
-    <div className="h-[.42rem] flex items-stretch p-[.04rem] bg-color-bg2 rounded-[.4rem]">
+    <div className='h-[.42rem] flex items-stretch p-[.04rem] bg-color-bg2 rounded-[.4rem]'>
       <div
         className={classNames(
-          "px-[.24rem] flex items-center justify-center relative cursor-pointer",
-          selectedTab === "assets"
-            ? "bg-color-highlight text-white dark:text-text1 rounded-[.4rem]"
-            : "text-text1 dark:text-white"
+          'px-[.24rem] flex items-center justify-center relative cursor-pointer',
+          selectedTab === 'assets'
+            ? 'bg-color-highlight text-white dark:text-text1 rounded-[.4rem]'
+            : 'text-text1 dark:text-white'
         )}
         onClick={() => {
-          updateTab("assets");
+          updateTab('assets');
         }}
       >
         <div>Assets</div>
@@ -56,19 +56,19 @@ export const MyDataTabs = (props: MyDataTabsProps) => {
 
       <div
         className={classNames(
-          "ml-[.1rem] px-[.16rem] flex items-center justify-center relative cursor-pointer",
-          selectedTab === "pubkeys"
-            ? "bg-color-highlight text-white dark:text-text1 rounded-[.4rem]"
-            : "text-text1 dark:text-white"
+          'ml-[.1rem] px-[.16rem] flex items-center justify-center relative cursor-pointer',
+          selectedTab === 'pubkeys'
+            ? 'bg-color-highlight text-white dark:text-text1 rounded-[.4rem]'
+            : 'text-text1 dark:text-white'
         )}
         onClick={() => {
-          updateTab("pubkeys");
+          updateTab('pubkeys');
         }}
       >
         <div>Pubkeys</div>
       </div>
 
-      <div
+      {/* <div
         className={classNames(
           "ml-[.1rem] px-[.24rem] flex items-center justify-center relative cursor-pointer",
           selectedTab === "history"
@@ -80,7 +80,7 @@ export const MyDataTabs = (props: MyDataTabsProps) => {
         }}
       >
         <div>History</div>
-      </div>
+      </div> */}
     </div>
   );
 };
