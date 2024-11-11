@@ -24,7 +24,7 @@ import { isSupportRestApi } from 'utils/configUtils';
 import snackbarUtil from 'utils/snackbarUtils';
 import { getShortAddress } from 'utils/stringUtils';
 import { MyDataNodeEjection } from './MyDataNodeEjection';
-import { getBeaconHost, getg4mm4URL } from 'config/env';
+import { getBeaconHost, getValidatorInfoURL } from 'config/env';
 
 export const MyDataPubkeys = () => {
   const { metaMaskAccount } = useWalletAccount();
@@ -257,7 +257,7 @@ const MyDataPubkeyItem = (props: MyDataPubkeyItemProps) => {
       <div className='flex items-center justify-center text-[.16rem] text-color-text1'>
         <div className='flex items-center cursor-pointer'>
           <a
-            href={getg4mm4URL() + 'validator/' + pubkeyInfo.pubkeyAddress}
+            href={getValidatorInfoURL() + 'validator/' + pubkeyInfo.pubkeyAddress}
             target='_blank'
           >
             {!apiData ? '--' : apiData?.validator?.slashed ? '🔴' : '🟢'}

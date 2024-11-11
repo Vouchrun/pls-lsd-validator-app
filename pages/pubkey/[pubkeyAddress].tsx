@@ -5,7 +5,7 @@ import { PageTitleContainer } from 'components/common/PageTitleContainer';
 import { Icomoon } from 'components/icon/Icomoon';
 import { PubkeyDetailAsset } from 'components/pubkey/PubkeyDetailAsset';
 import { PubkeyDetailSlashHistory } from 'components/pubkey/PubkeyDetailSlashHistory';
-import { getg4mm4URL } from 'config/env';
+import { getValidatorInfoURL } from 'config/env';
 import { robotoBold } from 'config/font';
 import { useAppSlice } from 'hooks/selector';
 import { usePubkeyDetail } from 'hooks/usePubkeyDetail';
@@ -81,7 +81,7 @@ const PubkeyDetailPage = () => {
                     <div className='mr-[.06rem]'>
                       <span className={robotoBold.className}>Address:</span>{' '}
                       <a
-                        href={getg4mm4URL() + 'validator/' + pubkeyAddress}
+                        href={getValidatorInfoURL() + 'validator/' + pubkeyAddress}
                         target='_blank'
                       >
                         {getShortAddress(pubkeyAddress, 20)}

@@ -2,7 +2,7 @@ import classNames from 'classnames';
 import { CustomButton } from 'components/common/CustomButton';
 import { DataLoading } from 'components/common/DataLoading';
 import { Icomoon } from 'components/icon/Icomoon';
-import { getBeaconHost, getg4mm4URL, getLsdAppUrl } from 'config/env';
+import { getBeaconHost, getValidatorInfoURL, getLsdAppUrl } from 'config/env';
 import { usePubkeyDetail } from 'hooks/usePubkeyDetail';
 import { NodePubkeyInfo } from 'interfaces/common';
 import Image from 'next/image';
@@ -130,7 +130,7 @@ export const PubkeyDetailAsset = (props: {
 
         <a
           className='flex items-center justify-center text-[.16rem] text-error'
-          href={getg4mm4URL() + '/validator/' + pubkeyInfo?.pubkeyAddress}
+          href={getValidatorInfoURL() + '/validator/' + pubkeyInfo?.pubkeyAddress}
           target='_blank'
         >
           {!apiData ? '--' : apiData?.validator?.slashed ? '🔴' : '🟢'}

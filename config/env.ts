@@ -87,11 +87,11 @@ export function getBlockSeconds() {
   return appProdConfig.blockSeconds;
 }
 
-export function getg4mm4URL() {
+export function getValidatorInfoURL() {
   if (isDev()) {
-    return appDevConfig.g4mm4URL;
+    return appDevConfig.ValidatorInfoURL;
   }
-  return appProdConfig.g4mm4URL;
+  return appProdConfig.ValidatorInfoURL;
 }
 
 export function getWagmiChainConfig() {
