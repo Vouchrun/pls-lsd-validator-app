@@ -18,6 +18,7 @@ import { getShortAddress } from 'utils/stringUtils';
 import { TokenStakeListTabs } from './TokenStakeListTabs';
 import { updateValidatorStakeLoadingParams } from 'redux/reducers/AppSlice';
 import { useAppDispatch } from 'hooks/common';
+import { getg4mm4URL } from 'config/env';
 
 export const TokenStakeList = () => {
   const router = useRouter();
@@ -252,9 +253,7 @@ export const TokenStakeList = () => {
 
                 <a
                   className='flex items-center'
-                  href={
-                    'https://www.g4mm4.io/validator/' + pubkeyInfo.pubkeyAddress
-                  }
+                  href={getg4mm4URL() + 'validator/' + pubkeyInfo.pubkeyAddress}
                   target='_blank'
                 >
                   <div className='mx-[.06rem]'>

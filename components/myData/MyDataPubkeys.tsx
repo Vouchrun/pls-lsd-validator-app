@@ -24,7 +24,7 @@ import { isSupportRestApi } from 'utils/configUtils';
 import snackbarUtil from 'utils/snackbarUtils';
 import { getShortAddress } from 'utils/stringUtils';
 import { MyDataNodeEjection } from './MyDataNodeEjection';
-import { getBeaconHost } from 'config/env';
+import { getBeaconHost, getg4mm4URL } from 'config/env';
 
 export const MyDataPubkeys = () => {
   const { metaMaskAccount } = useWalletAccount();
@@ -128,7 +128,7 @@ export const MyDataPubkeys = () => {
             Public Key List {!showLoading && `(${displayPubkeyInfos.length})`}
           </div>
           <div className='flex items-center justify-center text-[.16rem] text-color-text2'>
-            Stash Health
+            Slashed Health
           </div>
           <div className='flex items-center justify-center text-[.16rem] text-color-text2'>
             Status
@@ -257,10 +257,10 @@ const MyDataPubkeyItem = (props: MyDataPubkeyItemProps) => {
       <div className='flex items-center justify-center text-[.16rem] text-color-text1'>
         <div className='flex items-center cursor-pointer'>
           <a
-            href={'https://www.g4mm4.io/validator/' + pubkeyInfo.pubkeyAddress}
+            href={getg4mm4URL() + 'validator/' + pubkeyInfo.pubkeyAddress}
             target='_blank'
           >
-            {!apiData ? '--' : apiData?.validator?.slashed ? '🟢' : '🔴'}
+            {!apiData ? '--' : apiData?.validator?.slashed ? '🔴' : '🟢'}
           </a>
         </div>
       </div>
