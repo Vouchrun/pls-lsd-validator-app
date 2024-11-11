@@ -130,7 +130,7 @@ export const PubkeyDetailAsset = (props: {
 
         <a
           className='flex items-center justify-center text-[.16rem] text-error'
-          href={getValidatorInfoURL() + '/validator/' + pubkeyInfo?.pubkeyAddress}
+          href={getValidatorInfoURL() + 'validator/' + pubkeyInfo?.pubkeyAddress}
           target='_blank'
         >
           {!apiData ? '--' : apiData?.validator?.slashed ? '🔴' : '🟢'}
