@@ -68,7 +68,7 @@ export const PubkeyDetailAsset = (props: {
         </div>
 
         <div className='flex items-center justify-center text-[.16rem] text-color-text2'>
-          Slashed {getTokenName()}
+          Slashed Health
         </div>
       </div>
 
@@ -128,9 +128,13 @@ export const PubkeyDetailAsset = (props: {
           --
         </div>
 
-        <div className='flex items-center justify-center text-[.16rem] text-error'>
-          {!apiData ? '--' : apiData?.validator?.slashed ? 'true' : 'false'}
-        </div>
+        <a
+          className='flex items-center justify-center text-[.16rem] text-error'
+          href={'https://www.g4mm4.io/validator/' + pubkeyInfo?.pubkeyAddress}
+          target='_blank'
+        >
+          {!apiData ? '--' : apiData?.validator?.slashed ? '🟢' : '🔴'}
+        </a>
       </div>
     </div>
   );

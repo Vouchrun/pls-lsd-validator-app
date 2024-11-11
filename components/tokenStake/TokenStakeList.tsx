@@ -250,11 +250,12 @@ export const TokenStakeList = () => {
                   }}
                 />
 
-                <div
+                <a
                   className='flex items-center'
-                  onClick={() => {
-                    router.push(`/pubkey/${pubkeyInfo.pubkeyAddress}`);
-                  }}
+                  href={
+                    'https://www.g4mm4.io/validator/' + pubkeyInfo.pubkeyAddress
+                  }
+                  target='_blank'
                 >
                   <div className='mx-[.06rem]'>
                     {getShortAddress(metaMaskAccount, 4)}
@@ -265,7 +266,7 @@ export const TokenStakeList = () => {
                     size='.12rem'
                     color={darkMode ? '#ffffff80' : '#6C86AD'}
                   />
-                </div>
+                </a>
               </div>
 
               <div

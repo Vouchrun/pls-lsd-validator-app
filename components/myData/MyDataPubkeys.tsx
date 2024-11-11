@@ -18,12 +18,13 @@ import {
 import Image from 'next/image';
 import { useRouter } from 'next/router';
 import checkedIcon from 'public/images/checked.svg';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { getPubkeyStatusTypeText, openLink } from 'utils/commonUtils';
 import { isSupportRestApi } from 'utils/configUtils';
 import snackbarUtil from 'utils/snackbarUtils';
 import { getShortAddress } from 'utils/stringUtils';
 import { MyDataNodeEjection } from './MyDataNodeEjection';
+import { getBeaconHost } from 'config/env';
 
 export const MyDataPubkeys = () => {
   const { metaMaskAccount } = useWalletAccount();
@@ -120,13 +121,15 @@ export const MyDataPubkeys = () => {
         <div
           className='h-[.7rem] grid items-center font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F]'
           style={{
-            gridTemplateColumns: '70% 30%',
+            gridTemplateColumns: '50% 25% 25%',
           }}
         >
           <div className='pl-[.5rem] flex items-center justify-start text-[.16rem] text-color-text2'>
             Public Key List {!showLoading && `(${displayPubkeyInfos.length})`}
           </div>
-
+          <div className='flex items-center justify-center text-[.16rem] text-color-text2'>
+            Stash Health
+          </div>
           <div className='flex items-center justify-center text-[.16rem] text-color-text2'>
             Status
           </div>
@@ -186,6 +189,31 @@ const MyDataPubkeyItem = (props: MyDataPubkeyItemProps) => {
   const { darkMode } = useAppSlice();
   const { index, pubkeyInfo } = props;
 
+  const [apiData, setApiData] = useState<any>(null);
+  useEffect(() => {
+    const getData = async () => {
+      if (!pubkeyInfo.pubkeyAddress) {
+        return;
+      }
+
+      const res = await fetch(
+        `${getBeaconHost()}/eth/v1/beacon/states/head/validators?id=` +
+          pubkeyInfo.pubkeyAddress,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      const apires = await res.json();
+
+      setApiData(apires.data[0]);
+    };
+
+    getData();
+  }, [pubkeyInfo.pubkeyAddress]);
+
   return (
     <div
       className={classNames(
@@ -193,7 +221,7 @@ const MyDataPubkeyItem = (props: MyDataPubkeyItemProps) => {
         index % 2 === 0 ? 'bg-bgPage/50 dark:bg-bgPageDark/50' : ''
       )}
       style={{
-        gridTemplateColumns: '70% 30%',
+        gridTemplateColumns: '50% 25% 25%',
       }}
     >
       <div className='pl-[.5rem] flex items-center justify-start text-[.16rem] text-color-text2 cursor-pointer'>
@@ -223,6 +251,17 @@ const MyDataPubkeyItem = (props: MyDataPubkeyItemProps) => {
             size='.12rem'
             color={darkMode ? '#ffffff80' : '#6C86AD'}
           />
+        </div>
+      </div>
+
+      <div className='flex items-center justify-center text-[.16rem] text-color-text1'>
+        <div className='flex items-center cursor-pointer'>
+          <a
+            href={'https://www.g4mm4.io/validator/' + pubkeyInfo.pubkeyAddress}
+            target='_blank'
+          >
+            {!apiData ? '--' : apiData?.validator?.slashed ? '🟢' : '🔴'}
+          </a>
         </div>
       </div>
 

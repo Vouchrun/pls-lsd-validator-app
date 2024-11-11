@@ -51,10 +51,6 @@ export const UnstakingPoolStatus = () => {
             Pool {getTokenName()}
           </div>
 
-          {/* <div className="flex items-center justify-center text-[.16rem] text-color-text2">
-            Unstakeawable {getLsdTokenName()}
-          </div> */}
-
           <div className='flex items-center justify-center text-[.16rem] text-color-text2'>
             Waiting Stakers
           </div>
@@ -82,14 +78,6 @@ export const UnstakingPoolStatus = () => {
               })
             )}
           </div>
-
-          {/* <div className="flex items-center justify-center text-[.16rem] text-color-text1">
-            {unstakeawableEth === undefined ? (
-              <DataLoading height=".16rem" />
-            ) : (
-              formatNumber(unstakeawableEth, { hideDecimalsForZero: true })
-            )}
-          </div> */}
 
           <div className='flex items-center justify-center text-[.16rem] text-color-text1'>
             {waitingStakers === undefined ? (
