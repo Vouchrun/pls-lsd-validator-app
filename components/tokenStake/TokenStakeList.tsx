@@ -140,7 +140,12 @@ export const TokenStakeList = () => {
               <div className='flex items-center'>
                 <div>
                   Group Stake Avaliable{' '}
-                  {displaySoloPubkeyInfos.length > 1 ? 'Solo' : 'Trusted'} Nodes
+                  {displaySoloPubkeyInfos.length > 1
+                    ? 'Solo'
+                    : displayTrustPubkeyInfos.length > 1
+                    ? 'Trusted'
+                    : ''}{' '}
+                  Nodes
                 </div>
 
                 <div className='ml-[.06rem] rotate-[-90deg]'>

@@ -36,7 +36,7 @@ export const ValidatorEjection = () => {
           }}
         >
           <div className='text-color-text2 text-[.16rem]'>
-            StaFi Ejection Mechanism
+            Ejection Mechanism
           </div>
 
           <div className='ml-[.06rem] flex items-center'>

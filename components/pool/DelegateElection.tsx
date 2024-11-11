@@ -36,7 +36,7 @@ export const DelegateElection = () => {
           }}
         >
           <div className='text-color-text2 text-[.16rem]'>
-            StaFi Delegation Mechanism
+            Delegation Mechanism
           </div>
 
           <div className='ml-[.06rem] flex items-center'>
