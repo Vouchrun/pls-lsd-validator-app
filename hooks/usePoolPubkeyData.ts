@@ -113,9 +113,16 @@ export function usePoolPubkeyData() {
       //   }
       // );
       // const beaconStatusResJson = await beaconStatusResponse.json();
-      const beaconStatusResJson = await fetchPubkeyStatus(
-        pubkeyAddressList.join(',')
-      );
+      const chunkSize = 100; // Adjust the chunk size as needed
+      const beaconStatusResponses = [];
+      for (let i = 0; i < pubkeyAddressList.length; i += chunkSize) {
+        const chunk = pubkeyAddressList.slice(i, i + chunkSize);
+        const response = await fetchPubkeyStatus(chunk.join(','));
+        beaconStatusResponses.push(response);
+      }
+      const beaconStatusResJson = {
+        data: beaconStatusResponses.flatMap((response) => response.data),
+      };
 
       // Query on-chain pubkey detail info list
       const pubkeyInfoRequests = pubkeyAddressList?.map(
