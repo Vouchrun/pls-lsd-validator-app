@@ -2,7 +2,8 @@ import classNames from 'classnames';
 import { CustomButton } from 'components/common/CustomButton';
 import { DataLoading } from 'components/common/DataLoading';
 import { Icomoon } from 'components/icon/Icomoon';
-import { getLsdAppUrl } from 'config/env';
+import { getNetworkWithdrawContract } from 'config/contract';
+import { getLsdAppUrl, getValidatorInfoURL } from 'config/env';
 import { robotoSemiBold } from 'config/font';
 import { useAppSlice } from 'hooks/selector';
 import { usePoolData } from 'hooks/usePoolData';
@@ -30,6 +31,7 @@ export const PoolAssets = () => {
     stakedToken,
     stakedTokenValue,
   } = usePoolData();
+  const networkwithdrawAddress = getNetworkWithdrawContract();
 
   return (
     <div className='mt-[.24rem] bg-color-bg2 border-[0.01rem] border-color-border1 rounded-[.3rem]'>
@@ -184,7 +186,20 @@ export const PoolAssets = () => {
               ) : (
                 matchedValidators
               )}
+
+              <a
+                className='min-w-[.15rem] min-h-[.15rem] ml-[.1rem]'
+                href={
+                  getValidatorInfoURL() +
+                  'validators?v=' +
+                  networkwithdrawAddress
+                }
+                target='_blank'
+              >
+                <Icomoon icon='share' size='.12rem' />
+              </a>
             </div>
+
             <div
               className='flex items-center mt-[.24rem] cursor-pointer'
               onClick={() => {
