@@ -9,9 +9,45 @@ import { robotoBold } from 'config/font';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
 import tokenStakeIcon from 'public/images/token_stake.svg';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Typography from '@mui/material/Typography';
+import Modal from '@mui/material/Modal';
+import { Switch } from '@mui/material';
+import { useEffect, useState } from 'react';
+
+const style = {
+  position: 'absolute',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+  bgcolor: 'background.paper',
+  border: '2px solid #000',
+  boxShadow: 20,
+  p: 4,
+  background: '#455168',
+  borderRadius: '0.3rem',
+};
 
 const TokenStakeListPage = () => {
   const router = useRouter();
+
+  const [open, setOpen] = useState(false);
+  const [show, setShow] = useState(false);
+  const handleClose = () => setOpen(false);
+
+  const onConfirm = async () => {
+    if (show) {
+      window.localStorage.setItem('show', 'false');
+    }
+    setOpen(false);
+  };
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      setOpen(window.localStorage.getItem('show') === 'false' ? false : true);
+    }
+  }, []);
 
   return (
     <div>
@@ -77,11 +113,61 @@ const TokenStakeListPage = () => {
 
             <FaqItem text='What are the commissions and fees associated with staking PLS?'>
               Staking Reward Commission: 10% of your staking reward. 5% will be
-              allocated to the Vouch DAO, 5% will be allocated to validator Nodes (Operators).
+              allocated to the Vouch DAO, 5% will be allocated to validator
+              Nodes (Operators).
             </FaqItem>
           </div>
         </div>
       </div>
+
+      <Modal
+        open={open}
+        onClose={handleClose}
+        aria-labelledby='modal-modal-title'
+        aria-describedby='modal-modal-description'
+      >
+        <Box sx={style}>
+          <h4 className='d-title'>Disclaimer</h4>
+          <br />
+          <p id='modal-modal-description' className='d-subtitle'>
+            I acknowledge that all transactions executed through connected smart
+            contracts are irreversible and conducted solely on the applicable
+            blockchain networks. I understand that using smart contracts carries
+            risks, including errors, hacks, and unforeseen consequences, which
+            may result in loss of funds.
+          </p>
+          <br />
+          <p id='modal-modal-description' className='d-subtitle'>
+            I accept these risks and acknowledge that the application operators
+            have no control over my funds or transactions and provide no
+            warranty or endorsement with respect to any tokens or outcomes.
+          </p>
+          <br />
+          <div className='flex items-center gap-[8px]'>
+            <label className='sc-1ecf058b-1 ggnPRR'>
+              {' '}
+              <Switch
+                checked={show}
+                onChange={() => setShow(!show)}
+                name='loading'
+                color='warning'
+              />
+              <span className='sc-1ecf058b-0 dioEsS'></span>
+            </label>
+            <div style={{ color: 'white' }}>Do not show again</div>
+          </div>
+          <CustomButton
+            mt='.18rem'
+            className='mx-[.24rem]'
+            height='.56rem'
+            type='primary'
+            onClick={() => onConfirm()}
+            border='none'
+          >
+            <div className='flex items-center'>Confirm</div>
+          </CustomButton>
+        </Box>
+      </Modal>
     </div>
   );
 };
