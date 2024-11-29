@@ -120,7 +120,7 @@ const SystemPage = () => {
             <VouchContracts />
           </div>
         </div>
-        <div className='grid grid-cols-1 lg:grid-cols-2 gap-1 mt-1'>
+        <div className='grid grid-cols-1 lg:grid-cols-1 gap-1 mt-1'>
           <div>
             <Voter voters={voters} voteManagerAddress={voteManagerAddress} />
           </div>
