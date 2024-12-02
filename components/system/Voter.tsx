@@ -99,28 +99,28 @@ const VoterRow = memo(
     );
 
     return (
-      <div
+      <tr
         className={
           darkMode
-            ? 'flex items-center justify-between px-[30px] py-[8px] border-b-[0.01rem] border-[#303745] text-[.14rem] text-color-text1'
-            : 'flex items-center justify-between px-[20px] py-[5px] border-b-[0.01rem] border-[#ffffff] text-[.14rem] text-color-text1'
+            ? 'border-b-[0.01rem] border-[#303745] text-[.14rem] text-color-text1 last:border-0'
+            : 'border-b-[0.01rem] border-[#ffffff] text-[.14rem] text-color-text1 last:border-0'
         }
       >
-        <div className='text-[13px] truncate'>{voter}</div>
-        <div className={robotoSemiBold.className}>{formattedBalance} PLS</div>
-        <div className={robotoSemiBold.className}>
+        <td className='text-left text-[13px] truncate px-[30px] py-[15px]'>{voter}</td>
+        <td className='text-center font-semibold px-[30px] py-[15px]' >{formattedBalance} PLS</td>
+        <td className='text-center font-semibold px-[30px] py-[15px]'>
           {withdrawCycleSeconds &&
-          moment
-            .utc(lastVoted)
-            .add(+withdrawCycleSeconds + 3600, 'seconds')
-            .isBefore(moment.utc())
+            moment
+              .utc(lastVoted)
+              .add(+withdrawCycleSeconds + 3600, 'seconds')
+              .isBefore(moment.utc())
             ? '🔴'
             : '🟢'}
-        </div>
-        <div className={robotoSemiBold.className}>
+        </td>
+        <td className='text-center px-[30px] py-[8px]'>
           {moment.utc(lastVoted).local().format('D MMM YYYY h:mm a')}
-        </div>
-      </div>
+        </td>
+      </tr>
     );
   }
 );
@@ -178,7 +178,66 @@ const Voter = memo(({ voters, voteManagerAddress }: any) => {
   }, [dispatch, writeContractAsync, voterAddress]);
 
   return (
-    <div className='bg-color-bg2 border-[0.01rem] border-color-border1 rounded-[.3rem]'>
+    <>
+      <div className='bg-color-bg2 border-[0.01rem] border-color-border1 rounded-[.3rem] overflow-hidden'>
+        <div className='bg-bgPage/50 dark:bg-bgPageDark/50'>
+          <div className='overflow-x-auto'>
+            <table className='w-full min-w-[800px]'>
+              <thead>
+                <tr>
+                  <th className='bg-color-bg2 text-left font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[.16rem] text-color-text2 px-[30px] py-[30px]'>Voter / Relays</th>
+                  <th className='bg-color-bg2 font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[.16rem] text-color-text2 px-[30px] py-[30px]'>Balance</th>
+                  <th className='bg-color-bg2 font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[.16rem] text-color-text2 px-[30px] py-[30px]'>Status</th>
+                  <th className='bg-color-bg2 font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[.16rem] text-color-text2 px-[30px] py-[30px]'>Last Voted</th>
+                </tr>
+              </thead>
+              <tbody >
+                <VoterList
+                  voters={voters}
+                  darkMode={darkMode}
+                  withdrawCycleSeconds={withdrawCycleSeconds}
+                />
+              </tbody>
+            </table>
+          </div>
+          <div className='text-[.14rem] text-color-text1 mt-5 text-center pb-[30px] max-w-[422px] mx-auto'>
+            <input
+              type='text'
+              placeholder='Enter Voter Address'
+              value={voterAddress}
+              onChange={(e) => setVoterAddress(e.target.value)}
+              className={
+                darkMode
+                  ? 'w-full rounded-[35px] bg-[#1B1B1F] text-center h-[42px] border-[0.01rem] border-[#6C86AD80]'
+                  : 'w-full rounded-[35px] bg-[#fff] text-center h-[42px] border-[0.01rem] border-[#6C86AD80]'
+              }
+            />
+            <div className='mt-[10px] max-w-[100%] mx-auto flex items-center gap-1 w-[100%] justify-center'>
+              <CustomButton
+                type='small'
+                height='.42rem'
+                width='130px'
+                disabled={metaMaskAccount !== voteManagerAddress}
+                onClick={handleAddAddress}
+              >
+                Add
+              </CustomButton>
+              <CustomButton
+                type='small'
+                height='.42rem'
+                width='130px'
+                disabled={metaMaskAccount !== voteManagerAddress}
+                onClick={handleRemoveAddress}
+              >
+                Remove
+              </CustomButton>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      {/* <div className='bg-color-bg2 border-[0.01rem] border-color-border1 rounded-[.3rem]'>
       <div className='h-[.7rem] flex items-center justify-between font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[.16rem] text-color-text2 px-[30px]'>
         <span>Voter / Relays</span>
         <span>Balance</span>
@@ -197,41 +256,10 @@ const Voter = memo(({ voters, voteManagerAddress }: any) => {
           withdrawCycleSeconds={withdrawCycleSeconds}
         />
 
-        <div className='text-[.14rem] text-color-text1 mt-5 text-center mb-[10px] max-w-[422px] mx-auto'>
-          <input
-            type='text'
-            placeholder='Enter Voter Address'
-            value={voterAddress}
-            onChange={(e) => setVoterAddress(e.target.value)}
-            className={
-              darkMode
-                ? 'w-full rounded-[35px] bg-[#1B1B1F] text-center h-[42px] border-[0.01rem] border-[#6C86AD80]'
-                : 'w-full rounded-[35px] bg-[#fff] text-center h-[42px] border-[0.01rem] border-[#6C86AD80]'
-            }
-          />
-          <div className='mt-[10px] max-w-[100%] mx-auto flex items-center gap-1 w-[100%] justify-center'>
-            <CustomButton
-              type='small'
-              height='.42rem'
-              width='130px'
-              disabled={metaMaskAccount !== voteManagerAddress}
-              onClick={handleAddAddress}
-            >
-              Add
-            </CustomButton>
-            <CustomButton
-              type='small'
-              height='.42rem'
-              width='130px'
-              disabled={metaMaskAccount !== voteManagerAddress}
-              onClick={handleRemoveAddress}
-            >
-              Remove
-            </CustomButton>
-          </div>
-        </div>
+        
       </div>
-    </div>
+    </div> */}
+    </>
   );
 });
 
