@@ -6,11 +6,12 @@ import { useWalletAccount } from 'hooks/useWalletAccount';
 import { useAppDispatch } from 'hooks/common';
 import { addAddress, removeAddress } from 'redux/reducers/ValidatorSlice';
 import { useWriteContract } from 'wagmi';
-import { robotoSemiBold } from 'config/font';
 import Web3 from 'web3';
 import { formatNumber } from 'utils/numberUtils';
 import * as moment from 'moment';
 import { useUnstakingPoolData } from 'hooks/useUnstakingPoolData';
+import { getExplorerAPIURL } from 'config/env';
+import { getNetworkProposalContract } from 'config/contract';
 
 interface VoterData {
   balance: string | null;
@@ -34,11 +35,9 @@ const useVoterData = (voter: string) => {
 
       // Fetch both balance and transactions in parallel
       const [balanceResponse, txResponse] = await Promise.all([
+        fetch(getExplorerAPIURL() + `api/v2/addresses/` + voter),
         fetch(
-          `https://api.scan.pulsechain.com/api/v2/addresses/0x73E3116809Ef7Df249f276ED7ceAaDaA44Acad97`
-        ),
-        fetch(
-          `https://api.scan.pulsechain.com/api/v2/addresses/0x73E3116809Ef7Df249f276ED7ceAaDaA44Acad97/transactions`
+          getExplorerAPIURL() + `api/v2/addresses/` + voter + `/transactions`
         ),
       ]);
 
@@ -52,7 +51,7 @@ const useVoterData = (voter: string) => {
       const firstOccurrence = txData.items.find(
         (item: any) =>
           item.method === 'execProposal' &&
-          item.to.hash === '0x7783D7040423f75aeF82a3Ec32ed366ca460Fa6c'
+          item.to.hash === getNetworkProposalContract()
       );
 
       const timestamp = firstOccurrence ? firstOccurrence.timestamp : null;
@@ -106,14 +105,18 @@ const VoterRow = memo(
             : 'border-b-[0.01rem] border-[#ffffff] text-[.14rem] text-color-text1 last:border-0'
         }
       >
-        <td className='text-left text-[13px] truncate px-[30px] py-[15px]'>{voter}</td>
-        <td className='text-center font-semibold px-[30px] py-[15px]' >{formattedBalance} PLS</td>
+        <td className='text-left text-[13px] truncate px-[30px] py-[15px]'>
+          {voter}
+        </td>
+        <td className='text-center font-semibold px-[30px] py-[15px]'>
+          {formattedBalance} PLS
+        </td>
         <td className='text-center font-semibold px-[30px] py-[15px]'>
           {withdrawCycleSeconds &&
-            moment
-              .utc(lastVoted)
-              .add(+withdrawCycleSeconds + 3600, 'seconds')
-              .isBefore(moment.utc())
+          moment
+            .utc(lastVoted)
+            .add(+withdrawCycleSeconds + 3600, 'seconds')
+            .isBefore(moment.utc())
             ? '🔴'
             : '🟢'}
         </td>
@@ -185,13 +188,21 @@ const Voter = memo(({ voters, voteManagerAddress }: any) => {
             <table className='w-full min-w-[800px]'>
               <thead>
                 <tr>
-                  <th className='bg-color-bg2 text-left font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[.16rem] text-color-text2 px-[30px] py-[30px]'>Voter / Relays</th>
-                  <th className='bg-color-bg2 font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[.16rem] text-color-text2 px-[30px] py-[30px]'>Balance</th>
-                  <th className='bg-color-bg2 font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[.16rem] text-color-text2 px-[30px] py-[30px]'>Status</th>
-                  <th className='bg-color-bg2 font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[.16rem] text-color-text2 px-[30px] py-[30px]'>Last Voted</th>
+                  <th className='bg-color-bg2 text-left font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[.16rem] text-color-text2 px-[30px] py-[30px]'>
+                    Voter / Relays
+                  </th>
+                  <th className='bg-color-bg2 font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[.16rem] text-color-text2 px-[30px] py-[30px]'>
+                    Balance
+                  </th>
+                  <th className='bg-color-bg2 font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[.16rem] text-color-text2 px-[30px] py-[30px]'>
+                    Status
+                  </th>
+                  <th className='bg-color-bg2 font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[.16rem] text-color-text2 px-[30px] py-[30px]'>
+                    Last Voted
+                  </th>
                 </tr>
               </thead>
-              <tbody >
+              <tbody>
                 <VoterList
                   voters={voters}
                   darkMode={darkMode}
@@ -234,7 +245,6 @@ const Voter = memo(({ voters, voteManagerAddress }: any) => {
             </div>
           </div>
         </div>
-
       </div>
 
       {/* <div className='bg-color-bg2 border-[0.01rem] border-color-border1 rounded-[.3rem]'>

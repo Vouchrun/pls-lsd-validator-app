@@ -1,9 +1,10 @@
-import { Action, configureStore, ThunkAction } from "@reduxjs/toolkit";
-import appReducer from "./reducers/AppSlice";
-import walletReducer from "./reducers/WalletSlice";
-import ethReducer from "./reducers/EthSlice";
-import lsdEthReducer from "./reducers/LsdEthSlice";
-import validatorReducer from "./reducers/ValidatorSlice";
+import { Action, configureStore, ThunkAction } from '@reduxjs/toolkit';
+import appReducer from './reducers/AppSlice';
+import walletReducer from './reducers/WalletSlice';
+import ethReducer from './reducers/EthSlice';
+import lsdEthReducer from './reducers/LsdEthSlice';
+import validatorReducer from './reducers/ValidatorSlice';
+import validatorNodeAddressStateReducer from './reducers/ValidatorNodeAddress';
 
 export const store = configureStore({
   reducer: {
@@ -12,6 +13,7 @@ export const store = configureStore({
     eth: ethReducer,
     lsdEth: lsdEthReducer,
     validator: validatorReducer,
+    validatorNodeAddressState: validatorNodeAddressStateReducer,
   },
 });
 

@@ -1,5 +1,4 @@
 import classNames from 'classnames';
-import { CustomButton } from 'components/common/CustomButton';
 import { DataLoading } from 'components/common/DataLoading';
 import { Icomoon } from 'components/icon/Icomoon';
 import { getNetworkWithdrawContract } from 'config/contract';
@@ -9,7 +8,6 @@ import { useAppSlice } from 'hooks/selector';
 import { usePoolData } from 'hooks/usePoolData';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
-import { useMemo } from 'react';
 import { formatValidatorDespositAmount, openLink } from 'utils/commonUtils';
 import {
   getLsdTokenName,
