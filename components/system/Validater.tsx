@@ -7,6 +7,7 @@ import { useNetworkProposalData } from 'hooks/useNetworkProposalData';
 import { addTrustNode, removeTrustNode } from 'redux/reducers/ValidatorSlice';
 import { useAppDispatch } from 'hooks/common';
 import { useWriteContract } from 'wagmi';
+import { robotoSemiBold } from 'config/font';
 
 export default function Validater({ nodes }: any) {
   const dispatch = useAppDispatch();
@@ -19,7 +20,8 @@ export default function Validater({ nodes }: any) {
     <div className='bg-color-bg2 border-[0.01rem] border-color-border1 rounded-[.3rem]'>
       <div className='h-[.7rem] flex items-center justify-between font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[.16rem] text-color-text2 px-[30px]'>
         <span>Trusted Validator Node Address</span>
-        {/* <span>Active Validators</span> */}
+        <span>Balance Status</span>
+        <span>Active Validators</span>
       </div>
       <div
         className={classNames(
@@ -38,7 +40,10 @@ export default function Validater({ nodes }: any) {
               }
             >
               <div className='text-[13px] truncate'>{node}</div>
-              {/* <div className={robotoSemiBold.className}>57</div> */}
+              <div className={robotoSemiBold.className}>
+                {true ? '🔴' : '🟢'}
+              </div>
+              <div className={robotoSemiBold.className}>57</div>
             </div>
           ))}
         <div className='text-[.14rem] text-color-text1 mt-5 text-center mb-[10px] max-w-[422px] mx-auto'>

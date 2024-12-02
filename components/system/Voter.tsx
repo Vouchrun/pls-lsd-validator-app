@@ -1,7 +1,6 @@
-import React from 'react';
+import React, { memo, useCallback, useMemo } from 'react';
 import classNames from 'classnames';
 import { useAppSlice } from 'hooks/selector';
-import { useNetworkProposalData } from 'hooks/useNetworkProposalData';
 import { CustomButton } from 'components/common/CustomButton';
 import { useWalletAccount } from 'hooks/useWalletAccount';
 import { useAppDispatch } from 'hooks/common';
@@ -10,75 +9,174 @@ import { useWriteContract } from 'wagmi';
 import { robotoSemiBold } from 'config/font';
 import Web3 from 'web3';
 import { formatNumber } from 'utils/numberUtils';
+import * as moment from 'moment';
+import { useUnstakingPoolData } from 'hooks/useUnstakingPoolData';
 
-const Voter = React.memo(({ voters, voteManagerAddress }: any) => {
+interface VoterData {
+  balance: string | null;
+  lastVoted: string | null;
+  loading: boolean;
+}
+
+// Create a custom hook for fetching voter data
+const useVoterData = (voter: string) => {
+  const [data, setData] = React.useState<VoterData>({
+    balance: null,
+    lastVoted: null,
+    loading: false,
+  });
+
+  const fetchData = useCallback(async () => {
+    if (data.loading) return;
+
+    try {
+      setData((prev) => ({ ...prev, loading: true }));
+
+      // Fetch both balance and transactions in parallel
+      const [balanceResponse, txResponse] = await Promise.all([
+        fetch(
+          `https://api.scan.pulsechain.com/api/v2/addresses/0x73E3116809Ef7Df249f276ED7ceAaDaA44Acad97`
+        ),
+        fetch(
+          `https://api.scan.pulsechain.com/api/v2/addresses/0x73E3116809Ef7Df249f276ED7ceAaDaA44Acad97/transactions`
+        ),
+      ]);
+
+      const [balanceData, txData] = await Promise.all([
+        balanceResponse.json(),
+        txResponse.json(),
+      ]);
+
+      const newBalance = Web3.utils.fromWei(balanceData.coin_balance);
+
+      const firstOccurrence = txData.items.find(
+        (item: any) =>
+          item.method === 'execProposal' &&
+          item.to.hash === '0x7783D7040423f75aeF82a3Ec32ed366ca460Fa6c'
+      );
+
+      const timestamp = firstOccurrence ? firstOccurrence.timestamp : null;
+
+      setData(() => ({
+        balance: newBalance,
+        lastVoted: timestamp,
+        loading: false,
+      }));
+    } catch (error) {
+      console.error('Error fetching voter data:', error);
+      setData((prev) => ({ ...prev, loading: false }));
+    }
+  }, [voter]);
+
+  // Initial fetch and setup polling
+  React.useEffect(() => {
+    fetchData();
+    const intervalId = setInterval(fetchData, 30000);
+    return () => clearInterval(intervalId);
+  }, [fetchData]);
+
+  return data;
+};
+
+// Memoized VoterRow component
+const VoterRow = memo(
+  ({
+    voter,
+    darkMode,
+    balance,
+    lastVoted,
+    withdrawCycleSeconds,
+  }: {
+    voter: string;
+    darkMode: boolean;
+    balance: string | null;
+    lastVoted: string | null;
+    withdrawCycleSeconds: string | undefined;
+  }) => {
+    const formattedBalance = useMemo(
+      () => formatNumber(balance ?? 0, { hideDecimalsForZero: true }),
+      [balance]
+    );
+
+    return (
+      <div
+        className={
+          darkMode
+            ? 'flex items-center justify-between px-[30px] py-[8px] border-b-[0.01rem] border-[#303745] text-[.14rem] text-color-text1'
+            : 'flex items-center justify-between px-[20px] py-[5px] border-b-[0.01rem] border-[#ffffff] text-[.14rem] text-color-text1'
+        }
+      >
+        <div className='text-[13px] truncate'>{voter}</div>
+        <div className={robotoSemiBold.className}>{formattedBalance} PLS</div>
+        <div className={robotoSemiBold.className}>
+          {withdrawCycleSeconds &&
+          moment
+            .utc(lastVoted)
+            .add(+withdrawCycleSeconds + 3600, 'seconds')
+            .isBefore(moment.utc())
+            ? '🔴'
+            : '🟢'}
+        </div>
+        <div className={robotoSemiBold.className}>
+          {moment.utc(lastVoted).local().format('D MMM YYYY h:mm a')}
+        </div>
+      </div>
+    );
+  }
+);
+
+// Memoized VoterList component
+const VoterList = memo(
+  ({
+    voters,
+    darkMode,
+    withdrawCycleSeconds,
+  }: {
+    voters: string[];
+    darkMode: boolean;
+    withdrawCycleSeconds: string | undefined;
+  }) => {
+    // Use a Map to store voter data
+    const voterDataMap = new Map(
+      voters.map((voter) => [voter, useVoterData(voter)])
+    );
+
+    return (
+      <>
+        {voters.map((voter) => {
+          const voterData = voterDataMap.get(voter);
+          return (
+            <VoterRow
+              key={voter}
+              voter={voter}
+              darkMode={darkMode}
+              withdrawCycleSeconds={withdrawCycleSeconds}
+              balance={voterData?.balance ?? '0'}
+              lastVoted={voterData?.lastVoted ?? '0'}
+            />
+          );
+        })}
+      </>
+    );
+  }
+);
+
+const Voter = memo(({ voters, voteManagerAddress }: any) => {
   const dispatch = useAppDispatch();
   const { darkMode } = useAppSlice();
   const { metaMaskAccount } = useWalletAccount();
   const [voterAddress, setVoterAddress] = React.useState('');
   const { writeContractAsync } = useWriteContract();
+  const { withdrawCycleSeconds } = useUnstakingPoolData();
 
-  const VoterBalance = ({ voter }: any) => {
-    const [balance, setBalance] = React.useState<string | null>(null); // Initialize with null to differentiate between uninitialized and 0 balance.
-    const [loading, setLoading] = React.useState(false);
+  const handleAddAddress = useCallback(() => {
+    dispatch(addAddress(writeContractAsync, voterAddress));
+  }, [dispatch, writeContractAsync, voterAddress]);
 
-    const fetchBalance = React.useCallback(async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(
-          'https://api.scan.pulsechain.com/api/v2/addresses/0x73E3116809Ef7Df249f276ED7ceAaDaA44Acad97'
-        ); // Replace with actual function to get balance
-        const resJson = await response.json();
-        const newBalance = Web3.utils.fromWei(resJson.coin_balance);
-        // Update balance only if the new balance is different
-        setBalance((prev) => (prev !== newBalance ? newBalance : prev));
-      } catch (error) {
-        console.error('Error fetching balance:', error);
-      } finally {
-        setLoading(false);
-      }
-    }, []);
+  const handleRemoveAddress = useCallback(() => {
+    dispatch(removeAddress(writeContractAsync, voterAddress));
+  }, [dispatch, writeContractAsync, voterAddress]);
 
-    React.useEffect(() => {
-      fetchBalance();
-    }, [fetchBalance]);
-
-    return <>{formatNumber(balance || 0, { hideDecimalsForZero: true })} PLS</>;
-  };
-
-  const LastVoted = ({ voter }: any) => {
-    const [lastVoted, setLastVoted] = React.useState<string | null>(null);
-    const [loading, setLoading] = React.useState(false);
-
-    const fetchBalance = async () => {
-      try {
-        setLoading(true);
-        const txResponse = await fetch(
-          'https://api.scan.pulsechain.com/api/v2/addresses/0x73E3116809Ef7Df249f276ED7ceAaDaA44Acad97/transactions'
-        );
-        const data = await txResponse.json();
-        const firstOccurrence = data.items.find(
-          (item: any) =>
-            item.method === 'execProposal' &&
-            item.to.hash === '0x7783D7040423f75aeF82a3Ec32ed366ca460Fa6c'
-        );
-
-        const timestamp = firstOccurrence ? firstOccurrence.timestamp : null;
-        // Update balance only if the new balance is different
-        setLastVoted((prev) => (prev !== timestamp ? timestamp : prev));
-      } catch (error) {
-        console.error('Error fetching balance:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    React.useEffect(() => {
-      fetchBalance();
-    }, []);
-
-    return <>{lastVoted}</>;
-  };
   return (
     <div className='bg-color-bg2 border-[0.01rem] border-color-border1 rounded-[.3rem]'>
       <div className='h-[.7rem] flex items-center justify-between font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[.16rem] text-color-text2 px-[30px]'>
@@ -93,26 +191,12 @@ const Voter = React.memo(({ voters, voteManagerAddress }: any) => {
           'bg-bgPage/50 dark:bg-bgPageDark/50'
         )}
       >
-        {voters &&
-          voters.map((voter: any, index: number) => (
-            <div
-              key={index}
-              className={
-                darkMode
-                  ? 'flex items-center justify-between px-[30px] py-[8px] border-b-[0.01rem] border-[#303745] text-[.14rem] text-color-text1'
-                  : 'flex items-center justify-between px-[20px] py-[5px] border-b-[0.01rem] border-[#ffffff] text-[.14rem] text-color-text1'
-              }
-            >
-              <div className='text-[13px] truncate'>{voter}</div>
-              <div className={robotoSemiBold.className}>
-                <VoterBalance voter={voter} />
-              </div>
-              <div className={robotoSemiBold.className}>10 Aug 2024 7:45pm</div>
-              <div className={robotoSemiBold.className}>
-                <LastVoted voter={voter} />
-              </div>
-            </div>
-          ))}
+        <VoterList
+          voters={voters}
+          darkMode={darkMode}
+          withdrawCycleSeconds={withdrawCycleSeconds}
+        />
+
         <div className='text-[.14rem] text-color-text1 mt-5 text-center mb-[10px] max-w-[422px] mx-auto'>
           <input
             type='text'
@@ -131,9 +215,7 @@ const Voter = React.memo(({ voters, voteManagerAddress }: any) => {
               height='.42rem'
               width='130px'
               disabled={metaMaskAccount !== voteManagerAddress}
-              onClick={() => {
-                dispatch(addAddress(writeContractAsync, voterAddress));
-              }}
+              onClick={handleAddAddress}
             >
               Add
             </CustomButton>
@@ -142,9 +224,7 @@ const Voter = React.memo(({ voters, voteManagerAddress }: any) => {
               height='.42rem'
               width='130px'
               disabled={metaMaskAccount !== voteManagerAddress}
-              onClick={() => {
-                dispatch(removeAddress(writeContractAsync, voterAddress));
-              }}
+              onClick={handleRemoveAddress}
             >
               Remove
             </CustomButton>
