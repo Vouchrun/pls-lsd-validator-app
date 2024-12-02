@@ -1009,14 +1009,12 @@ export const addAddress =
         }
       );
     } catch (err: any) {
-      {
-        let displayMsg = err.message || TRANSACTION_FAILED_MESSAGE;
-        if (err.code === -32603) {
-          displayMsg = CONNECTION_ERROR_MESSAGE;
-        } else if (err.code === 4001) {
-          snackbarUtil.error(CANCELLED_MESSAGE);
-          return;
-        }
+      let displayMsg = err.message || TRANSACTION_FAILED_MESSAGE;
+      if (err.code === -32603) {
+        displayMsg = CONNECTION_ERROR_MESSAGE;
+      } else if (err.code === 4001) {
+        snackbarUtil.error(CANCELLED_MESSAGE);
+        return;
       }
     } finally {
       dispatch(updateEthBalance());

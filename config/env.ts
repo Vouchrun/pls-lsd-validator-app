@@ -94,6 +94,13 @@ export function getValidatorInfoURL() {
   return appProdConfig.ValidatorInfoURL;
 }
 
+export function getExplorerAPIURL() {
+  if (isDev()) {
+    return appDevConfig.explorerAPIURL;
+  }
+  return appProdConfig.explorerAPIURL;
+}
+
 export function getWagmiChainConfig() {
   return {
     id: getEthereumChainId(),
