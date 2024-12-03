@@ -9,6 +9,7 @@ import { useAppSelector } from 'hooks/common';
 import { RootState } from 'redux/store';
 import { usePoolPubkeyData } from 'hooks/usePoolPubkeyData';
 import millify from 'millify';
+import { useRewardUpdateHour } from 'hooks/useRewardUpdateHour';
 
 export default function ProtocolStatus() {
   const { darkMode } = useAppSlice();
@@ -22,6 +23,7 @@ export default function ProtocolStatus() {
     withdrawCycleSeconds,
   } = useUnstakingPoolData();
   const { threshold, voters } = useNetworkProposalData();
+  const { rewardUpdateHour, rateChangeLimit } = useRewardUpdateHour();
 
   return (
     <div className='bg-color-bg2 border-[0.01rem] border-color-border1 rounded-[.3rem]'>
@@ -142,6 +144,28 @@ export default function ProtocolStatus() {
           <div className={robotoSemiBold.className}>
             {withdrawCycleSeconds && +withdrawCycleSeconds / 3600}
           </div>
+        </div>
+        <div
+          className={
+            darkMode
+              ? 'flex items-center justify-between px-[20px] py-[8px] border-b-[0.01rem] border-[#303745] text-[.14rem] text-color-text1'
+              : 'flex items-center justify-between px-[20px] py-[5px] border-b-[0.01rem] border-[#ffffff] text-[.14rem] text-color-text1'
+          }
+        >
+          <div className='text-color-text2'>
+            Network Balance Update (approx hours)
+          </div>
+          <div className={robotoSemiBold.className}>{rewardUpdateHour}</div>
+        </div>
+        <div
+          className={
+            darkMode
+              ? 'flex items-center justify-between px-[20px] py-[8px] border-b-[0.01rem] border-[#303745] text-[.14rem] text-color-text1'
+              : 'flex items-center justify-between px-[20px] py-[5px] border-b-[0.01rem] border-[#ffffff] text-[.14rem] text-color-text1'
+          }
+        >
+          <div className='text-color-text2'>Rate Change Limit</div>
+          <div className={robotoSemiBold.className}>{rateChangeLimit}</div>
         </div>
       </div>
     </div>

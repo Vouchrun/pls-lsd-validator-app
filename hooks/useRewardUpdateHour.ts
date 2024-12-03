@@ -1,11 +1,13 @@
-import { getNetworkBalanceContract } from "config/contract";
-import { getNetworkBalanceContractAbi } from "config/contractAbi";
-import { getBlockSeconds } from "config/env";
-import { useCallback, useEffect, useState } from "react";
-import { getEthWeb3 } from "utils/web3Utils";
+import { getNetworkBalanceContract } from 'config/contract';
+import { getNetworkBalanceContractAbi } from 'config/contractAbi';
+import { getBlockSeconds } from 'config/env';
+import { useCallback, useEffect, useState } from 'react';
+import { getEthWeb3 } from 'utils/web3Utils';
+import Web3 from 'web3';
 
 export function useRewardUpdateHour() {
   const [rewardUpdateHour, setRewardUpdateHour] = useState<string>();
+  const [rateChangeLimit, setRateChangeLimit] = useState<string>();
 
   const updateData = useCallback(async () => {
     try {
@@ -26,7 +28,16 @@ export function useRewardUpdateHour() {
 
       const updateHours =
         (Number(updateBalancesEpochs) * (getBlockSeconds() * 32)) / 60 / 60;
-      setRewardUpdateHour(Math.round(updateHours) + "");
+      setRewardUpdateHour(Math.round(updateHours) + '');
+
+      const rateChangeLimitValue = await networkBalanceContract.methods
+        .rateChangeLimit()
+        .call()
+        .catch((err: any) => {
+          console.log({ err });
+        });
+
+      setRateChangeLimit(Web3.utils.fromWei(rateChangeLimitValue) + '%');
     } catch (err: any) {
       console.log({ err });
     }
@@ -36,5 +47,5 @@ export function useRewardUpdateHour() {
     updateData();
   }, [updateData]);
 
-  return { rewardUpdateHour };
+  return { rewardUpdateHour, rateChangeLimit };
 }

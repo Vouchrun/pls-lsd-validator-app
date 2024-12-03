@@ -118,7 +118,7 @@ export default function Validater({ nodes }: any) {
               {node.address}
             </td>
             <td className='text-center font-semibold px-[30px] py-[15px]'>
-              {getStatusIcon(node.status)}
+              {node.activeCount > 0 ? getStatusIcon(node.status) : '--'}
             </td>
             <td className='text-center font-semibold px-[30px] py-[15px]'>
               {node.activeCount}
