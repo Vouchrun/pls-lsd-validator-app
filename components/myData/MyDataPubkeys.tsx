@@ -236,11 +236,10 @@ const MyDataPubkeyItem = (props: MyDataPubkeyItemProps) => {
           }}
         />
 
-        <div
-          className='flex items-center'
-          onClick={() => {
-            router.push(`/pubkey/${pubkeyInfo.pubkeyAddress}`);
-          }}
+        <a
+          className='flex items-center cursor-pointer'
+          href={getValidatorInfoURL() + 'validator/' + pubkeyInfo.pubkeyAddress}
+          target='_blank'
         >
           <div className='mx-[.06rem]'>
             {getShortAddress(pubkeyInfo.pubkeyAddress, 20)}
@@ -251,13 +250,15 @@ const MyDataPubkeyItem = (props: MyDataPubkeyItemProps) => {
             size='.12rem'
             color={darkMode ? '#ffffff80' : '#6C86AD'}
           />
-        </div>
+        </a>
       </div>
 
       <div className='flex items-center justify-center text-[.16rem] text-color-text1'>
         <div className='flex items-center cursor-pointer'>
           <a
-            href={getValidatorInfoURL() + 'validator/' + pubkeyInfo.pubkeyAddress}
+            href={
+              getValidatorInfoURL() + 'validator/' + pubkeyInfo.pubkeyAddress
+            }
             target='_blank'
           >
             {!apiData ? '--' : apiData?.validator?.slashed ? '🔴' : '🟢'}

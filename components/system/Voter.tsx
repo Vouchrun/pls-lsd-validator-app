@@ -12,6 +12,7 @@ import * as moment from 'moment';
 import { useUnstakingPoolData } from 'hooks/useUnstakingPoolData';
 import { getExplorerAPIURL } from 'config/env';
 import { getNetworkProposalContract } from 'config/contract';
+import { useRewardUpdateHour } from 'hooks/useRewardUpdateHour';
 
 interface VoterData {
   balance: string | null;
@@ -96,6 +97,7 @@ const VoterRow = memo(
       () => formatNumber(balance ?? 0, { hideDecimalsForZero: true }),
       [balance]
     );
+    const { rewardUpdateHour } = useRewardUpdateHour();
 
     return (
       <tr
@@ -112,10 +114,11 @@ const VoterRow = memo(
           {formattedBalance} PLS
         </td>
         <td className='text-center font-semibold px-[30px] py-[15px]'>
-          {withdrawCycleSeconds &&
+          {rewardUpdateHour &&
+          withdrawCycleSeconds &&
           moment
             .utc(lastVoted)
-            .add(+withdrawCycleSeconds + 3600, 'seconds')
+            .add(+withdrawCycleSeconds + +rewardUpdateHour * 3600, 'seconds')
             .isBefore(moment.utc())
             ? '🔴'
             : '🟢'}

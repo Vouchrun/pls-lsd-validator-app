@@ -182,20 +182,21 @@ export const PoolAssets = () => {
               {matchedValidators === undefined ? (
                 <DataLoading height='.16rem' />
               ) : (
-                matchedValidators
+                <>
+                  {matchedValidators}
+                  <a
+                    className='min-w-[.15rem] min-h-[.15rem] ml-[.1rem]'
+                    href={
+                      getValidatorInfoURL() +
+                      'validators?v=' +
+                      networkwithdrawAddress
+                    }
+                    target='_blank'
+                  >
+                    <Icomoon icon='share' size='.12rem' />
+                  </a>
+                </>
               )}
-
-              <a
-                className='min-w-[.15rem] min-h-[.15rem] ml-[.1rem]'
-                href={
-                  getValidatorInfoURL() +
-                  'validators?v=' +
-                  networkwithdrawAddress
-                }
-                target='_blank'
-              >
-                <Icomoon icon='share' size='.12rem' />
-              </a>
             </div>
 
             <div

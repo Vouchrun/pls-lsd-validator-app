@@ -255,7 +255,7 @@ export const TokenStakeList = () => {
                   className='flex items-center'
                   href={
                     getValidatorInfoURL() +
-                    'validators?v=' +
+                    'validator/' +
                     pubkeyInfo.pubkeyAddress
                   }
                   target='_blank'

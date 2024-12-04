@@ -37,7 +37,7 @@ export function useRewardUpdateHour() {
           console.log({ err });
         });
 
-      setRateChangeLimit(Web3.utils.fromWei(rateChangeLimitValue) + '%');
+      setRateChangeLimit(+Web3.utils.fromWei(rateChangeLimitValue) * 100 + '%');
     } catch (err: any) {
       console.log({ err });
     }
