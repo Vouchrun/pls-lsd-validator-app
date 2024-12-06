@@ -14,12 +14,14 @@ interface ValidatorNodeAddressData {
 
 interface ValidatorState {
   validatorNodeAddressData: ValidatorNodeAddressData[];
+  validatorTrustedNodeAddressData: ValidatorNodeAddressData[];
   loading: boolean;
   error: string | null;
 }
 
 const initialState: ValidatorState = {
   validatorNodeAddressData: [],
+  validatorTrustedNodeAddressData: [],
   loading: false,
   error: null,
 };
@@ -36,6 +38,14 @@ const validatorNodeAddressSlice = createSlice({
       state.loading = false;
       state.error = null;
     },
+    setTrustedValidatorData: (
+      state,
+      action: PayloadAction<ValidatorNodeAddressData[]>
+    ) => {
+      state.validatorTrustedNodeAddressData = action.payload;
+      state.loading = false;
+      state.error = null;
+    },
     setLoading: (state, action: PayloadAction<boolean>) => {
       state.loading = action.payload;
     },
@@ -46,8 +56,12 @@ const validatorNodeAddressSlice = createSlice({
   },
 });
 
-export const { setValidatorData, setLoading, setError } =
-  validatorNodeAddressSlice.actions;
+export const {
+  setValidatorData,
+  setLoading,
+  setError,
+  setTrustedValidatorData,
+} = validatorNodeAddressSlice.actions;
 
 // Thunk action to fetch validator data
 export const fetchValidatorData =
@@ -55,18 +69,17 @@ export const fetchValidatorData =
   async (dispatch) => {
     dispatch(setValidatorData([]));
     dispatch(setLoading(true));
+    const web3 = getEthWeb3();
+    const nodeDepositContract = new web3.eth.Contract(
+      getNodeDepositContractAbi(),
+      getNodeDepositContract()
+    );
 
     try {
       const CHUNK_SIZE = 100;
       const MINIMUM_BALANCE = 32000000;
 
       const fetchNodePubkeys = async (nodeAddress: string) => {
-        const web3 = getEthWeb3();
-        const nodeDepositContract = new web3.eth.Contract(
-          getNodeDepositContractAbi(),
-          getNodeDepositContract()
-        );
-
         try {
           const pubkeys = await nodeDepositContract.methods
             .getPubkeysOfNode(nodeAddress)
@@ -79,6 +92,20 @@ export const fetchValidatorData =
           console.error('Error fetching pubkeys:', error);
           return [];
         }
+      };
+
+      const setNodesWithCheck = async (nodeAddress: any) => {
+        const isTrusted = await nodeDepositContract.methods
+          .nodeInfoOf(nodeAddress)
+          .call()
+          .catch((err: any) => {
+            console.log({ err });
+          });
+
+        if (isTrusted[0] == 2) {
+          return true;
+        }
+        return false;
       };
 
       const fetchValidatorData = async (pubkeys: string[]) => {
@@ -105,10 +132,12 @@ export const fetchValidatorData =
       };
 
       const validatorInfo: ValidatorNodeAddressData[] = [];
+      const trustedvalidatorInfo: ValidatorNodeAddressData[] = [];
 
       for (const node of nodes) {
         const pubkeys = await fetchNodePubkeys(node);
         const validatorDetails = await fetchValidatorData(pubkeys);
+        const isTrusted = await setNodesWithCheck(node);
 
         const activeValidators = validatorDetails.filter(
           (validator: any) => validator.status === 'active_ongoing'
@@ -125,9 +154,18 @@ export const fetchValidatorData =
           activeCount: activeValidators.length,
           status: totalBalance >= MINIMUM_BALANCE ? 'active' : 'inactive',
         });
+        if (isTrusted) {
+          trustedvalidatorInfo.push({
+            address: node,
+            balance: totalBalance,
+            activeCount: activeValidators.length,
+            status: totalBalance >= MINIMUM_BALANCE ? 'active' : 'inactive',
+          });
+        }
       }
 
       dispatch(setValidatorData(validatorInfo));
+      dispatch(setTrustedValidatorData(trustedvalidatorInfo));
     } catch (error) {
       dispatch(
         setError(error instanceof Error ? error.message : 'An error occurred')

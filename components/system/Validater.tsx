@@ -48,11 +48,15 @@ export default function Validater({ nodes }: any) {
   const { admin } = useNetworkProposalData();
   const [voterAddress, setVoterAddress] = useState('');
   const { writeContractAsync } = useWriteContract();
+  const [filter, setFilter] = useState('All');
 
   // Get validator data from Redux store
-  const { validatorNodeAddressData, loading, error } = useAppSelector(
-    (state) => state.validatorNodeAddressState
-  );
+  const {
+    validatorNodeAddressData,
+    validatorTrustedNodeAddressData,
+    loading,
+    error,
+  } = useAppSelector((state) => state.validatorNodeAddressState);
 
   useEffect(() => {
     if (nodes && nodes?.length > 0) {
@@ -82,7 +86,7 @@ export default function Validater({ nodes }: any) {
     return 'w-full rounded-[35px] bg-[#fff] text-center h-[42px] border-[0.01rem] border-[#6C86AD80]';
   };
 
-  const renderTableBody = () => {
+  const renderTableBody = (filter: string) => {
     if (loading) {
       return <TableSkeleton />;
     }
@@ -99,7 +103,11 @@ export default function Validater({ nodes }: any) {
       );
     }
 
-    if (validatorNodeAddressData.length === 0) {
+    if (
+      filter === 'All'
+        ? validatorNodeAddressData.length === 0
+        : validatorTrustedNodeAddressData.length === 0
+    ) {
       return (
         <tbody>
           <tr>
@@ -112,7 +120,10 @@ export default function Validater({ nodes }: any) {
     }
     return (
       <tbody>
-        {validatorNodeAddressData.map((node, index) => (
+        {(filter === 'All'
+          ? validatorNodeAddressData
+          : validatorTrustedNodeAddressData
+        ).map((node: any, index: number) => (
           <tr key={index + 1} className={getRowClassName(darkMode)}>
             <td className='text-left text-[13px] truncate px-[30px] py-[15px]'>
               {node.address}
@@ -137,7 +148,42 @@ export default function Validater({ nodes }: any) {
             <thead>
               <tr>
                 <th className='bg-color-bg2 text-left font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[.16rem] text-color-text2 px-[30px] py-[30px]'>
-                  Validator Node Address
+                  <div className='flex items-center'>
+                    Validator Node Address
+                    <div className='flex items-center ml-1'>
+                      <label htmlFor='All' className='cursor-pointer'>
+                        <input
+                          type='radio'
+                          name='option'
+                          id='All'
+                          className='hidden peer'
+                          value='All'
+                          checked={filter === 'All'}
+                          onChange={(e) => {
+                            setFilter((e.target as HTMLInputElement).value);
+                          }}
+                        />
+                        <div className='peer-checked:text-[#fe8a3d]'>All</div>
+                      </label>
+                      <div className='mx-[5px]'>|</div>
+                      <label htmlFor='Trusted' className='cursor-pointer'>
+                        <input
+                          type='radio'
+                          name='option'
+                          id='Trusted'
+                          className='hidden peer'
+                          value='Trusted'
+                          checked={filter === 'Trusted'}
+                          onChange={(e) => {
+                            setFilter((e.target as HTMLInputElement).value);
+                          }}
+                        />
+                        <div className='peer-checked:text-[#fe8a3d]'>
+                          Trusted
+                        </div>
+                      </label>
+                    </div>
+                  </div>
                 </th>
                 <th className='bg-color-bg2 font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[.16rem] text-color-text2 px-[30px] py-[30px]'>
                   Balance Status
@@ -147,7 +193,7 @@ export default function Validater({ nodes }: any) {
                 </th>
               </tr>
             </thead>
-            {renderTableBody()}
+            {renderTableBody(filter)}
           </table>
         </div>
         <div className='text-[.14rem] text-color-text1 mt-5 text-center pb-[30px] max-w-[422px] mx-auto'>
