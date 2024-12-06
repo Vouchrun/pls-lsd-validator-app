@@ -38,7 +38,7 @@ const storage = {
 };
 
 export function usePoolPubkeyData() {
-  const [matchedValidators, setMatchedValidators] = useState();
+  const [matchedValidators, setMatchedValidators] = useState<any>();
   const [nodes, setNodes] = useState<any>([]);
   const [trustNodePubkeyNumberLimit, setTrustNodePubkeyNumberLimit] =
     useState<string>();
