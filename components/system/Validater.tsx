@@ -137,7 +137,7 @@ export default function Validater({ nodes }: any) {
             <thead>
               <tr>
                 <th className='bg-color-bg2 text-left font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[.16rem] text-color-text2 px-[30px] py-[30px]'>
-                  Trusted Validator Node Address
+                  Validator Node Address
                 </th>
                 <th className='bg-color-bg2 font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[.16rem] text-color-text2 px-[30px] py-[30px]'>
                   Balance Status
