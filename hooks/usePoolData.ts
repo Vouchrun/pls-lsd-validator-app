@@ -38,10 +38,15 @@ export function usePoolData() {
   const { matchedValidators } = usePoolPubkeyData();
 
   const stakedToken = useMemo(() => {
-    if (!matchedValidators) {
+    if (!matchedValidators || isNaN(Number(matchedValidators))) {
       return undefined;
     }
-    return Number(matchedValidators) * getValidatorTotalDepositAmount() + '';
+
+    const validatorCount = Math.max(0, Number(matchedValidators));
+    const depositAmount = getValidatorTotalDepositAmount();
+    const totalStaked = validatorCount * depositAmount;
+
+    return totalStaked.toString();
   }, [matchedValidators]);
 
   const mintedLsdTokenValue = useMemo(() => {
@@ -67,7 +72,8 @@ export function usePoolData() {
     ) {
       return undefined;
     }
-    return Number(stakedToken) * Number(tokenPrice);
+    const value = Number(stakedToken) * Number(tokenPrice);
+    return value.toString();
   }, [stakedToken, tokenPrice]);
 
   const udpatePoolData = useCallback(async () => {

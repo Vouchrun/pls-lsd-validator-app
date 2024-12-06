@@ -55,7 +55,7 @@ export default function Validater({ nodes }: any) {
   );
 
   useEffect(() => {
-    if (nodes && nodes.length > 0) {
+    if (nodes && nodes?.length > 0) {
       dispatch(fetchValidatorData(nodes));
     }
   }, [dispatch, nodes]);
