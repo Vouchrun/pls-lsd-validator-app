@@ -1,4 +1,4 @@
-import { getExplorerUrl, getValidatorExplorerUrl, isDev } from "./env";
+import { getExplorerUrl, getValidatorExplorerUrl, isDev } from './env';
 
 export function getEtherScanTxUrl(txHash: string | undefined) {
   return `${getExplorerUrl()}/tx/${txHash}`;

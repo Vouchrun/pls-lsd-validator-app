@@ -9,14 +9,12 @@ import Validater from 'components/system/Validater';
 import Voter from 'components/system/Voter';
 import VouchContracts from 'components/system/VouchContracts';
 import { robotoBold } from 'config/font';
-import { useAppSlice } from 'hooks/selector';
 import { useApr } from 'hooks/useApr';
 import { useNetworkProposalData } from 'hooks/useNetworkProposalData';
-import { usePoolData } from 'hooks/usePoolData';
 import { usePoolPubkeyData } from 'hooks/usePoolPubkeyData';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { getLsdTokenName } from 'utils/configUtils';
 import { getLsdTokenIcon } from 'utils/iconUtils';
 import { formatNumber } from 'utils/numberUtils';
@@ -56,6 +54,10 @@ const SystemPage = () => {
       router.push('/');
     }
   }, [nodes, voters, admin, metaMaskAccount, router, isConnected]);
+
+  const memoizedVoter = useMemo(() => {
+    return <Voter voters={voters} voteManagerAddress={voteManagerAddress} />;
+  }, [voters, voteManagerAddress]);
 
   if (showPage === null) {
     return null; // Render nothing while the condition is being checked
@@ -120,10 +122,8 @@ const SystemPage = () => {
             <VouchContracts />
           </div>
         </div>
-        <div className='grid grid-cols-1 lg:grid-cols-2 gap-1 mt-1'>
-          <div>
-            <Voter voters={voters} voteManagerAddress={voteManagerAddress} />
-          </div>
+        <div className='grid grid-cols-1 lg:grid-cols-1 gap-1 mt-1'>
+          <div>{memoizedVoter}</div>
           <div>
             <Validater nodes={nodes} />
           </div>

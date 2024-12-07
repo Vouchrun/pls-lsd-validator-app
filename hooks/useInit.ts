@@ -75,7 +75,7 @@ export function useInit() {
     if (metaMaskAccount) {
       dispatch(setUpdateFlag(dayjs().unix()));
     }
-  }, 6000); // 6s
+  }, 120000); // 60s
 
   // useEffect(() => {
   //   if (!metaMaskAccount) {

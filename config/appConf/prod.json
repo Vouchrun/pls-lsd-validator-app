@@ -42,5 +42,6 @@
     ]
   },
   "lsdAppUrl": "https://app.vouch.run/",
-  "ValidatorInfoURL": "https://www.g4mm4.io/"
+  "ValidatorInfoURL": "https://www.g4mm4.io/",
+  "explorerAPIURL": "https://api.scan.pulsechain.com/"
 }

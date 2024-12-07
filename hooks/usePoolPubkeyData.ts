@@ -1,194 +1,206 @@
 import { getNodeDepositContract } from 'config/contract';
 import { getNodeDepositContractAbi } from 'config/contractAbi';
-import { ChainPubkeyStatus, NodePubkeyInfo } from 'interfaces/common';
-import { useCallback, useEffect, useState } from 'react';
+import { ChainPubkeyStatus } from 'interfaces/common';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { fetchPubkeyStatus } from 'utils/apiUtils';
-import { createWeb3, getEthWeb3 } from 'utils/web3Utils';
-import { useWalletAccount } from './useWalletAccount';
+import { getEthWeb3 } from 'utils/web3Utils';
+
+const CACHE_KEY = 'matchedValidatorsData';
+
+interface CachedValidatorData {
+  matchedValidators: string;
+  timestamp: number;
+  nodes: string[];
+  trustNodePubkeyNumberLimit: string;
+}
+
+const storage = {
+  get: (key: string) => {
+    if (typeof window !== 'undefined') {
+      try {
+        return window.localStorage.getItem(key);
+      } catch (e) {
+        console.error('Local storage access error:', e);
+        return null;
+      }
+    }
+    return null;
+  },
+  set: (key: string, value: string) => {
+    if (typeof window !== 'undefined') {
+      try {
+        window.localStorage.setItem(key, value);
+      } catch (e) {
+        console.error('Local storage access error:', e);
+      }
+    }
+  },
+};
 
 export function usePoolPubkeyData() {
-  const [matchedValidators, setMatchedValidators] = useState<string>();
+  const [matchedValidators, setMatchedValidators] = useState<any>();
   const [nodes, setNodes] = useState<any>([]);
   const [trustNodePubkeyNumberLimit, setTrustNodePubkeyNumberLimit] =
     useState<string>();
+  const [isLoading, setIsLoading] = useState(true);
+  const [isClient, setIsClient] = useState(false);
 
   const web3 = getEthWeb3();
 
-  const nodeDepositContract = new web3.eth.Contract(
-    getNodeDepositContractAbi(),
-    getNodeDepositContract(),
-    {}
+  const nodeDepositContract = useMemo(
+    () =>
+      new web3.eth.Contract(
+        getNodeDepositContractAbi(),
+        getNodeDepositContract(),
+        {}
+      ),
+    [web3]
   );
+
+  // Set isClient to true when component mounts on client side
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   let isSettingNodes = false;
 
-  async function setNodesWithCheck(nodesValue: any) {
-    if (isSettingNodes) return;
-
-    isSettingNodes = true;
-    setNodes([]);
-    const uniqueNodes = new Set<string>();
-    const nodesToUpdate: string[] = [];
-
-    for (let i = 0; i < nodesValue.length; i++) {
-      const isTrusted = await nodeDepositContract.methods
-        .nodeInfoOf(nodesValue[i])
-        .call()
-        .catch((err: any) => {
-          console.log({ err });
-        });
-
-      if (isTrusted[0] == 2 && !uniqueNodes.has(nodesValue[i])) {
-        uniqueNodes.add(nodesValue[i]);
-        nodesToUpdate.push(nodesValue[i]);
-      }
-    }
-    setNodes(nodesToUpdate);
-    isSettingNodes = false;
-  }
-
   const updateMatchedValidators = useCallback(async () => {
+    if (!nodeDepositContract) {
+      return 0;
+    }
+
     try {
-      const nodesLength = await nodeDepositContract.methods
-        .getNodesLength()
-        .call()
-        .catch((err: any) => {
-          console.log({ err });
-        });
+      setIsLoading(true);
+
+      // Only check cache on client side
+      if (isClient) {
+        const cached = storage.get(CACHE_KEY);
+        if (cached) {
+          try {
+            const parsedCache = JSON.parse(cached) as CachedValidatorData;
+            // Use cache if it's less than 5 minutes old
+            if (Date.now() - parsedCache.timestamp < 5 * 60 * 1000) {
+              setMatchedValidators(parsedCache.matchedValidators);
+              setNodes(parsedCache.nodes);
+              setTrustNodePubkeyNumberLimit(
+                parsedCache.trustNodePubkeyNumberLimit
+              );
+              setIsLoading(false);
+              return parseInt(parsedCache.matchedValidators);
+            }
+          } catch (e) {
+            console.error('Cache parsing error:', e);
+          }
+        }
+      }
+
+      // If cache is invalid or expired, fetch fresh data
+      const [nodesLength, trustNodeLimit] = await Promise.all([
+        nodeDepositContract.methods.getNodesLength().call(),
+        nodeDepositContract.methods.trustNodePubkeyNumberLimit().call(),
+      ]);
 
       const nodesValue = await nodeDepositContract.methods
         .getNodes(0, nodesLength)
-        .call()
-        .catch((err: any) => {
-          console.log({ err });
-        });
+        .call();
 
-      // setNodes([]);
-      // const uniqueNodes = new Set<string>();
-
-      // for (let i = 0; i < nodesValue.length; i++) {
-      //   const isTrusted = await nodeDepositContract.methods
-      //     .nodeInfoOf(nodesValue[i])
-      //     .call()
-      //     .catch((err: any) => {
-      //       console.log({ err });
-      //     });
-      //   if (isTrusted[0] == 2 && !uniqueNodes.has(nodesValue[i])) {
-      //     uniqueNodes.add(nodesValue[i]);
-      //     setNodes((prev) => [...prev, nodesValue[i]]);
-      //   }
-      // }
-
-      setNodesWithCheck(nodesValue);
-
-      const trustNodePubkeyNumberLimitValue = await nodeDepositContract.methods
-        .trustNodePubkeyNumberLimit()
-        .call()
-        .catch((err: any) => {
-          console.log({ err });
-        });
-
-      setTrustNodePubkeyNumberLimit(trustNodePubkeyNumberLimitValue);
-
+      // Get pubkeys for all nodes
       const pubkeyAddressList: string[] = [];
-
-      // Query node pubkey addresses
-      const requests = nodesValue?.map((nodeAddress: string) => {
-        return (async () => {
-          const pubkeys: string[] = await nodeDepositContract.methods
+      await Promise.all(
+        nodesValue.map(async (nodeAddress: string) => {
+          const pubkeys = await nodeDepositContract.methods
             .getPubkeysOfNode(nodeAddress)
-            .call()
-            .catch((err: any) => {
-              console.log({ err });
-            });
+            .call();
           pubkeyAddressList.push(...pubkeys);
-        })();
-      });
-      await Promise.all(requests);
+        })
+      );
 
-      // Query beacon pubkey status list
-      // const beaconStatusResponse = await fetch(
-      //   `/api/pubkeyStatus?id=${pubkeyAddressList.join(",")}`,
-      //   {
-      //     method: "GET",
-      //   }
-      // );
-      // const beaconStatusResJson = await beaconStatusResponse.json();
-      const chunkSize = 100; // Adjust the chunk size as needed
-      const beaconStatusResponses = [];
-      for (let i = 0; i < pubkeyAddressList.length; i += chunkSize) {
-        const chunk = pubkeyAddressList.slice(i, i + chunkSize);
-        const response = await fetchPubkeyStatus(chunk.join(','));
-        beaconStatusResponses.push(response);
+      // Get pubkey info and beacon status in parallel
+      const [pubkeyInfos, beaconStatusResponses] = await Promise.all([
+        Promise.all(
+          pubkeyAddressList.map((pubkeyAddress) =>
+            nodeDepositContract.methods.pubkeyInfoOf(pubkeyAddress).call()
+          )
+        ),
+        fetchBeaconStatusInChunks(pubkeyAddressList),
+      ]);
+
+      const beaconStatusData = beaconStatusResponses.flatMap(
+        (response) => response.data
+      );
+
+      // Calculate matched validators
+      const validValidatorCount = pubkeyInfos.filter((item, index) => {
+        const beaconStatus = beaconStatusData
+          .find(
+            (statusItem: any) =>
+              statusItem.validator?.pubkey === pubkeyAddressList[index]
+          )
+          ?.status?.toUpperCase();
+
+        const isExited = [
+          'EXITED_UNSLASHED',
+          'EXITED_SLASHED',
+          'EXITED',
+        ].includes(beaconStatus ?? '');
+
+        return (
+          item._status === ChainPubkeyStatus.Staked &&
+          (isExited || (!isExited && beaconStatus !== undefined))
+        );
+      }).length;
+
+      // Cache the new data only on client side
+      if (isClient) {
+        const cacheData: CachedValidatorData = {
+          matchedValidators: validValidatorCount.toString(),
+          nodes: nodesValue,
+          trustNodePubkeyNumberLimit: trustNodeLimit,
+          timestamp: Date.now(),
+        };
+        storage.set(CACHE_KEY, JSON.stringify(cacheData));
       }
-      const beaconStatusResJson = {
-        data: beaconStatusResponses.flatMap((response) => response.data),
-      };
 
-      // Query on-chain pubkey detail info list
-      const pubkeyInfoRequests = pubkeyAddressList?.map(
-        (pubkeyAddress: string) => {
-          return (async () => {
-            const pubkeyInfo = await nodeDepositContract.methods
-              .pubkeyInfoOf(pubkeyAddress)
-              .call()
-              .catch((err: any) => {
-                console.log({ err });
-              });
-            return pubkeyInfo;
-          })();
-        }
-      );
-      const pubkeyInfos = await Promise.all(pubkeyInfoRequests);
+      // Update state
+      setMatchedValidators(validValidatorCount.toString());
+      setNodes(nodesValue);
+      setTrustNodePubkeyNumberLimit(trustNodeLimit);
 
-      const nodePubkeyInfos: NodePubkeyInfo[] = pubkeyInfos.map(
-        (item, index) => {
-          const matchedBeaconData = beaconStatusResJson.data?.find(
-            (item: any) => item.validator?.pubkey === pubkeyAddressList[index]
-          );
-          return {
-            pubkeyAddress: pubkeyAddressList[index],
-            beaconApiStatus:
-              matchedBeaconData?.status?.toUpperCase() || undefined,
-            ...item,
-          };
-        }
-      );
-
-      let matchedValidators = 0;
-
-      nodePubkeyInfos.forEach((item) => {
-        if (
-          item._status === ChainPubkeyStatus.Staked &&
-          item.beaconApiStatus !== 'EXITED_UNSLASHED' &&
-          item.beaconApiStatus !== 'EXITED_SLASHED' &&
-          item.beaconApiStatus !== 'EXITED'
-        ) {
-          matchedValidators += 1;
-        }
-
-        if (
-          item._status === ChainPubkeyStatus.Staked &&
-          (item.beaconApiStatus === 'EXITED_UNSLASHED' ||
-            item.beaconApiStatus === 'EXITED_SLASHED' ||
-            item.beaconApiStatus === 'EXITED')
-        ) {
-          matchedValidators += 1;
-        }
-      });
-
-      setMatchedValidators(matchedValidators + '');
+      return validValidatorCount;
     } catch (err: any) {
-      console.log({ err });
+      console.error('Error in updateMatchedValidators:', err);
+      return parseInt(matchedValidators) || 0;
+    } finally {
+      setIsLoading(false);
     }
-  }, []);
+  }, [nodeDepositContract, matchedValidators, isClient]);
+
+  const fetchBeaconStatusInChunks = async (pubkeyAddressList: string[]) => {
+    const chunkSize = 100;
+    const beaconStatusResponses = [];
+
+    for (let i = 0; i < pubkeyAddressList.length; i += chunkSize) {
+      const chunk = pubkeyAddressList.slice(i, i + chunkSize);
+      const response = await fetchPubkeyStatus(chunk.join(','));
+      beaconStatusResponses.push(response);
+    }
+
+    return beaconStatusResponses;
+  };
 
   useEffect(() => {
-    updateMatchedValidators();
-  }, [updateMatchedValidators]);
+    if (isClient) {
+      updateMatchedValidators();
+      const interval = setInterval(updateMatchedValidators, 5 * 60 * 1000);
+      return () => clearInterval(interval);
+    }
+  }, [updateMatchedValidators, isClient]);
 
   return {
     matchedValidators,
     trustNodePubkeyNumberLimit,
     nodes,
+    isLoading,
+    updateMatchedValidators,
   };
 }
