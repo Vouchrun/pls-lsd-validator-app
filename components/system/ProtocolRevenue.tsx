@@ -10,6 +10,7 @@ import millify from 'millify';
 import { useAppDispatch } from 'hooks/common';
 import { withDrawAdmin } from 'redux/reducers/ValidatorSlice';
 import { useWriteContract } from 'wagmi';
+import { useFeePoolData } from 'hooks/useFeePoolData';
 
 export default function ProtocolRevenue() {
   const dispatch = useAppDispatch();
@@ -23,6 +24,7 @@ export default function ProtocolRevenue() {
   const [distributionAddress, setDistributionAddress] = React.useState('');
   const { writeContractAsync } = useWriteContract();
   const { metaMaskAccount } = useWalletAccount();
+  const { feePoolBalance } = useFeePoolData();
 
   return (
     <div className='bg-color-bg2 border-[0.01rem] border-color-border1 rounded-[.3rem]'>
@@ -90,6 +92,21 @@ export default function ProtocolRevenue() {
           <div className='text-color-text2'>Treasury Balance</div>
           <div className={robotoSemiBold.className}>
             {millify(treasuryBalance, {
+              precision: 2,
+              space: true,
+            })}
+          </div>
+        </div>
+        <div
+          className={
+            darkMode
+              ? 'flex items-center justify-between px-[20px] py-[8px] border-b-[0.01rem] border-[#303745] text-[.14rem] text-color-text1'
+              : 'flex items-center justify-between px-[20px] py-[5px] border-b-[0.01rem] border-[#ffffff] text-[.14rem] text-color-text1'
+          }
+        >
+          <div className='text-color-text2'>Fee Pool Balance</div>
+          <div className={robotoSemiBold.className}>
+            {millify(feePoolBalance, {
               precision: 2,
               space: true,
             })}
