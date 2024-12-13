@@ -118,7 +118,7 @@ export const updateApr = (): AppThunk => async (dispatch, getState) => {
     );
     const events = await contract.getPastEvents('allEvents', {
       fromBlock:
-        currentBlock - Math.floor((1 / getBlockSeconds()) * 60 * 60 * 24 * 5),
+        currentBlock - Math.floor((1 / getBlockSeconds()) * 60 * 60 * 24 * 7),
       toBlock: currentBlock,
     });
     let apr = getDefaultApr();
@@ -144,7 +144,7 @@ export const updateApr = (): AppThunk => async (dispatch, getState) => {
         endRate !== 1 &&
         beginRate !== 1
       ) {
-        apr = ((endRate - beginRate) / 5) * 365.25 * 100;
+        apr = ((endRate - beginRate) / 7) * 365.25 * 100;
       }
     }
     dispatch(setApr(apr));
