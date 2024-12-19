@@ -43,5 +43,6 @@
   },
   "lsdAppUrl": "https://testnet.app.vouch.run/",
   "ValidatorInfoURL": "https://www.g4mm4.io/",
-  "explorerAPIURL": "https://api.scan.pulsechain.com/"
+  "explorerAPIURL": "https://api.scan.pulsechain.com/",
+  "withdrawContractDeploymentBlock": 19612112
 }

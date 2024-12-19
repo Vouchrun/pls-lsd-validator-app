@@ -1,17 +1,9 @@
 import classNames from 'classnames';
 import { CustomButton } from 'components/common/CustomButton';
 import { FaqItem } from 'components/common/FaqItem';
-import { PageTitleContainer } from 'components/common/PageTitleContainer';
-import { Icomoon } from 'components/icon/Icomoon';
 import { TokenStakeList } from 'components/tokenStake/TokenStakeList';
-import { TokenStakeListTabs } from 'components/tokenStake/TokenStakeListTabs';
-import { robotoBold } from 'config/font';
-import Image from 'next/image';
 import { useRouter } from 'next/router';
-import tokenStakeIcon from 'public/images/token_stake.svg';
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
-import Typography from '@mui/material/Typography';
 import Modal from '@mui/material/Modal';
 import { Switch } from '@mui/material';
 import { useEffect, useState } from 'react';
@@ -37,7 +29,12 @@ const TokenStakeListPage = () => {
 
   const [open, setOpen] = useState(false);
   const [show, setShow] = useState(false);
-  const handleClose = () => setOpen(false);
+  const handleClose = (event: any, reason: string) => {
+    if (reason === 'backdropClick') {
+      return; // Ignore backdrop clicks
+    }
+    setOpen(false);
+  };
 
   const onConfirm = async () => {
     if (show) {

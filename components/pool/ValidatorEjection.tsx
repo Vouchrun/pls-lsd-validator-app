@@ -1,19 +1,116 @@
 import classNames from 'classnames';
-import { CustomPagination } from 'components/common/CustomPagination';
 import { EmptyContent } from 'components/common/EmptyContent';
 import { Icomoon } from 'components/icon/Icomoon';
+import {
+  getNetworkWithdrawContract,
+  getNodeDepositContract,
+} from 'config/contract';
+import {
+  getNetworkWithdrawContractAbi,
+  getNodeDepositContractAbi,
+} from 'config/contractAbi';
+import { getBeaconHost, getWithdrawContractDeploymentBlock } from 'config/env';
 import { robotoBold, robotoSemiBold } from 'config/font';
 import { useAppSlice } from 'hooks/selector';
-import { useWalletAccount } from 'hooks/useWalletAccount';
-import { useState } from 'react';
+import * as moment from 'moment';
+import { useEffect, useState } from 'react';
 import { openLink } from 'utils/commonUtils';
-import { getDocLinks, getTokenName } from 'utils/configUtils';
+import { getDocLinks } from 'utils/configUtils';
+import { getShortAddress } from 'utils/stringUtils';
+import { getEthWeb3 } from 'utils/web3Utils';
 
+const findStatus = (status: string) => {
+  if (status === 'withdrawal_done') {
+    return 'Exited';
+  } else if (status === 'active_exiting') {
+    return 'Pending';
+  } else if (status === 'active_ongoing') {
+    return 'Missed';
+  } else {
+    return 'Unknown';
+  }
+};
+
+const findStatusSymbol = (status: string) => {
+  if (status === 'withdrawal_done') {
+    return '🟢';
+  } else if (status === 'active_exiting') {
+    return '🟡';
+  } else if (status === 'active_ongoing') {
+    return '🔴';
+  } else {
+    return 'Unknown';
+  }
+};
 export const ValidatorEjection = () => {
   const { darkMode } = useAppSlice();
-  const { metaMaskAccount } = useWalletAccount();
-  const [page, setPage] = useState(1);
+  const [validatorElectionData, setValidatorElectionData] = useState<any>([]);
 
+  const web3 = getEthWeb3();
+  const networkWithdrawContract = new web3.eth.Contract(
+    getNetworkWithdrawContractAbi(),
+    getNetworkWithdrawContract(),
+    {}
+  );
+
+  const networkDepositContract = new web3.eth.Contract(
+    getNodeDepositContractAbi(),
+    getNodeDepositContract(),
+    {}
+  );
+
+  const getData = async () => {
+    const data: any = [];
+    const currentBlock = await web3.eth.getBlockNumber();
+    const events = await networkWithdrawContract.getPastEvents(
+      'NotifyValidatorExit',
+      {
+        fromBlock: getWithdrawContractDeploymentBlock(),
+        toBlock: currentBlock,
+      }
+    );
+    console.log(events);
+    events.forEach(async (event: any) => {
+      const block = await web3.eth.getBlock(event.blockNumber);
+      const timeStamp = block.timestamp;
+
+      const response = await fetch(
+        `${getBeaconHost()}/eth/v1/beacon/states/head/validators?id=` +
+          event?.returnValues?.ejectedValidators[0],
+        {
+          method: 'GET',
+          headers: {},
+        }
+      );
+
+      const res = await response.json();
+
+      const status = findStatus(res?.data[0]?.status);
+      const statusSymbol = findStatusSymbol(res?.data[0]?.status);
+      const poolAddress = res?.data[0]?.validator?.pubkey;
+
+      const pubkeyInfoOf = await networkDepositContract.methods
+        .pubkeyInfoOf(poolAddress)
+        .call()
+        .catch((err: any) => {
+          console.log({ err });
+        });
+      const nodeAddress = pubkeyInfoOf._owner;
+
+      data.push({
+        timeStamp: +timeStamp * 1000,
+        poolAddress: poolAddress,
+        nodeAddress: nodeAddress,
+        status: status,
+        statusSymbol: statusSymbol,
+      });
+      setValidatorElectionData(data);
+    });
+  };
+  useEffect(() => {
+    setValidatorElectionData([]);
+    getData();
+  }, []);
   return (
     <div>
       <div className='mt-[.48rem] flex items-center'>
@@ -23,7 +120,7 @@ export const ValidatorEjection = () => {
             'text-[.24rem] text-color-text1'
           )}
         >
-          Node Election
+          Validator Election
         </div>
 
         <div
@@ -53,11 +150,19 @@ export const ValidatorEjection = () => {
         <div
           className='h-[.7rem] grid items-center font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F]'
           style={{
-            gridTemplateColumns: '25% 25% 25% 25%',
+            gridTemplateColumns: '20% 20% 20% 20% 20%',
           }}
         >
           <div className='flex items-center justify-center text-[.16rem] text-color-text2'>
-            Address
+            Node Address
+          </div>
+
+          <div className='flex items-center justify-center text-[.16rem] text-color-text2'>
+            Pool Address
+          </div>
+
+          <div className='flex items-center justify-center text-[.16rem] text-color-text2'>
+            Health
           </div>
 
           <div className='flex items-center justify-center text-[.16rem] text-color-text2'>
@@ -65,81 +170,70 @@ export const ValidatorEjection = () => {
           </div>
 
           <div className='flex items-center justify-center text-[.16rem] text-color-text2'>
-            {getTokenName()} Rewarded
-          </div>
-
-          <div className='flex items-center justify-center text-[.16rem] text-color-text2'>
-            Details
+            Status
           </div>
         </div>
 
-        <div className='h-[2rem] flex items-center justify-center'>
-          <EmptyContent />
-        </div>
+        {validatorElectionData.length == 0 && (
+          <div className='h-[2rem] flex items-center justify-center'>
+            <EmptyContent />
+          </div>
+        )}
+
+        {validatorElectionData.length > 0 && (
+          <div className='max-h-[4.2rem] overflow-auto'>
+            {validatorElectionData.map((item: any, index: number) => (
+              <div
+                key={index}
+                className={classNames(
+                  'h-[.74rem] grid items-center font-[500]',
+                  index % 2 === 0 ? 'bg-bgPage/50 dark:bg-bgPageDark/50' : ''
+                )}
+                style={{
+                  gridTemplateColumns: '20% 20% 20% 20% 20%',
+                }}
+              >
+                <div className='flex items-center justify-center text-[.16rem] text-color-text2 cursor-pointer'>
+                  <div className='flex items-center'>
+                    <div className='mx-[.06rem]'>
+                      {getShortAddress(item.nodeAddress, 4)}
+                    </div>
+                  </div>
+                </div>
+
+                <div className='flex items-center justify-center text-[.16rem] text-color-text2 cursor-pointer'>
+                  <div className='mx-[.06rem]'>
+                    {getShortAddress(item.poolAddress, 4)}
+                  </div>
+                </div>
+
+                <div className='flex items-center justify-center text-[.16rem] cursor-pointer'>
+                  <div className='mx-[.06rem]'>{item.statusSymbol}</div>
+                </div>
+
+                <div className='flex items-center justify-center text-[.16rem] text-color-text2 cursor-pointer'>
+                  <div className='mx-[.06rem]'>
+                    {' '}
+                    {moment
+                      .utc(item.timeStamp)
+                      .local()
+                      .format('D MMM YYYY h:mm a')}{' '}
+                  </div>
+                </div>
+
+                <div className='flex items-center justify-center text-[.16rem] text-color-text2 cursor-pointer'>
+                  <div className='mx-[.06rem]'>{item.status}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* <NodeElectionItem index={0} /> */}
 
         {/* <div className="my-[.32rem] flex items-center justify-center">
           <CustomPagination page={page} onChange={setPage} totalCount={1} />
         </div> */}
-      </div>
-    </div>
-  );
-};
-
-interface NodeElectionItemProps {
-  index: number;
-}
-
-const NodeElectionItem = (props: NodeElectionItemProps) => {
-  const { darkMode } = useAppSlice();
-  const { index } = props;
-
-  return (
-    <div
-      className={classNames(
-        'h-[.74rem] grid items-center font-[500]',
-        index % 2 === 0 ? 'bg-bgPage/50 dark:bg-bgPageDark/50' : ''
-      )}
-      style={{
-        gridTemplateColumns: '25% 25% 25% 25%',
-      }}
-    >
-      <div className='flex items-center justify-center text-[.16rem] text-color-text2 cursor-pointer'>
-        <div
-          className='h-[.42rem] w-[1.76rem] px-[.16rem] flex items-center justify-between border-solid border-[1px] border-white dark:border-[#1B1B1F] rounded-[.3rem] bg-color-bgPage'
-          onClick={() => {}}
-        >
-          <div className='text-color-text1 text-[.16rem]'>0x998C…837G</div>
-
-          <div className='ml-[.06rem] rotate-[-90deg]'>
-            <Icomoon icon='arrow-down' size='.1rem' color='#848B97' />
-          </div>
-        </div>
-      </div>
-
-      <div className='flex items-center justify-center text-color-text1 text-[.16rem]'>
-        <div className={classNames(robotoSemiBold.className)}>
-          16 April 23:00
-        </div>
-      </div>
-
-      <div className='flex items-center justify-center text-color-text1 text-[.16rem] '>
-        <div className={classNames(robotoSemiBold.className)}>24.5</div>
-      </div>
-
-      <div className='flex items-center justify-center text-color-text1 text-[.16rem]'>
-        <div className='flex items-center'>
-          <div className={classNames(robotoSemiBold.className, 'mr-[.06rem]')}>
-            Active
-          </div>
-
-          <Icomoon
-            icon='right1'
-            size='.1rem'
-            color={darkMode ? '#ffffff80' : '#6C86AD'}
-          />
-        </div>
       </div>
     </div>
   );

@@ -101,6 +101,13 @@ export function getExplorerAPIURL() {
   return appProdConfig.explorerAPIURL;
 }
 
+export function getWithdrawContractDeploymentBlock() {
+  if (isDev()) {
+    return appDevConfig.withdrawContractDeploymentBlock;
+  }
+  return appProdConfig.withdrawContractDeploymentBlock;
+}
+
 export function getWagmiChainConfig() {
   return {
     id: getEthereumChainId(),
