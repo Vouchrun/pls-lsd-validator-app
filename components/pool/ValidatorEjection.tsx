@@ -1,133 +1,61 @@
-import { FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { Popover } from '@mui/material';
 import classNames from 'classnames';
 import { EmptyContent } from 'components/common/EmptyContent';
 import { Icomoon } from 'components/icon/Icomoon';
-import {
-  getNetworkWithdrawContract,
-  getNodeDepositContract,
-} from 'config/contract';
-import {
-  getNetworkWithdrawContractAbi,
-  getNodeDepositContractAbi,
-} from 'config/contractAbi';
-import {
-  getBeaconHost,
-  getValidatorInfoURL,
-  getWithdrawContractDeploymentBlock,
-} from 'config/env';
-import { robotoBold, robotoSemiBold } from 'config/font';
+
+import { getValidatorInfoURL } from 'config/env';
+import { robotoBold } from 'config/font';
 import { useAppSlice } from 'hooks/selector';
 import * as moment from 'moment';
+import Image from 'next/image';
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
-import { openLink } from 'utils/commonUtils';
+import { useMemo, useState } from 'react';
+import { getValidatorEjectionTypeText, openLink } from 'utils/commonUtils';
 import { getDocLinks } from 'utils/configUtils';
 import { getShortAddress } from 'utils/stringUtils';
-import { getEthWeb3 } from 'utils/web3Utils';
+import checkedIcon from 'public/images/checked.svg';
+import { bindTrigger } from 'material-ui-popup-state';
+import { bindPopover, usePopupState } from 'material-ui-popup-state/hooks';
+import { ValidatorEjectionStatusType } from 'interfaces/common';
+import _ from 'lodash';
+import { useValidatorEjectionData } from 'hooks/useValidatorEjectionData';
+import { LoadingContent } from 'components/common/LoadingContent';
 
-const filterOptions = [
-  {
-    label: 'All Type',
-    value: 'all',
-  },
-  { label: 'Exited', value: 'Exited' },
-  { label: 'Pending', value: 'Pending' },
-  { label: 'Delayed', value: 'Delayed' },
-];
-
-const findStatus = (status: string) => {
-  if (status === 'withdrawal_done') {
-    return 'Exited';
-  } else if (status === 'active_exiting') {
-    return 'Pending';
-  } else if (status === 'active_ongoing') {
-    return 'Delayed';
-  } else {
-    return 'Unknown';
-  }
-};
-
-const findStatusSymbol = (status: string) => {
-  if (status === 'withdrawal_done') {
-    return '🟢';
-  } else if (status === 'active_exiting') {
-    return '🟡';
-  } else if (status === 'active_ongoing') {
-    return '🔴';
-  } else {
-    return 'Unknown';
-  }
-};
 export const ValidatorEjection = () => {
   const { darkMode } = useAppSlice();
   const router = useRouter();
   const [selectedFilter, setSelectedFilter] = useState('all');
-  const [validatorElectionData, setValidatorElectionData] = useState<any>([]);
 
-  const web3 = getEthWeb3();
-  const networkWithdrawContract = new web3.eth.Contract(
-    getNetworkWithdrawContractAbi(),
-    getNetworkWithdrawContract(),
-    {}
-  );
+  const [types, setTypes] = useState<ValidatorEjectionStatusType[]>([]);
 
-  const networkDepositContract = new web3.eth.Contract(
-    getNodeDepositContractAbi(),
-    getNodeDepositContract(),
-    {}
-  );
+  const displayTypesText = useMemo(() => {
+    if (types.length === 0) {
+      return 'All Types';
+    } else if (types.length === 1) {
+      return getValidatorEjectionTypeText(types[0]);
+    } else {
+      return types
+        .map((status) => getValidatorEjectionTypeText(status))
+        .join(',');
+    }
+  }, [types]);
 
-  const getData = async () => {
-    const data: any = [];
-    const currentBlock = await web3.eth.getBlockNumber();
-    const events = await networkWithdrawContract.getPastEvents(
-      'NotifyValidatorExit',
-      {
-        fromBlock: getWithdrawContractDeploymentBlock(),
-        toBlock: currentBlock,
-      }
-    );
-    events.forEach(async (event: any) => {
-      const block = await web3.eth.getBlock(event.blockNumber);
-      const timeStamp = block.timestamp;
+  const {
+    totalCount,
+    validatorElectionData,
+    showLoading,
+    showEmptyContent,
+    delayedCount,
+    pendingCount,
+    exitedCount,
+    othersCount,
+  } = useValidatorEjectionData(types);
 
-      const response = await fetch(
-        `${getBeaconHost()}/eth/v1/beacon/states/head/validators?id=` +
-          event?.returnValues?.ejectedValidators[0],
-        {
-          method: 'GET',
-          headers: {},
-        }
-      );
+  const typePopupState = usePopupState({
+    variant: 'popover',
+    popupId: 'type',
+  });
 
-      const res = await response.json();
-
-      const status = findStatus(res?.data[0]?.status);
-      const statusSymbol = findStatusSymbol(res?.data[0]?.status);
-      const poolAddress = res?.data[0]?.validator?.pubkey;
-
-      const pubkeyInfoOf = await networkDepositContract.methods
-        .pubkeyInfoOf(poolAddress)
-        .call()
-        .catch((err: any) => {
-          console.log({ err });
-        });
-      const nodeAddress = pubkeyInfoOf._owner;
-
-      data.push({
-        timeStamp: +timeStamp * 1000,
-        poolAddress: poolAddress,
-        nodeAddress: nodeAddress,
-        status: status,
-        statusSymbol: statusSymbol,
-      });
-      setValidatorElectionData(data);
-    });
-  };
-  useEffect(() => {
-    setValidatorElectionData([]);
-    getData();
-  }, []);
   return (
     <div>
       <div className='mt-[.48rem] flex items-center justify-between'>
@@ -164,17 +92,38 @@ export const ValidatorEjection = () => {
           </div>
         </div>
         <div>
-          <select
-            value={selectedFilter}
-            onChange={(e) => {
-              setSelectedFilter(e.target.value);
-            }}
-            className='bg-transparent border-[1px] border-color-border1 rounded-[.3rem] px-[.24rem] py-[.1rem] text-[.16rem] text-color-text2 w-[1.5rem] outline-none'
+          <div
+            className={classNames(
+              'mr-[.24rem] cursor-pointer px-[.16rem] h-[.42rem] inline-flex items-center justify-between rounded-[.3rem] border-[0.01rem]',
+              typePopupState.isOpen
+                ? 'border-[#ffffff00] bg-color-selected'
+                : 'border-[#6C86AD80]'
+            )}
+            {...bindTrigger(typePopupState)}
           >
-            {filterOptions.map((filter) => (
-              <option value={filter.value}>{filter.label}</option>
-            ))}
-          </select>
+            <div
+              className={classNames(
+                'flex-1 text-[.16rem] w-[0.8rem] flex items-center justify-center',
+                typePopupState.isOpen ? 'text-text1' : 'text-color-text2'
+              )}
+              style={{
+                maxLines: 1,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                WebkitLineClamp: 1,
+                lineClamp: 1,
+                display: '-webkit-box',
+                WebkitBoxOrient: 'vertical',
+                wordBreak: 'break-all',
+              }}
+            >
+              {displayTypesText}
+            </div>
+
+            <div className='ml-[.2rem]'>
+              <Icomoon icon='arrow-down' size='.1rem' color='#848B97' />
+            </div>
+          </div>
         </div>
       </div>
 
@@ -206,84 +155,70 @@ export const ValidatorEjection = () => {
           </div>
         </div>
 
-        {validatorElectionData.length == 0 && (
+        <div className='max-h-[4.2rem] overflow-auto'>
+          {validatorElectionData.map((item: any, index: number) => (
+            <div
+              key={index}
+              className={classNames(
+                'h-[.74rem] grid items-center font-[500]',
+                index % 2 === 0 ? 'bg-bgPage/50 dark:bg-bgPageDark/50' : ''
+              )}
+              style={{
+                gridTemplateColumns: '20% 20% 20% 20% 20%',
+              }}
+            >
+              <div className='flex items-center justify-center text-[.16rem] text-color-text2 cursor-pointer'>
+                <div className='flex items-center'>
+                  <div
+                    className='mx-[.06rem]'
+                    onClick={() => {
+                      router.push(`/pubkey/${item.nodeAddress}`);
+                    }}
+                  >
+                    {getShortAddress(item.nodeAddress, 4)}
+                  </div>
+                </div>
+              </div>
+
+              <div className='flex items-center justify-center text-[.16rem] text-color-text2 cursor-pointer'>
+                <div className='mx-[.06rem]'>
+                  <a
+                    href={
+                      getValidatorInfoURL() + 'validator/' + item.poolAddress
+                    }
+                    target='_blank'
+                  >
+                    {getShortAddress(item.poolAddress, 4)}
+                  </a>
+                </div>
+              </div>
+
+              <div className='flex items-center justify-center text-[.16rem] cursor-pointer'>
+                <div className='mx-[.06rem]'>{item.statusSymbol}</div>
+              </div>
+
+              <div className='flex items-center justify-center text-[.16rem] text-color-text2 cursor-pointer'>
+                <div className='mx-[.06rem]'>
+                  {moment.utc(item.timeStamp).format('D MMM YYYY h:mm a')}
+                </div>
+              </div>
+
+              <div className='flex items-center justify-center text-[.16rem] text-color-text2 cursor-pointer'>
+                <div className='mx-[.06rem]'>{item.status}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {showEmptyContent && (
           <div className='h-[2rem] flex items-center justify-center'>
             <EmptyContent />
           </div>
         )}
 
-        {validatorElectionData.length > 0 && (
-          <div className='max-h-[4.2rem] overflow-auto'>
-            {validatorElectionData.filter(
-              (item: any) =>
-                selectedFilter === 'all' || item.status === selectedFilter
-            ).length === 0 ? (
-              <div className='h-[2rem] flex items-center justify-center'>
-                <EmptyContent />
-              </div>
-            ) : (
-              validatorElectionData
-                .filter(
-                  (item: any) =>
-                    selectedFilter === 'all' || item.status === selectedFilter
-                )
-                .map((item: any, index: number) => (
-                  <div
-                    key={index}
-                    className={classNames(
-                      'h-[.74rem] grid items-center font-[500]',
-                      index % 2 === 0
-                        ? 'bg-bgPage/50 dark:bg-bgPageDark/50'
-                        : ''
-                    )}
-                    style={{
-                      gridTemplateColumns: '20% 20% 20% 20% 20%',
-                    }}
-                  >
-                    <div className='flex items-center justify-center text-[.16rem] text-color-text2 cursor-pointer'>
-                      <div className='flex items-center'>
-                        <div
-                          className='mx-[.06rem]'
-                          onClick={() => {
-                            router.push(`/pubkey/${item.nodeAddress}`);
-                          }}
-                        >
-                          {getShortAddress(item.nodeAddress, 4)}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className='flex items-center justify-center text-[.16rem] text-color-text2 cursor-pointer'>
-                      <div className='mx-[.06rem]'>
-                        <a
-                          href={
-                            getValidatorInfoURL() +
-                            'validator/' +
-                            item.poolAddress
-                          }
-                          target='_blank'
-                        >
-                          {getShortAddress(item.poolAddress, 4)}
-                        </a>
-                      </div>
-                    </div>
-
-                    <div className='flex items-center justify-center text-[.16rem] cursor-pointer'>
-                      <div className='mx-[.06rem]'>{item.statusSymbol}</div>
-                    </div>
-
-                    <div className='flex items-center justify-center text-[.16rem] text-color-text2 cursor-pointer'>
-                      <div className='mx-[.06rem]'>
-                        {moment.utc(item.timeStamp).format('D MMM YYYY h:mm a')}
-                      </div>
-                    </div>
-
-                    <div className='flex items-center justify-center text-[.16rem] text-color-text2 cursor-pointer'>
-                      <div className='mx-[.06rem]'>{item.status}</div>
-                    </div>
-                  </div>
-                ))
-            )}
+        {showLoading && (
+          <div className='h-[2rem] flex items-center justify-center relative'>
+            <LoadingContent />
           </div>
         )}
 
@@ -293,6 +228,245 @@ export const ValidatorEjection = () => {
           <CustomPagination page={page} onChange={setPage} totalCount={1} />
         </div> */}
       </div>
+
+      <ChooseTypePopover
+        totalCount={totalCount}
+        activeCount={delayedCount}
+        pendingCount={pendingCount}
+        exitedCount={exitedCount}
+        othersCount={othersCount}
+        popupState={typePopupState}
+        data={validatorElectionData}
+        types={types}
+        onChangeTypes={setTypes}
+        onSelectFilter={(filter: string) => {
+          setSelectedFilter(filter);
+        }}
+        onClose={() => {
+          typePopupState.close();
+        }}
+      />
     </div>
+  );
+};
+
+const ChooseTypePopover = (props: any) => {
+  const {
+    popupState,
+    types,
+    onChangeTypes,
+    totalCount,
+    activeCount,
+    pendingCount,
+    exitedCount,
+    othersCount,
+  } = props;
+
+  const { darkMode } = useAppSlice();
+
+  const onClickType = (type: ValidatorEjectionStatusType) => {
+    if (types.indexOf(type) >= 0) {
+      onChangeTypes(_.without(types, type));
+    } else {
+      onChangeTypes(_.concat(types, type));
+    }
+  };
+
+  return (
+    <Popover
+      {...bindPopover(popupState)}
+      anchorOrigin={{
+        vertical: 'bottom',
+        horizontal: 'left',
+      }}
+      transformOrigin={{
+        vertical: 'top',
+        horizontal: 'left',
+      }}
+      elevation={0}
+      sx={{
+        marginTop: '.15rem',
+        '& .MuiPopover-paper': {
+          background: darkMode ? '#6C86AD4D' : '#ffffff80',
+          border: darkMode
+            ? '0.01rem solid #6C86AD80'
+            : '0.01rem solid #FFFFFF',
+          backdropFilter: 'blur(.4rem)',
+          borderRadius: '.3rem',
+        },
+        '& .MuiTypography-root': {
+          padding: '0px',
+        },
+        '& .MuiBox-root': {
+          padding: '0px',
+        },
+      }}
+    >
+      <div
+        className={classNames('p-[.16rem] w-[3.1rem]', darkMode ? 'dark' : '')}
+      >
+        <div
+          className='cursor-pointer flex items-center justify-between'
+          onClick={() => {
+            onChangeTypes([]);
+            // onClose();
+          }}
+        >
+          <div className='flex items-center'>
+            <div className='ml-[.12rem] text-color-text1 text-[.16rem]'>
+              All
+            </div>
+
+            <div
+              className={classNames(
+                'ml-[.03rem] mb-[.1rem] w-[.16rem] h-[.16rem] items-center justify-center rounded-full',
+                'bg-[#E8EFFD] text-text2',
+                totalCount === undefined ? 'hidden' : 'flex'
+              )}
+            >
+              <div className='scale-[.6] origin-center'>{totalCount}</div>
+            </div>
+          </div>
+
+          {types.length === 0 ? (
+            <div className='w-[.16rem] h-[.16rem] relative'>
+              <Image src={checkedIcon} alt='checked' layout='fill' />
+            </div>
+          ) : (
+            <div className='w-[.16rem] h-[.16rem] rounded-[0.03rem] border-solid border-[1px] border-color-border3' />
+          )}
+        </div>
+
+        <div className='my-[.16rem] h-[0.01rem] bg-color-divider1' />
+
+        <div
+          className='cursor-pointer flex items-center justify-between'
+          onClick={() => {
+            onClickType(ValidatorEjectionStatusType.Delayed);
+          }}
+        >
+          <div className='flex items-center'>
+            <div className='ml-[.12rem] text-color-text1 text-[.16rem]'>
+              Delayed
+            </div>
+
+            <div
+              className={classNames(
+                'ml-[.03rem] mb-[.1rem] w-[.16rem] h-[.16rem] items-center justify-center rounded-full',
+                'bg-[#E8EFFD] text-text2',
+                activeCount === undefined ? 'hidden' : 'flex'
+              )}
+            >
+              <div className='scale-[.6] origin-center'>{activeCount}</div>
+            </div>
+          </div>
+
+          {types.indexOf(ValidatorEjectionStatusType.Delayed) >= 0 ? (
+            <div className='w-[.16rem] h-[.16rem] relative'>
+              <Image src={checkedIcon} alt='checked' layout='fill' />
+            </div>
+          ) : (
+            <div className='w-[.16rem] h-[.16rem] rounded-[0.03rem] border-solid border-[1px] border-color-border3' />
+          )}
+        </div>
+
+        <div className='my-[.16rem] h-[0.01rem] bg-color-divider1' />
+
+        <div
+          className='cursor-pointer flex items-center justify-between'
+          onClick={() => {
+            onClickType(ValidatorEjectionStatusType.Pending);
+          }}
+        >
+          <div className='flex items-center'>
+            <div className='ml-[.12rem] text-color-text1 text-[.16rem]'>
+              Pending
+            </div>
+
+            <div
+              className={classNames(
+                'ml-[.03rem] mb-[.1rem] w-[.16rem] h-[.16rem] items-center justify-center rounded-full',
+                'bg-[#E8EFFD] text-text2',
+                pendingCount === undefined ? 'hidden' : 'flex'
+              )}
+            >
+              <div className='scale-[.6] origin-center'>{pendingCount}</div>
+            </div>
+          </div>
+
+          {types.indexOf(ValidatorEjectionStatusType.Pending) >= 0 ? (
+            <div className='w-[.16rem] h-[.16rem] relative'>
+              <Image src={checkedIcon} alt='checked' layout='fill' />
+            </div>
+          ) : (
+            <div className='w-[.16rem] h-[.16rem] rounded-[0.03rem] border-solid border-[1px] border-color-border3' />
+          )}
+        </div>
+
+        <div className='my-[.16rem] h-[0.01rem] bg-color-divider1' />
+
+        <div
+          className='cursor-pointer flex items-center justify-between'
+          onClick={() => {
+            onClickType(ValidatorEjectionStatusType.Exited);
+          }}
+        >
+          <div className='flex items-center'>
+            <div className='ml-[.12rem] text-color-text1 text-[.16rem]'>
+              Exited
+            </div>
+
+            <div
+              className={classNames(
+                'ml-[.03rem] mb-[.1rem] w-[.16rem] h-[.16rem] items-center justify-center rounded-full',
+                'bg-[#E8EFFD] text-text2',
+                exitedCount === undefined ? 'hidden' : 'flex'
+              )}
+            >
+              <div className='scale-[.6] origin-center'>{exitedCount}</div>
+            </div>
+          </div>
+
+          {types.indexOf(ValidatorEjectionStatusType.Exited) >= 0 ? (
+            <div className='w-[.16rem] h-[.16rem] relative'>
+              <Image src={checkedIcon} alt='checked' layout='fill' />
+            </div>
+          ) : (
+            <div className='w-[.16rem] h-[.16rem] rounded-[0.03rem] border-solid border-[1px] border-color-border3' />
+          )}
+        </div>
+
+        <div className='my-[.16rem] h-[0.01rem] bg-color-divider1' />
+
+        <div
+          className='cursor-pointer flex items-center justify-between'
+          onClick={() => {}}
+        >
+          <div className='flex items-center'>
+            <div className='ml-[.12rem] text-color-text1 text-[.16rem]'>
+              Others
+            </div>
+
+            <div
+              className={classNames(
+                'ml-[.03rem] mb-[.1rem] w-[.16rem] h-[.16rem] items-center justify-center rounded-full',
+                'bg-[#E8EFFD] text-text2',
+                othersCount === undefined ? 'hidden' : 'flex'
+              )}
+            >
+              <div className='scale-[.6] origin-center'>{othersCount}</div>
+            </div>
+          </div>
+
+          {types.indexOf(ValidatorEjectionStatusType.Others) >= 0 ? (
+            <div className='w-[.16rem] h-[.16rem] relative'>
+              <Image src={checkedIcon} alt='checked' layout='fill' />
+            </div>
+          ) : (
+            <div className='w-[.16rem] h-[.16rem] rounded-[0.03rem] border-solid border-[1px] border-color-border3' />
+          )}
+        </div>
+      </div>
+    </Popover>
   );
 };
