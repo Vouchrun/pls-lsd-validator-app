@@ -24,7 +24,7 @@ export default function ProtocolRevenue() {
   const [distributionAddress, setDistributionAddress] = React.useState('');
   const { writeContractAsync } = useWriteContract();
   const { metaMaskAccount } = useWalletAccount();
-  const { feePoolBalance } = useFeePoolData();
+  const { feePoolBalance, mvaBalance, safuBalance } = useFeePoolData();
 
   return (
     <div className='bg-color-bg2 border-[0.01rem] border-color-border1 rounded-[.3rem]'>
@@ -89,9 +89,9 @@ export default function ProtocolRevenue() {
               : 'flex items-center justify-between px-[20px] py-[5px] border-b-[0.01rem] border-[#ffffff] text-[.14rem] text-color-text1'
           }
         >
-          <div className='text-color-text2'>Treasury Balance</div>
+          <div className='text-color-text2'>Fee Pool Balance</div>
           <div className={robotoSemiBold.className}>
-            {millify(treasuryBalance, {
+            {millify(feePoolBalance, {
               precision: 2,
               space: true,
             })}
@@ -104,9 +104,39 @@ export default function ProtocolRevenue() {
               : 'flex items-center justify-between px-[20px] py-[5px] border-b-[0.01rem] border-[#ffffff] text-[.14rem] text-color-text1'
           }
         >
-          <div className='text-color-text2'>Fee Pool Balance</div>
+          <div className='text-color-text2'>DAO Treasury Account (DTA)</div>
           <div className={robotoSemiBold.className}>
             {millify(feePoolBalance, {
+              precision: 2,
+              space: true,
+            })}
+          </div>
+        </div>
+        <div
+          className={
+            darkMode
+              ? 'flex items-center justify-between px-[20px] py-[8px] border-b-[0.01rem] border-[#303745] text-[.14rem] text-color-text1'
+              : 'flex items-center justify-between px-[20px] py-[5px] border-b-[0.01rem] border-[#ffffff] text-[.14rem] text-color-text1'
+          }
+        >
+          <div className='text-color-text2'>Master Validator Account (MVA)</div>
+          <div className={robotoSemiBold.className}>
+            {millify(mvaBalance, {
+              precision: 2,
+              space: true,
+            })}
+          </div>
+        </div>
+        <div
+          className={
+            darkMode
+              ? 'flex items-center justify-between px-[20px] py-[8px] border-b-[0.01rem] border-[#303745] text-[.14rem] text-color-text1'
+              : 'flex items-center justify-between px-[20px] py-[5px] border-b-[0.01rem] border-[#ffffff] text-[.14rem] text-color-text1'
+          }
+        >
+          <div className='text-color-text2'>SAFU Account (SAFU)</div>
+          <div className={robotoSemiBold.className}>
+            {millify(safuBalance, {
               precision: 2,
               space: true,
             })}
@@ -115,10 +145,10 @@ export default function ProtocolRevenue() {
         <div className='text-[.14rem] text-color-text1 mt-5 text-center mb-[10px]'>
           <span className='text-color-text2'>Withdrawable Balance:</span>{' '}
           <span className={robotoSemiBold.className}>
-            {millify(totalPlatformCommission - totalPlatformClaimedAmount, {
+            {millify(treasuryBalance, {
               precision: 2,
               space: true,
-            })}{' '}
+            })}
             PLS
           </span>
         </div>

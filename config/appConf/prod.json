@@ -39,7 +39,9 @@
     "treasuryAddresses": [
       "0x104e6e24258eaE78221D3b6d494E551138F33113",
       "0x9df4e2AB92a00B46B8181CF1BB441c722B12B6a2"
-    ]
+    ],
+    "mvaAddress": "0x4f0c1579d495f906fE3A72d2957c90442CF93159",
+    "safuAddress": "0xadC59Aa3E4dc87062325Ce0E27434da714b730A2"
   },
   "lsdAppUrl": "https://app.vouch.run/",
   "ValidatorInfoURL": "https://www.g4mm4.io/",
