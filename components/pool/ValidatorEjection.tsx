@@ -435,37 +435,6 @@ const ChooseTypePopover = (props: any) => {
             <div className='w-[.16rem] h-[.16rem] rounded-[0.03rem] border-solid border-[1px] border-color-border3' />
           )}
         </div>
-
-        <div className='my-[.16rem] h-[0.01rem] bg-color-divider1' />
-
-        <div
-          className='cursor-pointer flex items-center justify-between'
-          onClick={() => {}}
-        >
-          <div className='flex items-center'>
-            <div className='ml-[.12rem] text-color-text1 text-[.16rem]'>
-              Others
-            </div>
-
-            <div
-              className={classNames(
-                'ml-[.03rem] mb-[.1rem] w-[.16rem] h-[.16rem] items-center justify-center rounded-full',
-                'bg-[#E8EFFD] text-text2',
-                othersCount === undefined ? 'hidden' : 'flex'
-              )}
-            >
-              <div className='scale-[.6] origin-center'>{othersCount}</div>
-            </div>
-          </div>
-
-          {types.indexOf(ValidatorEjectionStatusType.Others) >= 0 ? (
-            <div className='w-[.16rem] h-[.16rem] relative'>
-              <Image src={checkedIcon} alt='checked' layout='fill' />
-            </div>
-          ) : (
-            <div className='w-[.16rem] h-[.16rem] rounded-[0.03rem] border-solid border-[1px] border-color-border3' />
-          )}
-        </div>
       </div>
     </Popover>
   );

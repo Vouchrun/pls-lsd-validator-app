@@ -112,7 +112,7 @@ export const getValidatorEjectionTypeText = (status: string | undefined) => {
     case 3:
       return 'Delayed';
     default:
-      return 'Others';
+      return 'Exited';
   }
 };
 
