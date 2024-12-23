@@ -11,8 +11,8 @@ import { usePubkeysHome } from 'hooks/usePubkeysHome';
 import { useWalletAccount } from 'hooks/useWalletAccount';
 import { PubkeyStatus } from 'interfaces/common';
 import { useRouter } from 'next/router';
-import { useMemo, useState } from 'react';
-import { isPubkeyStakeable, openLink } from 'utils/commonUtils';
+import { useEffect, useMemo, useState } from 'react';
+import { isPubkeyStakeable } from 'utils/commonUtils';
 import snackbarUtil from 'utils/snackbarUtils';
 import { getShortAddress } from 'utils/stringUtils';
 import { TokenStakeListTabs } from './TokenStakeListTabs';
@@ -72,6 +72,22 @@ export const TokenStakeList = () => {
       (item) => item.canStake && isPubkeyStakeable(item._status)
     ).length > 1;
 
+  // State to track checked items
+  const [checkedItems, setCheckedItems] = useState<any>([]);
+
+  // Handler to toggle checkbox values
+  const handleCheckboxChange = (item: string) => (event: any) => {
+    if (event.target.checked) {
+      // Add item to the checkedItems array
+      setCheckedItems((prev: string[]) => [...prev, item]);
+    } else {
+      // Remove item from the checkedItems array
+      setCheckedItems((prev: string[]) =>
+        prev.filter((checkedItem) => checkedItem !== item)
+      );
+    }
+  };
+
   return (
     <div>
       <div className='pt-[.24rem] flex items-center justify-between'>
@@ -111,6 +127,7 @@ export const TokenStakeList = () => {
               type='stroke'
               className='px-[.16rem]'
               height='.42rem'
+              disabled={checkedItems.length === 0}
               onClick={() => {
                 const stakeablePubkeyInfos = (
                   displaySoloPubkeyInfos.length > 1
@@ -130,7 +147,7 @@ export const TokenStakeList = () => {
                   {
                     pathname: '/tokenStake/stake',
                     query: {
-                      pubkeyAddressList: pubkeyAddressList,
+                      pubkeyAddressList: checkedItems,
                       type: isTrust ? 'trusted' : 'solo',
                     },
                   },
@@ -140,7 +157,7 @@ export const TokenStakeList = () => {
             >
               <div className='flex items-center'>
                 <div>
-                  Group Stake Avaliable{' '}
+                  Stake Selected{' '}
                   {displaySoloPubkeyInfos.length > 1
                     ? 'Solo'
                     : displayTrustPubkeyInfos.length > 1
@@ -290,29 +307,42 @@ export const TokenStakeList = () => {
               <div className='flex items-center justify-end pr-[.56rem] text-[.16rem] text-color-text2'>
                 {pubkeyInfo.canStake &&
                   isPubkeyStakeable(pubkeyInfo._status) && (
-                    <CustomButton
-                      height='.42rem'
-                      className='px-[.5rem]'
-                      onClick={() => {
-                        dispatch(
-                          updateValidatorStakeLoadingParams({
-                            modalVisible: false,
-                          })
-                        );
-                        router.push(
-                          {
-                            pathname: '/tokenStake/stake',
-                            query: {
-                              pubkeyAddressList: [pubkeyInfo.pubkeyAddress],
-                              type: isTrust ? 'trusted' : 'solo',
+                    <>
+                      <CustomButton
+                        height='.42rem'
+                        className='px-[.5rem]'
+                        onClick={() => {
+                          dispatch(
+                            updateValidatorStakeLoadingParams({
+                              modalVisible: false,
+                            })
+                          );
+                          router.push(
+                            {
+                              pathname: '/tokenStake/stake',
+                              query: {
+                                pubkeyAddressList: [pubkeyInfo.pubkeyAddress],
+                                type: isTrust ? 'trusted' : 'solo',
+                              },
                             },
-                          },
-                          '/tokenStake/stake'
-                        );
-                      }}
-                    >
-                      Stake
-                    </CustomButton>
+                            '/tokenStake/stake'
+                          );
+                        }}
+                      >
+                        Stake
+                      </CustomButton>
+                      <input
+                        type='checkbox'
+                        key={index}
+                        className='ml-[.24rem]'
+                        checked={checkedItems.includes(
+                          pubkeyInfo.pubkeyAddress
+                        )}
+                        onChange={handleCheckboxChange(
+                          pubkeyInfo.pubkeyAddress
+                        )}
+                      />
+                    </>
                   )}
               </div>
             </div>
