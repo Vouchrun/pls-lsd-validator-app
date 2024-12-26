@@ -81,3 +81,23 @@ export function getTreasuryAddresses() {
   }
   return appProdConfig.contracts.treasuryAddresses;
 }
+
+/**
+ * get mva addresses
+ */
+export function getMVAAddresses() {
+  if (isDev()) {
+    return appDevConfig.contracts.mvaAddress;
+  }
+  return appProdConfig.contracts.mvaAddress;
+}
+
+/**
+ * get safu addresses
+ */
+export function getSAFUAddresses() {
+  if (isDev()) {
+    return appDevConfig.contracts.safuAddress;
+  }
+  return appProdConfig.contracts.safuAddress;
+}

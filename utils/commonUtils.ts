@@ -1,15 +1,15 @@
 import {
   CANCELLED_ERR_MESSAGE1,
   CANCELLED_ERR_MESSAGE2,
-} from "constants/common";
+} from 'constants/common';
 import {
   ChainPubkeyStatus,
   DisplayPubkeyStatus,
   NodePubkeyInfo,
   PubkeyStatus,
-} from "interfaces/common";
-import { formatNumber } from "./numberUtils";
-import { getValidatorTotalDepositAmount } from "config/env";
+} from 'interfaces/common';
+import { formatNumber } from './numberUtils';
+import { getValidatorTotalDepositAmount } from 'config/env';
 
 /**
  * create uuid
@@ -17,17 +17,17 @@ import { getValidatorTotalDepositAmount } from "config/env";
  */
 export function uuid() {
   try {
-    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(
       /[xy]/g,
       function (c) {
         let r = (Math.random() * 16) | 0,
-          v = c == "x" ? r : (r & 0x3) | 0x8;
+          v = c == 'x' ? r : (r & 0x3) | 0x8;
 
         return v.toString(16);
       }
     );
   } catch {
-    return "";
+    return '';
   }
 }
 
@@ -66,19 +66,19 @@ export const isEvmTxCancelError = (err: any) => {
 export const getPubkeyStatusText = (status: string) => {
   switch (Number(status)) {
     case 0:
-      return "UnInitial";
+      return 'UnInitial';
     case 1:
-      return "Deposited";
+      return 'Deposited';
     case 2:
-      return "Matched";
+      return 'Matched';
     case 3:
-      return "Staked";
+      return 'Staked';
     case 4:
-      return "Unmatched";
+      return 'Unmatched';
     case 100:
-      return "Others";
+      return 'Others';
     default:
-      return "Unknown";
+      return 'Unknown';
   }
 };
 
@@ -89,13 +89,30 @@ export const getPubkeyStatusText = (status: string) => {
 export const getPubkeyStatusTypeText = (status: string | undefined) => {
   switch (Number(status)) {
     case 1:
-      return "Active";
+      return 'Active';
     case 2:
-      return "Pending";
+      return 'Pending';
     case 3:
-      return "Exited";
+      return 'Exited';
     default:
-      return "Others";
+      return 'Others';
+  }
+};
+
+/**
+ * Get chain validator ejection status display text.
+ * @param status pubkey status value
+ */
+export const getValidatorEjectionTypeText = (status: string | undefined) => {
+  switch (Number(status)) {
+    case 1:
+      return 'Exited';
+    case 2:
+      return 'Pending';
+    case 3:
+      return 'Delayed';
+    default:
+      return 'Exited';
   }
 };
 
@@ -121,24 +138,24 @@ export const isPubkeyStakeable = (status: string) => {
 export const getBeaconStatusListOfPubkeyStatus = (status: PubkeyStatus) => {
   switch (status) {
     case PubkeyStatus.Unmatched:
-      return ["PENDING_INITIALIZED"];
+      return ['PENDING_INITIALIZED'];
     case PubkeyStatus.Staked:
       return [
-        "PENDING_QUEUED",
-        "ACTIVE_ONGOING",
-        "ACTIVE_EXITING",
-        "ACTIVE_SLASHED",
-        "ACTIVE",
-        "PENDING",
+        'PENDING_QUEUED',
+        'ACTIVE_ONGOING',
+        'ACTIVE_EXITING',
+        'ACTIVE_SLASHED',
+        'ACTIVE',
+        'PENDING',
       ];
     case PubkeyStatus.Others:
       return [
-        "EXITED_UNSLASHED",
-        "EXITED_SLASHED",
-        "WITHDRAWAL_POSSIBLE",
-        "WITHDRAWAL_DONE",
-        "EXITED",
-        "WITHDRAWAL",
+        'EXITED_UNSLASHED',
+        'EXITED_SLASHED',
+        'WITHDRAWAL_POSSIBLE',
+        'WITHDRAWAL_DONE',
+        'EXITED',
+        'WITHDRAWAL',
         undefined,
       ];
     default:
@@ -155,15 +172,15 @@ export const getBeaconStatusListOfDisplayPubkeyStatus = (
 ) => {
   switch (status) {
     case DisplayPubkeyStatus.Waiting:
-      return ["PENDING_INITIALIZED", "PENDING_QUEUED", "PENDING", undefined];
+      return ['PENDING_INITIALIZED', 'PENDING_QUEUED', 'PENDING', undefined];
     case DisplayPubkeyStatus.Pending:
-      return ["PENDING_INITIALIZED", "PENDING_QUEUED", "PENDING", undefined];
+      return ['PENDING_INITIALIZED', 'PENDING_QUEUED', 'PENDING', undefined];
     case DisplayPubkeyStatus.Active:
-      return ["ACTIVE_ONGOING", "ACTIVE_EXITING", "ACTIVE_SLASHED", "ACTIVE"];
+      return ['ACTIVE_ONGOING', 'ACTIVE_EXITING', 'ACTIVE_SLASHED', 'ACTIVE'];
     case DisplayPubkeyStatus.Exited:
-      return ["EXITED_UNSLASHED", "EXITED_SLASHED", "EXITED"];
+      return ['EXITED_UNSLASHED', 'EXITED_SLASHED', 'EXITED'];
     case DisplayPubkeyStatus.Withdrawal:
-      return ["WITHDRAWAL_POSSIBLE", "WITHDRAWAL_DONE", "WITHDRAWAL"];
+      return ['WITHDRAWAL_POSSIBLE', 'WITHDRAWAL_DONE', 'WITHDRAWAL'];
     default:
       return [];
   }
@@ -213,53 +230,53 @@ export const getPubkeyDisplayStatus = (
 ) => {
   if (item._status === ChainPubkeyStatus.Deposited) {
     // return "Waiting";
-    return "Pending";
+    return 'Pending';
   }
   if (item._status === ChainPubkeyStatus.UnMatch) {
-    return "Failed";
+    return 'Failed';
   }
   if (item._status === ChainPubkeyStatus.Match && unmatchedToken < 31) {
-    return "Unmatched";
+    return 'Unmatched';
   }
   if (item._status === ChainPubkeyStatus.Match && unmatchedToken >= 31) {
-    return "Matched";
+    return 'Matched';
   }
   if (
     item._status === ChainPubkeyStatus.Staked &&
     (item.beaconApiStatus === undefined ||
-      item.beaconApiStatus === "PENDING_INITIALIZED" ||
-      item.beaconApiStatus === "PENDING_QUEUED" ||
-      item.beaconApiStatus === "PENDING")
+      item.beaconApiStatus === 'PENDING_INITIALIZED' ||
+      item.beaconApiStatus === 'PENDING_QUEUED' ||
+      item.beaconApiStatus === 'PENDING')
   ) {
-    return "Pending";
+    return 'Pending';
   }
   if (
     item._status === ChainPubkeyStatus.Staked &&
-    (item.beaconApiStatus === "ACTIVE_ONGOING" ||
-      item.beaconApiStatus === "ACTIVE_EXITING" ||
-      item.beaconApiStatus === "ACTIVE_SLASHED" ||
-      item.beaconApiStatus === "ACTIVE")
+    (item.beaconApiStatus === 'ACTIVE_ONGOING' ||
+      item.beaconApiStatus === 'ACTIVE_EXITING' ||
+      item.beaconApiStatus === 'ACTIVE_SLASHED' ||
+      item.beaconApiStatus === 'ACTIVE')
   ) {
-    return "Active";
+    return 'Active';
   }
   if (
     item._status === ChainPubkeyStatus.Staked &&
-    (item.beaconApiStatus === "EXITED_UNSLASHED" ||
-      item.beaconApiStatus === "EXITED_SLASHED" ||
-      item.beaconApiStatus === "EXITED")
+    (item.beaconApiStatus === 'EXITED_UNSLASHED' ||
+      item.beaconApiStatus === 'EXITED_SLASHED' ||
+      item.beaconApiStatus === 'EXITED')
   ) {
-    return "Exited";
+    return 'Exited';
   }
   if (
     item._status === ChainPubkeyStatus.Staked &&
-    (item.beaconApiStatus === "WITHDRAWAL_POSSIBLE" ||
-      item.beaconApiStatus === "WITHDRAWAL_DONE" ||
-      item.beaconApiStatus === "WITHDRAWAL")
+    (item.beaconApiStatus === 'WITHDRAWAL_POSSIBLE' ||
+      item.beaconApiStatus === 'WITHDRAWAL_DONE' ||
+      item.beaconApiStatus === 'WITHDRAWAL')
   ) {
-    return "Withdrawal";
+    return 'Withdrawal';
   }
 
-  return "Unknown";
+  return 'Unknown';
 };
 
 export const formatValidatorDespositAmount = formatNumber(
@@ -270,10 +287,10 @@ export const formatValidatorDespositAmount = formatNumber(
 export const isPubkeyStillValid = (beaconStatus: string | undefined) => {
   const uppercaseStatus = beaconStatus?.toUpperCase();
   return (
-    uppercaseStatus !== "EXITED_UNSLASHED" &&
-    uppercaseStatus !== "EXITED_SLASHED" &&
-    uppercaseStatus !== "EXITED" &&
-    uppercaseStatus !== "WITHDRAWAL_POSSIBLE" &&
-    uppercaseStatus !== "WITHDRAWAL_DONE"
+    uppercaseStatus !== 'EXITED_UNSLASHED' &&
+    uppercaseStatus !== 'EXITED_SLASHED' &&
+    uppercaseStatus !== 'EXITED' &&
+    uppercaseStatus !== 'WITHDRAWAL_POSSIBLE' &&
+    uppercaseStatus !== 'WITHDRAWAL_DONE'
   );
 };

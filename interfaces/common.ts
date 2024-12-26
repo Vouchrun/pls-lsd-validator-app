@@ -43,6 +43,13 @@ export enum PubkeyStatusType {
   Others = '4',
 }
 
+export enum ValidatorEjectionStatusType {
+  Exited = '1',
+  Pending = '2',
+  Delayed = '3',
+  Others = '4',
+}
+
 export enum DisplayPubkeyStatus {
   Waiting = '0',
   Pending = '1',

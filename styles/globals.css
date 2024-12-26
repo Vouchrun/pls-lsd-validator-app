@@ -152,3 +152,11 @@ body {
     text-align: left;
   }
 }
+
+select option {
+  color: #000;
+}
+
+input[type='checkbox'] {
+  accent-color: #5a5de0; /* Customize the checked color */
+}

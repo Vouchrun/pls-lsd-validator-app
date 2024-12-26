@@ -74,7 +74,7 @@ const PoolDataPage = () => {
 
         <ValidatorEjection />
 
-        <DelegateElection />
+        {/* <DelegateElection /> */}
       </div>
     </div>
   );

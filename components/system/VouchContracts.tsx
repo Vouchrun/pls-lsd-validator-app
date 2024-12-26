@@ -43,7 +43,7 @@ export default function VouchContracts() {
         </div>
         <div className='mb-[20px]'>
           <div className='text-color-text1 text-[14px] mb-[10px]'>
-            vPLS User Deposit Contract Address
+            User Deposit Contract Address
           </div>
           <div className='text-color-text2 text-[14px] flex items-center justify-between'>
             <div className='truncate'>{vPLSUserDepositAddress}</div>
@@ -57,7 +57,7 @@ export default function VouchContracts() {
         </div>
         <div className='mb-[20px]'>
           <div className='text-color-text1 text-[14px] mb-[10px]'>
-            vPLS Network Withdraw Contract Address
+            Network Withdraw Contract Address
           </div>
           <div className='text-color-text2 text-[14px] flex items-center justify-between'>
             <div className='truncate'>{networkwithdrawAddress}</div>

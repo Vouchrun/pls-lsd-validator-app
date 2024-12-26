@@ -149,7 +149,7 @@ export function useUnstakingPoolData() {
         });
 
       setWaitingStakers(
-        Number(nextWithdrawIndex) - Number(maxClaimableWithdrawIndex) + ''
+        Number(nextWithdrawIndex) - Number(maxClaimableWithdrawIndex) - 1 + ''
       );
       const withdrawCycleSecondsValue = await networkWithdrawContract.methods
         .withdrawCycleSeconds()
