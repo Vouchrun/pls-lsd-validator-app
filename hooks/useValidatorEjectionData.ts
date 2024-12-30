@@ -36,7 +36,8 @@ const findStatusSymbol = (status: string) => {
 };
 
 export const useValidatorEjectionData = (
-  validatorStatusFilters?: ValidatorEjectionStatusType[]
+  validatorStatusFilters?: ValidatorEjectionStatusType[],
+  nodeEjectionAddress?: string
 ) => {
   const [totalCount, setTotalCount] = useState<number>();
 
@@ -108,63 +109,68 @@ export const useValidatorEjectionData = (
           console.log({ err });
         });
       const nodeAddress = pubkeyInfoOf._owner;
+      if (nodeEjectionAddress ? nodeEjectionAddress == nodeAddress : true) {
+        const newItem = {
+          timeStamp: +timeStamp * 1000,
+          poolAddress: poolAddress,
+          nodeAddress: nodeAddress,
+          status: status,
+          statusSymbol: statusSymbol,
+        };
 
-      const newItem = {
-        timeStamp: +timeStamp * 1000,
-        poolAddress: poolAddress,
-        nodeAddress: nodeAddress,
-        status: status,
-        statusSymbol: statusSymbol,
-      };
+        if (isDelayed) {
+          delayedCount++;
+          if (
+            !validatorStatusFilters ||
+            validatorStatusFilters.length === 0 ||
+            validatorStatusFilters.indexOf(
+              ValidatorEjectionStatusType.Delayed
+            ) >= 0
+          ) {
+            data.push(newItem);
+          }
+        } else if (isPending) {
+          pendingCount++;
+          if (
+            !validatorStatusFilters ||
+            validatorStatusFilters.length === 0 ||
+            validatorStatusFilters.indexOf(
+              ValidatorEjectionStatusType.Pending
+            ) >= 0
+          ) {
+            data.push(newItem);
+          }
+        } else if (isExit) {
+          exitedCount++;
+          if (
+            !validatorStatusFilters ||
+            validatorStatusFilters.length === 0 ||
+            validatorStatusFilters.indexOf(
+              ValidatorEjectionStatusType.Exited
+            ) >= 0
+          ) {
+            data.push(newItem);
+          }
+        } else {
+          othersCount++;
+          if (
+            !validatorStatusFilters ||
+            validatorStatusFilters.length === 0 ||
+            validatorStatusFilters.indexOf(
+              ValidatorEjectionStatusType.Others
+            ) >= 0
+          ) {
+            data.push(newItem);
+          }
+        }
 
-      if (isDelayed) {
-        delayedCount++;
-        if (
-          !validatorStatusFilters ||
-          validatorStatusFilters.length === 0 ||
-          validatorStatusFilters.indexOf(ValidatorEjectionStatusType.Delayed) >=
-            0
-        ) {
-          data.push(newItem);
-        }
-      } else if (isPending) {
-        pendingCount++;
-        if (
-          !validatorStatusFilters ||
-          validatorStatusFilters.length === 0 ||
-          validatorStatusFilters.indexOf(ValidatorEjectionStatusType.Pending) >=
-            0
-        ) {
-          data.push(newItem);
-        }
-      } else if (isExit) {
-        exitedCount++;
-        if (
-          !validatorStatusFilters ||
-          validatorStatusFilters.length === 0 ||
-          validatorStatusFilters.indexOf(ValidatorEjectionStatusType.Exited) >=
-            0
-        ) {
-          data.push(newItem);
-        }
-      } else {
-        othersCount++;
-        if (
-          !validatorStatusFilters ||
-          validatorStatusFilters.length === 0 ||
-          validatorStatusFilters.indexOf(ValidatorEjectionStatusType.Others) >=
-            0
-        ) {
-          data.push(newItem);
-        }
+        setDelayedCount(delayedCount);
+        setPendingCount(pendingCount);
+        setExitedCount(exitedCount);
+        setOthersCount(othersCount);
+        setTotalCount(data.length);
+        setValidatorElectionData(data);
       }
-
-      setDelayedCount(delayedCount);
-      setPendingCount(pendingCount);
-      setExitedCount(exitedCount);
-      setOthersCount(othersCount);
-      setTotalCount(data.length);
-      setValidatorElectionData(data);
     });
   };
   useEffect(() => {
