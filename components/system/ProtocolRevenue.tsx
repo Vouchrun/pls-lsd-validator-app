@@ -20,11 +20,12 @@ export default function ProtocolRevenue() {
     totalPlatformCommission,
     stackCommissionRate,
   } = useUnstakingPoolData();
-  const { treasuryBalance, admin } = useNetworkProposalData();
+  const { admin } = useNetworkProposalData();
   const [distributionAddress, setDistributionAddress] = React.useState('');
   const { writeContractAsync } = useWriteContract();
   const { metaMaskAccount } = useWalletAccount();
-  const { feePoolBalance, mvaBalance, safuBalance } = useFeePoolData();
+  const { feePoolBalance, mvaBalance, safuBalance, dtaBalance } =
+    useFeePoolData();
 
   return (
     <div className='bg-color-bg2 border-[0.01rem] border-color-border1 rounded-[.3rem]'>
@@ -106,7 +107,7 @@ export default function ProtocolRevenue() {
         >
           <div className='text-color-text2'>DAO Treasury Account (DTA)</div>
           <div className={robotoSemiBold.className}>
-            {millify(feePoolBalance, {
+            {millify(dtaBalance, {
               precision: 2,
               space: true,
             })}
@@ -145,10 +146,10 @@ export default function ProtocolRevenue() {
         <div className='text-[.14rem] text-color-text1 mt-5 text-center mb-[10px]'>
           <span className='text-color-text2'>Withdrawable Balance:</span>{' '}
           <span className={robotoSemiBold.className}>
-            {millify(treasuryBalance, {
+            {millify(totalPlatformCommission - totalPlatformClaimedAmount, {
               precision: 2,
               space: true,
-            })}
+            })}{' '}
             PLS
           </span>
         </div>

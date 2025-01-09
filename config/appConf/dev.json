@@ -15,6 +15,9 @@
   "validatorExplorer": "https://beacon.v4.testnet.pulsechain.com/",
   "blockSeconds": 10,
   "contracts": {
+    "dtaContract": {
+      "address": "0xF66e726f63D595e5aae0e8a73B669630F1a45e01"
+    },
     "lsdTokenContract": {
       "address": "0x61135C59A4Eb452b89963188eD6B6a7487049764"
     },

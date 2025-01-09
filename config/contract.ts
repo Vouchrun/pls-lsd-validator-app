@@ -73,6 +73,16 @@ export function getFeePoolContract() {
 }
 
 /**
+ * get DTA contract address
+ */
+export function getDTAContract() {
+  if (isDev()) {
+    return appDevConfig.contracts.dtaContract.address;
+  }
+  return appProdConfig.contracts.dtaContract.address;
+}
+
+/**
  * get treasury addresses
  */
 export function getTreasuryAddresses() {

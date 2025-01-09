@@ -24,7 +24,6 @@ import { LoadingContent } from 'components/common/LoadingContent';
 export const ValidatorEjection = () => {
   const { darkMode } = useAppSlice();
   const router = useRouter();
-  const [selectedFilter, setSelectedFilter] = useState('all');
 
   const [types, setTypes] = useState<ValidatorEjectionStatusType[]>([]);
 
@@ -239,9 +238,6 @@ export const ValidatorEjection = () => {
         data={validatorElectionData}
         types={types}
         onChangeTypes={setTypes}
-        onSelectFilter={(filter: string) => {
-          setSelectedFilter(filter);
-        }}
         onClose={() => {
           typePopupState.close();
         }}

@@ -1,4 +1,5 @@
 import {
+  getDTAContract,
   getFeePoolContract,
   getMVAAddresses,
   getSAFUAddresses,
@@ -11,9 +12,11 @@ export function useFeePoolData() {
   const [feePoolBalance, setFeePoolBalance] = useState<number>(0);
   const [mvaBalance, setMVABalance] = useState<number>(0);
   const [safuBalance, setSAFUBalance] = useState<number>(0);
+  const [dtaBalance, setDTABalance] = useState<number>(0);
   const feePoolAddress = getFeePoolContract();
   const mvaAddress = getMVAAddresses();
   const safuAddress = getSAFUAddresses();
+  const dtaAddress = getDTAContract();
   const web3 = getEthWeb3();
 
   const updateFeePoolData = useCallback(async () => {
@@ -26,6 +29,9 @@ export function useFeePoolData() {
 
       const safuBalanceData = await web3.eth.getBalance(safuAddress);
       setSAFUBalance(+Web3.utils.fromWei(safuBalanceData));
+
+      const dtaBalanceData = await web3.eth.getBalance(dtaAddress);
+      setDTABalance(+Web3.utils.fromWei(dtaBalanceData));
     } catch (err: any) {
       console.log({ err });
     }
@@ -39,5 +45,6 @@ export function useFeePoolData() {
     feePoolBalance,
     mvaBalance,
     safuBalance,
+    dtaBalance,
   };
 }

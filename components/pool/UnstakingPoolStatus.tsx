@@ -3,6 +3,7 @@ import { DataLoading } from 'components/common/DataLoading';
 import { robotoBold, robotoSemiBold } from 'config/font';
 import { useUnstakedTokenOfDay } from 'hooks/useUnstakedTokenOfDay';
 import { useUnstakingPoolData } from 'hooks/useUnstakingPoolData';
+import { useValidatorEjectionData } from 'hooks/useValidatorEjectionData';
 import { getLsdTokenName, getTokenName } from 'utils/configUtils';
 import { formatNumber } from 'utils/numberUtils';
 
@@ -11,6 +12,7 @@ export const UnstakingPoolStatus = () => {
     useUnstakingPoolData();
 
   const { unstakedTokenOfDay } = useUnstakedTokenOfDay();
+  const { pendingCount } = useValidatorEjectionData();
 
   return (
     <div>
@@ -56,7 +58,7 @@ export const UnstakingPoolStatus = () => {
           </div>
 
           <div className='flex items-center justify-center text-[.16rem] text-color-text2'>
-            Ejected Validators
+            Ejecting Validators
           </div>
         </div>
 
@@ -88,7 +90,7 @@ export const UnstakingPoolStatus = () => {
           </div>
 
           <div className='flex items-center justify-center text-[.16rem] text-color-text1'>
-            --
+            {pendingCount}
           </div>
         </div>
       </div>
