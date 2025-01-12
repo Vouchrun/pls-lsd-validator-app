@@ -28,7 +28,7 @@ import {
   ValidatorClaimType,
 } from 'interfaces/common';
 import { AppThunk } from 'redux/store';
-import { fetchPubkeyStatus } from 'utils/apiUtils';
+import { fetchBeaconStatusInChunks } from 'utils/apiUtils';
 import { isEvmTxCancelError, uuid } from 'utils/commonUtils';
 import { getTokenName } from 'utils/configUtils';
 import { formatNumber, formatScientificNumber } from 'utils/numberUtils';
@@ -152,47 +152,25 @@ export const updateNodePubkeys = (): AppThunk => async (dispatch, getState) => {
       return;
     }
 
-    const requests = pubkeysOfNode?.map((pubkeyAddress: string) => {
-      return (async () => {
-        const pubkeyInfo = await nodeDepositContract.methods
-          .pubkeyInfoOf(pubkeyAddress)
-          .call()
-          .catch((err: any) => {
-            console.log({ err });
-          });
+    const [pubkeyInfos, beaconStatusResponses] = await Promise.all([
+      Promise.all(
+        pubkeysOfNode.map((pubkeyAddress: string) =>
+          nodeDepositContract.methods.pubkeyInfoOf(pubkeyAddress).call()
+        )
+      ),
+      fetchBeaconStatusInChunks(pubkeysOfNode),
+    ]);
 
-        return pubkeyInfo;
-      })();
-    });
-
-    const pubkeyInfos = await Promise.all(requests);
-
-    // const beaconStatusResponse = await fetch(
-    //   `/api/pubkeyStatus?id=${pubkeysOfNode.join(",")}`,
-    //   {
-    //     method: "GET",
-    //   }
-    // );
-    // const beaconStatusResJson = await beaconStatusResponse.json();
-    const beaconStatusResJson = await fetchPubkeyStatus(
-      pubkeysOfNode.join(',')
+    const beaconStatusResJson = beaconStatusResponses.flatMap(
+      (response) => response.data
     );
 
     const nodePubkeyInfos: NodePubkeyInfo[] = pubkeyInfos.map((item, index) => {
-      const matchedBeaconData = beaconStatusResJson.data?.find(
+      const matchedBeaconData = beaconStatusResJson?.find(
         (item: any) => item.validator?.pubkey === pubkeysOfNode[index]
       );
-      // console.log({ item });
-      // const type =
-      //   item._nodeDepositAmount ===
-      //   parseEther(
-      //     (getTrustValidatorDepositAmount() + "") as `${number}`,
-      //     "gwei"
-      //   )
-      //     ? "trusted"
-      //     : "solo";
       const type = item._nodeDepositAmount === 0 ? 'solo' : 'trusted';
-      // console.log({ type });
+
       return {
         pubkeyAddress: pubkeysOfNode[index],
         beaconApiStatus: matchedBeaconData?.status?.toUpperCase() || undefined,

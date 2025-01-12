@@ -2,7 +2,7 @@ import { getNodeDepositContract } from 'config/contract';
 import { getNodeDepositContractAbi } from 'config/contractAbi';
 import { ChainPubkeyStatus } from 'interfaces/common';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { fetchPubkeyStatus } from 'utils/apiUtils';
+import { fetchBeaconStatusInChunks } from 'utils/apiUtils';
 import { getEthWeb3 } from 'utils/web3Utils';
 
 const CACHE_KEY = 'matchedValidatorsData';
@@ -174,19 +174,6 @@ export function usePoolPubkeyData() {
       setIsLoading(false);
     }
   }, [nodeDepositContract, matchedValidators, isClient]);
-
-  const fetchBeaconStatusInChunks = async (pubkeyAddressList: string[]) => {
-    const chunkSize = 100;
-    const beaconStatusResponses = [];
-
-    for (let i = 0; i < pubkeyAddressList.length; i += chunkSize) {
-      const chunk = pubkeyAddressList.slice(i, i + chunkSize);
-      const response = await fetchPubkeyStatus(chunk.join(','));
-      beaconStatusResponses.push(response);
-    }
-
-    return beaconStatusResponses;
-  };
 
   useEffect(() => {
     if (isClient) {
