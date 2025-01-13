@@ -26,6 +26,7 @@ export const TokenStakeList = () => {
   const { metaMaskAccount } = useWalletAccount();
   const [page, setPage] = useState(1);
   const [selectedTab, setSelectedTab] = useState('All');
+  const [allSelected, setAllSelected] = useState(false);
   const { isTrust } = useIsTrustedValidator();
   const dispatch = useAppDispatch();
   const selectedStatus = useMemo(() => {
@@ -85,6 +86,24 @@ export const TokenStakeList = () => {
       setCheckedItems((prev: string[]) =>
         prev.filter((checkedItem) => checkedItem !== item)
       );
+    }
+  };
+
+  const handleAllSelected = (event: any) => {
+    console.log('here');
+    if (event.target.checked) {
+      setAllSelected(true);
+      // Add item to the checkedItems array
+      displayPubkeyInfos.map((pubkeyInfo) => {
+        setCheckedItems((prev: string[]) => [
+          ...prev,
+          pubkeyInfo.pubkeyAddress,
+        ]);
+      });
+    } else {
+      // Remove item from the checkedItems array
+      setCheckedItems([]);
+      setAllSelected(false);
     }
   };
 
@@ -156,15 +175,7 @@ export const TokenStakeList = () => {
               }}
             >
               <div className='flex items-center'>
-                <div>
-                  Stake Selected{' '}
-                  {displaySoloPubkeyInfos.length > 1
-                    ? 'Solo'
-                    : displayTrustPubkeyInfos.length > 1
-                    ? 'Trusted'
-                    : ''}{' '}
-                  Nodes
-                </div>
+                <div>Stake Selected Nodes</div>
 
                 <div className='ml-[.06rem] rotate-[-90deg]'>
                   <Icomoon icon='arrow-down' size='.1rem' color='#848B97' />
@@ -195,6 +206,15 @@ export const TokenStakeList = () => {
 
           <div className='flex items-center justify-center text-[.16rem] text-color-text2'>
             Status
+          </div>
+
+          <div className='flex items-right justify-end text-[.16rem] text-color-text2 pr-[.60rem]'>
+            <input
+              type='checkbox'
+              className='ml-[.24rem]'
+              checked={allSelected}
+              onChange={(e) => handleAllSelected(e)}
+            />
           </div>
         </div>
 
