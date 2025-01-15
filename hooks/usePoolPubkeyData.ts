@@ -116,39 +116,57 @@ export function usePoolPubkeyData() {
       );
 
       // Get pubkey info and beacon status in parallel
-      const [pubkeyInfos, beaconStatusResponses] = await Promise.all([
-        Promise.all(
-          pubkeyAddressList.map((pubkeyAddress) =>
-            nodeDepositContract.methods.pubkeyInfoOf(pubkeyAddress).call()
-          )
-        ),
+      var batch = new web3.BatchRequest();
+      const pubkeyInfos: any = [];
+      await Promise.all(
+        pubkeyAddressList.map((pubkeyAddress, index) => {
+          const request = nodeDepositContract.methods
+            .pubkeyInfoOf(pubkeyAddress)
+            .call.request({}, (error: any, result: any) => {
+              if (error) {
+                console.error('Error fetching pubkeyInfo:', error);
+              } else {
+                pubkeyInfos.push(result);
+              }
+            });
+
+          batch.add(request);
+
+          if (index == pubkeyAddressList.length - 1) {
+            batch.execute();
+          }
+        })
+      );
+
+      const [beaconStatusResponses] = await Promise.all([
         fetchBeaconStatusInChunks(pubkeyAddressList),
       ]);
-
       const beaconStatusData = beaconStatusResponses.flatMap(
         (response) => response.data
       );
 
       // Calculate matched validators
-      const validValidatorCount = pubkeyInfos.filter((item, index) => {
-        const beaconStatus = beaconStatusData
-          .find(
-            (statusItem: any) =>
-              statusItem.validator?.pubkey === pubkeyAddressList[index]
-          )
-          ?.status?.toUpperCase();
+      const validValidatorCount = pubkeyInfos.filter(
+        (item: any, index: number) => {
+          const beaconStatus = beaconStatusData
+            .find(
+              (statusItem: any) =>
+                statusItem.validator?.pubkey === pubkeyAddressList[index]
+            )
+            ?.status?.toUpperCase();
 
-        const isExited = [
-          'EXITED_UNSLASHED',
-          'EXITED_SLASHED',
-          'EXITED',
-        ].includes(beaconStatus ?? '');
+          const isExited = [
+            'EXITED_UNSLASHED',
+            'EXITED_SLASHED',
+            'EXITED',
+          ].includes(beaconStatus ?? '');
 
-        return (
-          item._status === ChainPubkeyStatus.Staked &&
-          (isExited || (!isExited && beaconStatus !== undefined))
-        );
-      }).length;
+          return (
+            item?._status === ChainPubkeyStatus.Staked &&
+            (isExited || (!isExited && beaconStatus !== undefined))
+          );
+        }
+      ).length;
 
       // Cache the new data only on client side
       if (isClient) {
