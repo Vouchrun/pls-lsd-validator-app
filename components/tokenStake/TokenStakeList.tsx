@@ -209,6 +209,7 @@ export const TokenStakeList = () => {
           </div>
 
           <div className='flex items-right justify-end text-[.16rem] text-color-text2 pr-[.60rem]'>
+            Select
             <input
               type='checkbox'
               className='ml-[.24rem]'
