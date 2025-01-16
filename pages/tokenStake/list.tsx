@@ -81,6 +81,28 @@ const TokenStakeListPage = () => {
               rowGap: '.16rem',
             }}
           >
+            <FaqItem text='What is the maximum number validators I can run?'>
+              <div>
+              In short you can run as many as you wish, however;
+              </div>
+              
+              <div className='mt-faqGap'>
+              When running validators in Vouch you can deposit and stake multiple
+              Validators from the same deposit address (i.e. Connected Account).
+              In Vouch we call this the "Node Addr". It is strongly advised to NOT  
+              exceed 300 pubkeys per connected account, while this is a soft limit, 
+              for security and performance reasons you should use muliple connected
+              accounts if you intend on running more than 300 validators.
+              </div>
+
+            </FaqItem>
+
+            <FaqItem text='What are the commissions and fees associated with staking PLS?'>
+              Staking Reward Commission: 10% of your staking reward. 5% will be
+              allocated to the Vouch DAO, 5% will be allocated to validator
+              Nodes (Operators).
+            </FaqItem>
+            
             <FaqItem text='What are the factors that affect the staking rewards?'>
               <div>
                 Staking rewards in the Vouch protocol are influenced by various
@@ -109,12 +131,6 @@ const TokenStakeListPage = () => {
               >
                 https://vouch.run/docs/introduction/vPLS_Token.html
               </a>
-            </FaqItem>
-
-            <FaqItem text='What are the commissions and fees associated with staking PLS?'>
-              Staking Reward Commission: 10% of your staking reward. 5% will be
-              allocated to the Vouch DAO, 5% will be allocated to validator
-              Nodes (Operators).
             </FaqItem>
           </div>
         </div>

@@ -9,6 +9,7 @@ import { useAppSlice } from 'hooks/selector';
 import { usePubkeysMyData } from 'hooks/usePubkeysMyData';
 import { useWalletAccount } from 'hooks/useWalletAccount';
 import { NodePubkeyInfo, PubkeyStatusType } from 'interfaces/common';
+
 import _ from 'lodash';
 import {
   bindPopover,
@@ -18,6 +19,10 @@ import {
 import Image from 'next/image';
 import { useRouter } from 'next/router';
 import checkedIcon from 'public/images/checked.svg';
+import leftIcon from 'public/images/arrow-left.svg';
+import doubleLeftIcon from 'public/images/double-left.svg';
+import doubleRightIcon from 'public/images/double-right.svg';
+import rightIcon from 'public/images/arrow-right.svg';
 import { useEffect, useMemo, useState } from 'react';
 import { getPubkeyStatusTypeText, openLink } from 'utils/commonUtils';
 import { isSupportRestApi } from 'utils/configUtils';
@@ -30,7 +35,7 @@ export const MyDataPubkeys = () => {
   const { metaMaskAccount } = useWalletAccount();
   const [page, setPage] = useState(1);
   const [types, setTypes] = useState<PubkeyStatusType[]>([]);
-
+  const { darkMode } = useAppSlice();
   // const statusList = useMemo(() => {
   //   if (types.length === 0) {
   //     return undefined;
@@ -67,6 +72,28 @@ export const MyDataPubkeys = () => {
     variant: 'popover',
     popupId: 'type',
   });
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [resultsPerPage, setResultsPerPage] = useState(10);
+
+  const totalItems = displayPubkeyInfos.length;
+  const totalPages = Math.ceil(totalItems / resultsPerPage);
+
+  const handleChangeResultsPerPage = (e: any) => {
+    setResultsPerPage(parseInt(e.target.value));
+    setCurrentPage(1); // Reset to first page on results per page change
+  };
+
+  const handleFirstPage = () => setCurrentPage(1);
+  const handleLastPage = () => setCurrentPage(totalPages);
+  const handlePreviousPage = () =>
+    setCurrentPage((prev) => Math.max(prev - 1, 1));
+  const handleNextPage = () =>
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+
+  const startIndex = (currentPage - 1) * resultsPerPage;
+  const endIndex = Math.min(startIndex + resultsPerPage, totalItems);
+  const paginatedItems = displayPubkeyInfos.slice(startIndex, endIndex);
 
   return (
     <div>
@@ -135,7 +162,7 @@ export const MyDataPubkeys = () => {
           </div>
         </div>
 
-        {displayPubkeyInfos.map((item, index) => (
+        {paginatedItems.map((item, index) => (
           <MyDataPubkeyItem key={index} index={index} pubkeyInfo={item} />
         ))}
 
@@ -150,16 +177,69 @@ export const MyDataPubkeys = () => {
             <LoadingContent />
           </div>
         )}
-
-        <div className='my-[.32rem] items-center justify-center hidden'>
-          <CustomPagination
-            page={page}
-            onChange={setPage}
-            totalCount={totalCount || 0}
-          />
+      </div>
+      <div className='flex items-center justify-center mt-1 md:flex-row flex-col'>
+        <div className='flex items-center'>
+          <div className='text-[#FE8A3C] text-[14px] mr-[10px]'>
+            Result per page
+          </div>
+          <select
+            value={resultsPerPage}
+            onChange={handleChangeResultsPerPage}
+            className='cursor-pointer px-[.16rem] h-[.42rem] inline-flex items-center justify-between rounded-[4px] border-[0.01rem] border-[#6C86AD80] bg-transparent shadow-none outline-none'
+            style={{ color: '#6C86AD' }}
+          >
+            <option value={10}>10</option>
+            <option value={25}>25</option>
+            <option value={50}>50</option>
+            <option value={75}>75</option>
+            <option value={100}>100</option>
+          </select>
+        </div>
+        <div className='text-[#FE8A3C] text-[14px] mx-[40px] md:my-0 my-[15px] flex'>
+          {startIndex + 1}-{endIndex} of {totalItems}
+        </div>
+        <div className='flex items-center'>
+          <button
+            onClick={handleFirstPage}
+            disabled={currentPage === 1}
+            className='cursor-pointer h-[.42rem] w-[40px] rounded-[4px] mx-[3px] border-none flex items-center justify-center bg-gradient-to-r from-[#FE8A3C] via-[#E79D6C] to-[#FE8A3C]'
+          >
+            <Image
+              src={doubleLeftIcon}
+              alt='First Page'
+              height={12}
+              width={16}
+            />
+          </button>
+          <button
+            onClick={handlePreviousPage}
+            disabled={currentPage === 1}
+            className='cursor-pointer h-[.42rem] w-[40px] rounded-[4px] mx-[3px] border-none flex items-center justify-center bg-gradient-to-r from-[#FE8A3C] via-[#E79D6C] to-[#FE8A3C]'
+          >
+            <Image src={leftIcon} alt='Previous Page' height={5} width={9} />
+          </button>
+          <button
+            onClick={handleNextPage}
+            disabled={currentPage === totalPages}
+            className='cursor-pointer h-[.42rem] w-[40px] rounded-[4px] mx-[3px] border-none flex items-center justify-center bg-gradient-to-r from-[#FE8A3C] via-[#E79D6C] to-[#FE8A3C]'
+          >
+            <Image src={rightIcon} alt='Next Page' height={5} width={9} />
+          </button>
+          <button
+            onClick={handleLastPage}
+            disabled={currentPage === totalPages}
+            className='cursor-pointer h-[.42rem] w-[40px] rounded-[4px] border-none mx-[3px] flex items-center justify-center bg-gradient-to-r from-[#FE8A3C] via-[#E79D6C] to-[#FE8A3C]'
+          >
+            <Image
+              src={doubleRightIcon}
+              alt='Last Page'
+              height={12}
+              width={16}
+            />
+          </button>
         </div>
       </div>
-
       {isSupportRestApi() && <MyDataNodeEjection />}
 
       <ChooseTypePopover

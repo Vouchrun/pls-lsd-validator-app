@@ -19,6 +19,11 @@ import { TokenStakeListTabs } from './TokenStakeListTabs';
 import { updateValidatorStakeLoadingParams } from 'redux/reducers/AppSlice';
 import { useAppDispatch } from 'hooks/common';
 import { getValidatorInfoURL } from 'config/env';
+import Image from 'next/image';
+import leftIcon from 'public/images/arrow-left.svg';
+import doubleLeftIcon from 'public/images/double-left.svg';
+import doubleRightIcon from 'public/images/double-right.svg';
+import rightIcon from 'public/images/arrow-right.svg';
 
 export const TokenStakeList = () => {
   const router = useRouter();
@@ -26,6 +31,7 @@ export const TokenStakeList = () => {
   const { metaMaskAccount } = useWalletAccount();
   const [page, setPage] = useState(1);
   const [selectedTab, setSelectedTab] = useState('All');
+  const [allSelected, setAllSelected] = useState(false);
   const { isTrust } = useIsTrustedValidator();
   const dispatch = useAppDispatch();
   const selectedStatus = useMemo(() => {
@@ -87,6 +93,61 @@ export const TokenStakeList = () => {
       );
     }
   };
+
+  const handleAllSelected = (event: any) => {
+    if (event.target.checked) {
+      setAllSelected(true);
+      // Add item to the checkedItems array
+      paginatedItems.map((pubkeyInfo) => {
+        setCheckedItems((prev: string[]) => [
+          ...prev,
+          pubkeyInfo.pubkeyAddress,
+        ]);
+      });
+    } else {
+      // Remove item from the checkedItems array
+      setCheckedItems([]);
+      setAllSelected(false);
+    }
+  };
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [resultsPerPage, setResultsPerPage] = useState(10);
+
+  const totalItems = displayPubkeyInfos.length;
+  const totalPages = Math.ceil(totalItems / resultsPerPage);
+
+  const handleChangeResultsPerPage = (e: any) => {
+    setResultsPerPage(parseInt(e.target.value));
+    setCurrentPage(1); // Reset to first page on results per page change
+  };
+
+  const handleFirstPage = () => {
+    setAllSelected(false);
+    setCheckedItems([]);
+    setCurrentPage(1);
+  };
+  const handleLastPage = () => {
+    setAllSelected(false);
+    setCheckedItems([]);
+    setCurrentPage(totalPages);
+  };
+  const handlePreviousPage = () =>
+    setCurrentPage((prev) => {
+      setAllSelected(false);
+      setCheckedItems([]);
+      return Math.max(prev - 1, 1);
+    });
+  const handleNextPage = () =>
+    setCurrentPage((prev) => {
+      setAllSelected(false);
+      setCheckedItems([]);
+      return Math.min(prev + 1, totalPages);
+    });
+
+  const startIndex = (currentPage - 1) * resultsPerPage;
+  const endIndex = Math.min(startIndex + resultsPerPage, totalItems);
+  const paginatedItems = displayPubkeyInfos.slice(startIndex, endIndex);
 
   return (
     <div>
@@ -156,15 +217,7 @@ export const TokenStakeList = () => {
               }}
             >
               <div className='flex items-center'>
-                <div>
-                  Stake Selected{' '}
-                  {displaySoloPubkeyInfos.length > 1
-                    ? 'Solo'
-                    : displayTrustPubkeyInfos.length > 1
-                    ? 'Trusted'
-                    : ''}{' '}
-                  Nodes
-                </div>
+                <div>Stake Selected Nodes</div>
 
                 <div className='ml-[.06rem] rotate-[-90deg]'>
                   <Icomoon icon='arrow-down' size='.1rem' color='#848B97' />
@@ -196,6 +249,18 @@ export const TokenStakeList = () => {
           <div className='flex items-center justify-center text-[.16rem] text-color-text2'>
             Status
           </div>
+
+          {selectedTab !== 'Unmatched' && selectedTab !== 'Staked' && (
+            <div className='flex items-right justify-end text-[.16rem] text-color-text2 pr-[.60rem]'>
+              Select Displayed
+              <input
+                type='checkbox'
+                className='ml-[.24rem]'
+                checked={allSelected}
+                onChange={(e) => handleAllSelected(e)}
+              />
+            </div>
+          )}
         </div>
 
         {showEmptyContent && (
@@ -210,143 +275,198 @@ export const TokenStakeList = () => {
           </div>
         )}
 
-        <div className='max-h-[4.2rem] overflow-auto'>
-          {displayPubkeyInfos.map((pubkeyInfo, index) => (
-            <div
-              key={index}
-              className={classNames(
-                'h-[.74rem] grid items-center font-[500]',
-                index % 2 === 0 ? 'bg-bgPage/50 dark:bg-bgPageDark/50' : ''
-              )}
-              style={{
-                gridTemplateColumns: '20% 20% 20% 40%',
-              }}
-            >
-              <div className='flex items-center justify-center text-[.16rem] text-color-text2 cursor-pointer'>
-                <Icomoon
-                  icon='copy'
-                  size='.133rem'
-                  color={darkMode ? '#ffffff80' : '#6C86AD'}
-                  onClick={() => {
-                    navigator.clipboard
-                      .writeText(pubkeyInfo.pubkeyAddress)
-                      .then(() => {
-                        snackbarUtil.success('Copy success');
-                      });
-                  }}
-                />
-
-                <div
-                  className='flex items-center'
-                  onClick={() => {
-                    router.push(`/pubkey/${pubkeyInfo.pubkeyAddress}`);
-                  }}
-                >
-                  <div className='mx-[.06rem]'>
-                    {getShortAddress(pubkeyInfo.pubkeyAddress, 4)}
-                  </div>
-
-                  <Icomoon
-                    icon='right1'
-                    size='.12rem'
-                    color={darkMode ? '#ffffff80' : '#6C86AD'}
-                  />
-                </div>
-              </div>
-
-              <div className='flex items-center justify-center text-[.16rem] text-color-text2 cursor-pointer'>
-                <Icomoon
-                  icon='copy'
-                  size='.133rem'
-                  color={darkMode ? '#ffffff80' : '#6C86AD'}
-                  onClick={() => {
-                    navigator.clipboard
-                      .writeText(metaMaskAccount || '')
-                      .then(() => {
-                        snackbarUtil.success('Copy success');
-                      });
-                  }}
-                />
-
-                <a
-                  className='flex items-center'
-                  href={
-                    getValidatorInfoURL() +
-                    'validator/' +
-                    pubkeyInfo.pubkeyAddress
-                  }
-                  target='_blank'
-                >
-                  <div className='mx-[.06rem]'>
-                    {getShortAddress(metaMaskAccount, 4)}
-                  </div>
-
-                  <Icomoon
-                    icon='right1'
-                    size='.12rem'
-                    color={darkMode ? '#ffffff80' : '#6C86AD'}
-                  />
-                </a>
-              </div>
+        {paginatedItems.map((pubkeyInfo, index) => (
+          <div
+            key={index}
+            className={classNames(
+              'h-[.74rem] grid items-center font-[500]',
+              index % 2 === 0 ? 'bg-bgPage/50 dark:bg-bgPageDark/50' : ''
+            )}
+            style={{
+              gridTemplateColumns: '20% 20% 20% 40%',
+            }}
+          >
+            <div className='flex items-center justify-center text-[.16rem] text-color-text2 cursor-pointer'>
+              <Icomoon
+                icon='copy'
+                size='.133rem'
+                color={darkMode ? '#ffffff80' : '#6C86AD'}
+                onClick={() => {
+                  navigator.clipboard
+                    .writeText(pubkeyInfo.pubkeyAddress)
+                    .then(() => {
+                      snackbarUtil.success('Copy success');
+                    });
+                }}
+              />
 
               <div
-                className={classNames(
-                  'flex items-center justify-center text-[.16rem] ',
-                  pubkeyInfo.displayStatus === 'Exited'
-                    ? 'text-error'
-                    : pubkeyInfo.displayStatus === 'Active'
-                    ? 'text-color-text1'
-                    : 'text-color-text2'
-                )}
+                className='flex items-center'
+                onClick={() => {
+                  router.push(`/pubkey/${pubkeyInfo.pubkeyAddress}`);
+                }}
               >
-                {!pubkeyInfo.canStake && pubkeyInfo.displayStatus === 'Matched'
-                  ? 'Unmatch'
-                  : pubkeyInfo.displayStatus}
-              </div>
+                <div className='mx-[.06rem]'>
+                  {getShortAddress(pubkeyInfo.pubkeyAddress, 4)}
+                </div>
 
-              <div className='flex items-center justify-end pr-[.56rem] text-[.16rem] text-color-text2'>
-                {pubkeyInfo.canStake &&
-                  isPubkeyStakeable(pubkeyInfo._status) && (
-                    <>
-                      <CustomButton
-                        height='.42rem'
-                        className='px-[.5rem]'
-                        onClick={() => {
-                          dispatch(
-                            updateValidatorStakeLoadingParams({
-                              modalVisible: false,
-                            })
-                          );
-                          router.push(
-                            {
-                              pathname: '/tokenStake/stake',
-                              query: {
-                                pubkeyAddressList: [pubkeyInfo.pubkeyAddress],
-                                type: isTrust ? 'trusted' : 'solo',
-                              },
-                            },
-                            '/tokenStake/stake'
-                          );
-                        }}
-                      >
-                        Stake
-                      </CustomButton>
-                      <input
-                        type='checkbox'
-                        key={index}
-                        className='ml-[.24rem]'
-                        checked={checkedItems.includes(
-                          pubkeyInfo.pubkeyAddress
-                        )}
-                        onChange={handleCheckboxChange(
-                          pubkeyInfo.pubkeyAddress
-                        )}
-                      />
-                    </>
-                  )}
+                <Icomoon
+                  icon='right1'
+                  size='.12rem'
+                  color={darkMode ? '#ffffff80' : '#6C86AD'}
+                />
               </div>
             </div>
-          ))}
+
+            <div className='flex items-center justify-center text-[.16rem] text-color-text2 cursor-pointer'>
+              <Icomoon
+                icon='copy'
+                size='.133rem'
+                color={darkMode ? '#ffffff80' : '#6C86AD'}
+                onClick={() => {
+                  navigator.clipboard
+                    .writeText(metaMaskAccount || '')
+                    .then(() => {
+                      snackbarUtil.success('Copy success');
+                    });
+                }}
+              />
+
+              <a
+                className='flex items-center'
+                href={
+                  getValidatorInfoURL() +
+                  'validator/' +
+                  pubkeyInfo.pubkeyAddress
+                }
+                target='_blank'
+              >
+                <div className='mx-[.06rem]'>
+                  {getShortAddress(metaMaskAccount, 4)}
+                </div>
+
+                <Icomoon
+                  icon='right1'
+                  size='.12rem'
+                  color={darkMode ? '#ffffff80' : '#6C86AD'}
+                />
+              </a>
+            </div>
+
+            <div
+              className={classNames(
+                'flex items-center justify-center text-[.16rem] ',
+                pubkeyInfo.displayStatus === 'Exited'
+                  ? 'text-error'
+                  : pubkeyInfo.displayStatus === 'Active'
+                  ? 'text-color-text1'
+                  : 'text-color-text2'
+              )}
+            >
+              {!pubkeyInfo.canStake && pubkeyInfo.displayStatus === 'Matched'
+                ? 'Unmatch'
+                : pubkeyInfo.displayStatus}
+            </div>
+
+            <div className='flex items-center justify-end pr-[.56rem] text-[.16rem] text-color-text2'>
+              {pubkeyInfo.canStake && isPubkeyStakeable(pubkeyInfo._status) && (
+                <>
+                  <CustomButton
+                    height='.42rem'
+                    className='px-[.5rem]'
+                    onClick={() => {
+                      dispatch(
+                        updateValidatorStakeLoadingParams({
+                          modalVisible: false,
+                        })
+                      );
+                      router.push(
+                        {
+                          pathname: '/tokenStake/stake',
+                          query: {
+                            pubkeyAddressList: [pubkeyInfo.pubkeyAddress],
+                            type: isTrust ? 'trusted' : 'solo',
+                          },
+                        },
+                        '/tokenStake/stake'
+                      );
+                    }}
+                  >
+                    Stake
+                  </CustomButton>
+                  <input
+                    type='checkbox'
+                    key={index}
+                    className='ml-[.24rem]'
+                    checked={checkedItems.includes(pubkeyInfo.pubkeyAddress)}
+                    onChange={handleCheckboxChange(pubkeyInfo.pubkeyAddress)}
+                  />
+                </>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className='flex items-center justify-center mt-1 md:flex-row flex-col'>
+        <div className='flex items-center'>
+          <div className='text-[#FE8A3C] text-[14px] mr-[10px]'>
+            Result per page
+          </div>
+          <select
+            value={resultsPerPage}
+            onChange={handleChangeResultsPerPage}
+            className='cursor-pointer px-[.16rem] h-[.42rem] inline-flex items-center justify-between rounded-[4px] border-[0.01rem] border-[#6C86AD80] bg-transparent shadow-none outline-none'
+            style={{ color: '#6C86AD' }}
+          >
+            <option value={10}>10</option>
+            <option value={25}>25</option>
+            <option value={50}>50</option>
+            <option value={75}>75</option>
+            <option value={100}>100</option>
+          </select>
+        </div>
+        <div className='text-[#FE8A3C] text-[14px] mx-[40px] md:my-0 my-[15px] flex'>
+          {startIndex + 1}-{endIndex} of {totalItems}
+        </div>
+        <div className='flex items-center'>
+          <button
+            onClick={handleFirstPage}
+            disabled={currentPage === 1}
+            className='cursor-pointer h-[.42rem] w-[40px] rounded-[4px] mx-[3px] border-none flex items-center justify-center bg-gradient-to-r from-[#FE8A3C] via-[#E79D6C] to-[#FE8A3C]'
+          >
+            <Image
+              src={doubleLeftIcon}
+              alt='First Page'
+              height={12}
+              width={16}
+            />
+          </button>
+          <button
+            onClick={handlePreviousPage}
+            disabled={currentPage === 1}
+            className='cursor-pointer h-[.42rem] w-[40px] rounded-[4px] mx-[3px] border-none flex items-center justify-center bg-gradient-to-r from-[#FE8A3C] via-[#E79D6C] to-[#FE8A3C]'
+          >
+            <Image src={leftIcon} alt='Previous Page' height={5} width={9} />
+          </button>
+          <button
+            onClick={handleNextPage}
+            disabled={currentPage === totalPages}
+            className='cursor-pointer h-[.42rem] w-[40px] rounded-[4px] mx-[3px] border-none flex items-center justify-center bg-gradient-to-r from-[#FE8A3C] via-[#E79D6C] to-[#FE8A3C]'
+          >
+            <Image src={rightIcon} alt='Next Page' height={5} width={9} />
+          </button>
+          <button
+            onClick={handleLastPage}
+            disabled={currentPage === totalPages}
+            className='cursor-pointer h-[.42rem] w-[40px] rounded-[4px] border-none mx-[3px] flex items-center justify-center bg-gradient-to-r from-[#FE8A3C] via-[#E79D6C] to-[#FE8A3C]'
+          >
+            <Image
+              src={doubleRightIcon}
+              alt='Last Page'
+              height={12}
+              width={16}
+            />
+          </button>
         </div>
       </div>
     </div>
