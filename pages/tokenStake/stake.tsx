@@ -511,15 +511,6 @@ const StakePage = () => {
                       }`
                     : `Stake (${validatorKeys.length} Uploaded)`}
                 </CustomButton>
-
-                <CustomButton
-                  onClick={() => {
-                    setValidatorKeys([]);
-                    setEditMode(false);
-                  }}
-                >
-                  XXX
-                </CustomButton>
               </div>
             </div>
           </CardContainer>
