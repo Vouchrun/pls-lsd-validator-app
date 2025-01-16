@@ -173,6 +173,8 @@ const StakePage = () => {
     <div className='w-smallContentW xl:w-contentW 2xl:w-largeContentW mx-auto'>
       <BackNavigation
         onClick={() => {
+          setEditMode(false);
+          setValidatorKeys([]);
           router.replace('/tokenStake/list');
         }}
       />
@@ -489,6 +491,7 @@ const StakePage = () => {
                         (success, result) => {
                           dispatch(updateEthBalance());
                           if (success) {
+                            setEditMode(false);
                             setValidatorKeys([]);
                           }
                         }
