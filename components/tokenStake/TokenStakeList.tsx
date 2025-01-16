@@ -204,6 +204,11 @@ export const TokenStakeList = () => {
                   (item) => item.pubkeyAddress
                 );
 
+                dispatch(
+                  updateValidatorStakeLoadingParams({
+                    modalVisible: false,
+                  })
+                );
                 router.push(
                   {
                     pathname: '/tokenStake/stake',
