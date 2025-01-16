@@ -489,6 +489,7 @@ const StakePage = () => {
                         (success, result) => {
                           dispatch(updateEthBalance());
                           if (success) {
+                            setValidatorKeys([]);
                           }
                         }
                       )
