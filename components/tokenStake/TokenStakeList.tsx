@@ -259,7 +259,7 @@ export const TokenStakeList = () => {
         )}
 
         <div className='max-h-[4.2rem] overflow-auto'>
-          {displayPubkeyInfos.map((pubkeyInfo, index) => (
+          {paginatedItems.map((pubkeyInfo, index) => (
             <div
               key={index}
               className={classNames(

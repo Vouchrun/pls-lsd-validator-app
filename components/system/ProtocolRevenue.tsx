@@ -143,7 +143,7 @@ export default function ProtocolRevenue() {
             })}
           </div>
         </div>
-        <div className='text-[.14rem] text-color-text1 mt-5 text-center mb-[10px]'>
+        <div className='text-[.14rem] text-color-text1 mt-1 text-center mb-[10px]'>
           <span className='text-color-text2'>Withdrawable Balance:</span>{' '}
           <span className={robotoSemiBold.className}>
             {millify(totalPlatformCommission - totalPlatformClaimedAmount, {
