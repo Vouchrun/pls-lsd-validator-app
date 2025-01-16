@@ -489,6 +489,7 @@ const StakePage = () => {
                         (success, result) => {
                           dispatch(updateEthBalance());
                           if (success) {
+                            setEditMode(false);
                             setValidatorKeys([]);
                           }
                         }
@@ -509,6 +510,15 @@ const StakePage = () => {
                           : 'Pubkeys'
                       }`
                     : `Stake (${validatorKeys.length} Uploaded)`}
+                </CustomButton>
+
+                <CustomButton
+                  onClick={() => {
+                    setValidatorKeys([]);
+                    setEditMode(false);
+                  }}
+                >
+                  XXX
                 </CustomButton>
               </div>
             </div>
