@@ -95,11 +95,10 @@ export const TokenStakeList = () => {
   };
 
   const handleAllSelected = (event: any) => {
-    console.log('here');
     if (event.target.checked) {
       setAllSelected(true);
       // Add item to the checkedItems array
-      displayPubkeyInfos.map((pubkeyInfo) => {
+      paginatedItems.map((pubkeyInfo) => {
         setCheckedItems((prev: string[]) => [
           ...prev,
           pubkeyInfo.pubkeyAddress,
@@ -123,12 +122,28 @@ export const TokenStakeList = () => {
     setCurrentPage(1); // Reset to first page on results per page change
   };
 
-  const handleFirstPage = () => setCurrentPage(1);
-  const handleLastPage = () => setCurrentPage(totalPages);
+  const handleFirstPage = () => {
+    setAllSelected(false);
+    setCheckedItems([]);
+    setCurrentPage(1);
+  };
+  const handleLastPage = () => {
+    setAllSelected(false);
+    setCheckedItems([]);
+    setCurrentPage(totalPages);
+  };
   const handlePreviousPage = () =>
-    setCurrentPage((prev) => Math.max(prev - 1, 1));
+    setCurrentPage((prev) => {
+      setAllSelected(false);
+      setCheckedItems([]);
+      return Math.max(prev - 1, 1);
+    });
   const handleNextPage = () =>
-    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+    setCurrentPage((prev) => {
+      setAllSelected(false);
+      setCheckedItems([]);
+      return Math.min(prev + 1, totalPages);
+    });
 
   const startIndex = (currentPage - 1) * resultsPerPage;
   const endIndex = Math.min(startIndex + resultsPerPage, totalItems);
@@ -235,15 +250,17 @@ export const TokenStakeList = () => {
             Status
           </div>
 
-          <div className='flex items-right justify-end text-[.16rem] text-color-text2 pr-[.60rem]'>
-            Select
-            <input
-              type='checkbox'
-              className='ml-[.24rem]'
-              checked={allSelected}
-              onChange={(e) => handleAllSelected(e)}
-            />
-          </div>
+          {selectedTab !== 'Unmatched' && selectedTab !== 'Staked' && (
+            <div className='flex items-right justify-end text-[.16rem] text-color-text2 pr-[.60rem]'>
+              Select Displayed
+              <input
+                type='checkbox'
+                className='ml-[.24rem]'
+                checked={allSelected}
+                onChange={(e) => handleAllSelected(e)}
+              />
+            </div>
+          )}
         </div>
 
         {showEmptyContent && (
@@ -258,144 +275,137 @@ export const TokenStakeList = () => {
           </div>
         )}
 
-        <div className='max-h-[4.2rem] overflow-auto'>
-          {paginatedItems.map((pubkeyInfo, index) => (
-            <div
-              key={index}
-              className={classNames(
-                'h-[.74rem] grid items-center font-[500]',
-                index % 2 === 0 ? 'bg-bgPage/50 dark:bg-bgPageDark/50' : ''
-              )}
-              style={{
-                gridTemplateColumns: '20% 20% 20% 40%',
-              }}
-            >
-              <div className='flex items-center justify-center text-[.16rem] text-color-text2 cursor-pointer'>
-                <Icomoon
-                  icon='copy'
-                  size='.133rem'
-                  color={darkMode ? '#ffffff80' : '#6C86AD'}
-                  onClick={() => {
-                    navigator.clipboard
-                      .writeText(pubkeyInfo.pubkeyAddress)
-                      .then(() => {
-                        snackbarUtil.success('Copy success');
-                      });
-                  }}
-                />
-
-                <div
-                  className='flex items-center'
-                  onClick={() => {
-                    router.push(`/pubkey/${pubkeyInfo.pubkeyAddress}`);
-                  }}
-                >
-                  <div className='mx-[.06rem]'>
-                    {getShortAddress(pubkeyInfo.pubkeyAddress, 4)}
-                  </div>
-
-                  <Icomoon
-                    icon='right1'
-                    size='.12rem'
-                    color={darkMode ? '#ffffff80' : '#6C86AD'}
-                  />
-                </div>
-              </div>
-
-              <div className='flex items-center justify-center text-[.16rem] text-color-text2 cursor-pointer'>
-                <Icomoon
-                  icon='copy'
-                  size='.133rem'
-                  color={darkMode ? '#ffffff80' : '#6C86AD'}
-                  onClick={() => {
-                    navigator.clipboard
-                      .writeText(metaMaskAccount || '')
-                      .then(() => {
-                        snackbarUtil.success('Copy success');
-                      });
-                  }}
-                />
-
-                <a
-                  className='flex items-center'
-                  href={
-                    getValidatorInfoURL() +
-                    'validator/' +
-                    pubkeyInfo.pubkeyAddress
-                  }
-                  target='_blank'
-                >
-                  <div className='mx-[.06rem]'>
-                    {getShortAddress(metaMaskAccount, 4)}
-                  </div>
-
-                  <Icomoon
-                    icon='right1'
-                    size='.12rem'
-                    color={darkMode ? '#ffffff80' : '#6C86AD'}
-                  />
-                </a>
-              </div>
+        {paginatedItems.map((pubkeyInfo, index) => (
+          <div
+            key={index}
+            className={classNames(
+              'h-[.74rem] grid items-center font-[500]',
+              index % 2 === 0 ? 'bg-bgPage/50 dark:bg-bgPageDark/50' : ''
+            )}
+            style={{
+              gridTemplateColumns: '20% 20% 20% 40%',
+            }}
+          >
+            <div className='flex items-center justify-center text-[.16rem] text-color-text2 cursor-pointer'>
+              <Icomoon
+                icon='copy'
+                size='.133rem'
+                color={darkMode ? '#ffffff80' : '#6C86AD'}
+                onClick={() => {
+                  navigator.clipboard
+                    .writeText(pubkeyInfo.pubkeyAddress)
+                    .then(() => {
+                      snackbarUtil.success('Copy success');
+                    });
+                }}
+              />
 
               <div
-                className={classNames(
-                  'flex items-center justify-center text-[.16rem] ',
-                  pubkeyInfo.displayStatus === 'Exited'
-                    ? 'text-error'
-                    : pubkeyInfo.displayStatus === 'Active'
-                    ? 'text-color-text1'
-                    : 'text-color-text2'
-                )}
+                className='flex items-center'
+                onClick={() => {
+                  router.push(`/pubkey/${pubkeyInfo.pubkeyAddress}`);
+                }}
               >
-                {!pubkeyInfo.canStake && pubkeyInfo.displayStatus === 'Matched'
-                  ? 'Unmatch'
-                  : pubkeyInfo.displayStatus}
-              </div>
+                <div className='mx-[.06rem]'>
+                  {getShortAddress(pubkeyInfo.pubkeyAddress, 4)}
+                </div>
 
-              <div className='flex items-center justify-end pr-[.56rem] text-[.16rem] text-color-text2'>
-                {pubkeyInfo.canStake &&
-                  isPubkeyStakeable(pubkeyInfo._status) && (
-                    <>
-                      <CustomButton
-                        height='.42rem'
-                        className='px-[.5rem]'
-                        onClick={() => {
-                          dispatch(
-                            updateValidatorStakeLoadingParams({
-                              modalVisible: false,
-                            })
-                          );
-                          router.push(
-                            {
-                              pathname: '/tokenStake/stake',
-                              query: {
-                                pubkeyAddressList: [pubkeyInfo.pubkeyAddress],
-                                type: isTrust ? 'trusted' : 'solo',
-                              },
-                            },
-                            '/tokenStake/stake'
-                          );
-                        }}
-                      >
-                        Stake
-                      </CustomButton>
-                      <input
-                        type='checkbox'
-                        key={index}
-                        className='ml-[.24rem]'
-                        checked={checkedItems.includes(
-                          pubkeyInfo.pubkeyAddress
-                        )}
-                        onChange={handleCheckboxChange(
-                          pubkeyInfo.pubkeyAddress
-                        )}
-                      />
-                    </>
-                  )}
+                <Icomoon
+                  icon='right1'
+                  size='.12rem'
+                  color={darkMode ? '#ffffff80' : '#6C86AD'}
+                />
               </div>
             </div>
-          ))}
-        </div>
+
+            <div className='flex items-center justify-center text-[.16rem] text-color-text2 cursor-pointer'>
+              <Icomoon
+                icon='copy'
+                size='.133rem'
+                color={darkMode ? '#ffffff80' : '#6C86AD'}
+                onClick={() => {
+                  navigator.clipboard
+                    .writeText(metaMaskAccount || '')
+                    .then(() => {
+                      snackbarUtil.success('Copy success');
+                    });
+                }}
+              />
+
+              <a
+                className='flex items-center'
+                href={
+                  getValidatorInfoURL() +
+                  'validator/' +
+                  pubkeyInfo.pubkeyAddress
+                }
+                target='_blank'
+              >
+                <div className='mx-[.06rem]'>
+                  {getShortAddress(metaMaskAccount, 4)}
+                </div>
+
+                <Icomoon
+                  icon='right1'
+                  size='.12rem'
+                  color={darkMode ? '#ffffff80' : '#6C86AD'}
+                />
+              </a>
+            </div>
+
+            <div
+              className={classNames(
+                'flex items-center justify-center text-[.16rem] ',
+                pubkeyInfo.displayStatus === 'Exited'
+                  ? 'text-error'
+                  : pubkeyInfo.displayStatus === 'Active'
+                  ? 'text-color-text1'
+                  : 'text-color-text2'
+              )}
+            >
+              {!pubkeyInfo.canStake && pubkeyInfo.displayStatus === 'Matched'
+                ? 'Unmatch'
+                : pubkeyInfo.displayStatus}
+            </div>
+
+            <div className='flex items-center justify-end pr-[.56rem] text-[.16rem] text-color-text2'>
+              {pubkeyInfo.canStake && isPubkeyStakeable(pubkeyInfo._status) && (
+                <>
+                  <CustomButton
+                    height='.42rem'
+                    className='px-[.5rem]'
+                    onClick={() => {
+                      dispatch(
+                        updateValidatorStakeLoadingParams({
+                          modalVisible: false,
+                        })
+                      );
+                      router.push(
+                        {
+                          pathname: '/tokenStake/stake',
+                          query: {
+                            pubkeyAddressList: [pubkeyInfo.pubkeyAddress],
+                            type: isTrust ? 'trusted' : 'solo',
+                          },
+                        },
+                        '/tokenStake/stake'
+                      );
+                    }}
+                  >
+                    Stake
+                  </CustomButton>
+                  <input
+                    type='checkbox'
+                    key={index}
+                    className='ml-[.24rem]'
+                    checked={checkedItems.includes(pubkeyInfo.pubkeyAddress)}
+                    onChange={handleCheckboxChange(pubkeyInfo.pubkeyAddress)}
+                  />
+                </>
+              )}
+            </div>
+          </div>
+        ))}
       </div>
       <div className='flex items-center justify-center mt-1 md:flex-row flex-col'>
         <div className='flex items-center'>
