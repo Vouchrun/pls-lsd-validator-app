@@ -99,10 +99,12 @@ export const TokenStakeList = () => {
       setAllSelected(true);
       // Add item to the checkedItems array
       paginatedItems.map((pubkeyInfo) => {
-        setCheckedItems((prev: string[]) => [
-          ...prev,
-          pubkeyInfo.pubkeyAddress,
-        ]);
+        if (pubkeyInfo.canStake && isPubkeyStakeable(pubkeyInfo._status)) {
+          setCheckedItems((prev: string[]) => [
+            ...prev,
+            pubkeyInfo.pubkeyAddress,
+          ]);
+        }
       });
     } else {
       // Remove item from the checkedItems array
