@@ -42,6 +42,8 @@ export const TokenStakeList = () => {
         return PubkeyStatus.Unmatched;
       case 'Staked':
         return PubkeyStatus.Staked;
+      case 'Matched':
+        return PubkeyStatus.Matched;
       case 'Others':
         return PubkeyStatus.Others;
     }
@@ -54,6 +56,7 @@ export const TokenStakeList = () => {
     totalCount,
     unmatchedCount,
     stakedCount,
+    matchedCount,
     othersCount,
   } = usePubkeysHome(metaMaskAccount, page, selectedStatus);
   // } = useNodePubkeys(
@@ -161,6 +164,7 @@ export const TokenStakeList = () => {
             totalCount={totalCount}
             unmatchedCount={unmatchedCount}
             stakedCount={stakedCount}
+            matchedCount={matchedCount}
             othersCount={othersCount}
           />
 

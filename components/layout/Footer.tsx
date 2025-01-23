@@ -1,14 +1,14 @@
-import React from 'react'
-import { useAppSlice } from "hooks/selector";
-import Image from "next/image";
-import appLogo from "public/images/logoStafi.svg";
-import appLogoLight from "public/images/logoStafi.svg";
+import React from 'react';
+import { useAppSlice } from 'hooks/selector';
+import Image from 'next/image';
+import appLogo from 'public/images/logoStafi.svg';
+import appLogoLight from 'public/images/logoStafi.svg';
 
 export default function Footer() {
-    const { darkMode, unreadNoticeFlag } = useAppSlice();
+  const { darkMode, unreadNoticeFlag } = useAppSlice();
   return (
     <div className='w-smallContentW xl:w-contentW 2xl:w-largeContentW mx-auto pb-1 flex flex-row justify-between items-center'>
-      <div style={{ color: darkMode ? '#fff' : '#000' }}>v1.0.1</div>
+      <div style={{ color: darkMode ? '#fff' : '#000' }}>v1.0.2</div>
       <a
         href='https://www.stafi.io/'
         target='_blank'
@@ -25,5 +25,5 @@ export default function Footer() {
         />
       </a>
     </div>
-  )
+  );
 }

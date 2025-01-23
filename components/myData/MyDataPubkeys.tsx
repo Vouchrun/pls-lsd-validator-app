@@ -65,6 +65,7 @@ export const MyDataPubkeys = () => {
     activeCount,
     pendingCount,
     exitedCount,
+    matchedCount,
     othersCount,
   } = usePubkeysMyData(metaMaskAccount, page, types);
 
@@ -247,6 +248,7 @@ export const MyDataPubkeys = () => {
         activeCount={activeCount}
         pendingCount={pendingCount}
         exitedCount={exitedCount}
+        matchedCount={matchedCount}
         othersCount={othersCount}
         popupState={typePopupState}
         types={types}
@@ -382,6 +384,7 @@ interface ChooseTypePopoverProps {
   activeCount: undefined | number;
   pendingCount: undefined | number;
   exitedCount: undefined | number;
+  matchedCount: undefined | number;
   othersCount: undefined | number;
   popupState: any;
   onClose: () => void;
@@ -399,6 +402,7 @@ const ChooseTypePopover = (props: ChooseTypePopoverProps) => {
     activeCount,
     pendingCount,
     exitedCount,
+    matchedCount,
     othersCount,
   } = props;
   const { darkMode } = useAppSlice();
@@ -567,6 +571,39 @@ const ChooseTypePopover = (props: ChooseTypePopoverProps) => {
           </div>
 
           {types.indexOf(PubkeyStatusType.Exited) >= 0 ? (
+            <div className='w-[.16rem] h-[.16rem] relative'>
+              <Image src={checkedIcon} alt='checked' layout='fill' />
+            </div>
+          ) : (
+            <div className='w-[.16rem] h-[.16rem] rounded-[0.03rem] border-solid border-[1px] border-color-border3' />
+          )}
+        </div>
+
+        <div className='my-[.16rem] h-[0.01rem] bg-color-divider1' />
+
+        <div
+          className='cursor-pointer flex items-center justify-between'
+          onClick={() => {
+            onClickType(PubkeyStatusType.Matched);
+          }}
+        >
+          <div className='flex items-center'>
+            <div className='ml-[.12rem] text-color-text1 text-[.16rem]'>
+              Matched
+            </div>
+
+            <div
+              className={classNames(
+                'ml-[.03rem] mb-[.1rem] w-[.16rem] h-[.16rem] items-center justify-center rounded-full',
+                'bg-[#E8EFFD] text-text2',
+                matchedCount === undefined ? 'hidden' : 'flex'
+              )}
+            >
+              <div className='scale-[.6] origin-center'>{matchedCount}</div>
+            </div>
+          </div>
+
+          {types.indexOf(PubkeyStatusType.Matched) >= 0 ? (
             <div className='w-[.16rem] h-[.16rem] relative'>
               <Image src={checkedIcon} alt='checked' layout='fill' />
             </div>

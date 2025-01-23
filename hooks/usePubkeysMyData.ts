@@ -2,12 +2,12 @@ import {
   ChainPubkeyStatus,
   NodePubkeyInfo,
   PubkeyStatusType,
-} from "interfaces/common";
-import { useEffect, useMemo, useState } from "react";
-import { getPubkeyDisplayStatus } from "utils/commonUtils";
-import { useAppSlice } from "./selector";
-import { useUnmatchedToken } from "./useUnmatchedToken";
-import { useUserPubkeys } from "./useUserPubkeys";
+} from 'interfaces/common';
+import { useEffect, useMemo, useState } from 'react';
+import { getPubkeyDisplayStatus } from 'utils/commonUtils';
+import { useAppSlice } from './selector';
+import { useUnmatchedToken } from './useUnmatchedToken';
+import { useUserPubkeys } from './useUserPubkeys';
 
 export const usePubkeysMyData = (
   nodeAddress: string | undefined,
@@ -19,6 +19,7 @@ export const usePubkeysMyData = (
   const [pendingCount, setPendingCount] = useState<number>();
   const [activeCount, setActiveCount] = useState<number>();
   const [exitedCount, setExitedCount] = useState<number>();
+  const [matchedCount, setMatchedCount] = useState<number>();
   const [othersCount, setOthersCount] = useState<number>();
 
   const { nodePubkeys } = useUserPubkeys();
@@ -39,6 +40,7 @@ export const usePubkeysMyData = (
     let activeCount = 0;
     let pendingCount = 0;
     let exitedCount = 0;
+    let matchedCount = 0;
     let othersCount = 0;
 
     const resList: NodePubkeyInfo[] = [];
@@ -59,23 +61,25 @@ export const usePubkeysMyData = (
 
       const isActive =
         item._status === ChainPubkeyStatus.Staked &&
-        (item.beaconApiStatus === "ACTIVE_ONGOING" ||
-          item.beaconApiStatus === "ACTIVE_EXITING" ||
-          item.beaconApiStatus === "ACTIVE_SLASHED" ||
-          item.beaconApiStatus === "ACTIVE");
+        (item.beaconApiStatus === 'ACTIVE_ONGOING' ||
+          item.beaconApiStatus === 'ACTIVE_EXITING' ||
+          item.beaconApiStatus === 'ACTIVE_SLASHED' ||
+          item.beaconApiStatus === 'ACTIVE');
 
       const isPending =
         item._status === ChainPubkeyStatus.Staked &&
         (item.beaconApiStatus === undefined ||
-          item.beaconApiStatus === "PENDING_INITIALIZED" ||
-          item.beaconApiStatus === "PENDING_QUEUED" ||
-          item.beaconApiStatus === "PENDING");
+          item.beaconApiStatus === 'PENDING_INITIALIZED' ||
+          item.beaconApiStatus === 'PENDING_QUEUED' ||
+          item.beaconApiStatus === 'PENDING');
 
       const isExit =
         item._status === ChainPubkeyStatus.Staked &&
-        (item.beaconApiStatus === "EXITED_UNSLASHED" ||
-          item.beaconApiStatus === "EXITED_SLASHED" ||
-          item.beaconApiStatus === "EXITED");
+        (item.beaconApiStatus === 'EXITED_UNSLASHED' ||
+          item.beaconApiStatus === 'EXITED_SLASHED' ||
+          item.beaconApiStatus === 'EXITED');
+
+      const isMatched = item._status === ChainPubkeyStatus.Match;
 
       const isOthers = !isActive && !isPending && !isExit;
 
@@ -106,6 +110,15 @@ export const usePubkeysMyData = (
         ) {
           resList.push(newItem);
         }
+      } else if (isMatched) {
+        matchedCount++;
+        if (
+          !pubkeyStatusTypes ||
+          pubkeyStatusTypes.length === 0 ||
+          pubkeyStatusTypes.indexOf(PubkeyStatusType.Matched) >= 0
+        ) {
+          resList.push(newItem);
+        }
       } else {
         othersCount++;
         if (
@@ -122,6 +135,7 @@ export const usePubkeysMyData = (
     setActiveCount(activeCount);
     setPendingCount(pendingCount);
     setExitedCount(exitedCount);
+    setMatchedCount(matchedCount);
     setOthersCount(othersCount);
     setTotalCount(nodePubkeys.length);
   }, [nodePubkeys, pubkeyStatusTypes, unmatchedEth]);
@@ -142,6 +156,7 @@ export const usePubkeysMyData = (
     pendingCount,
     activeCount,
     exitedCount,
+    matchedCount,
     displayPubkeyInfos,
   };
 };

@@ -27,6 +27,7 @@ export const usePubkeysHome = (
   const [totalCount, setTotalCount] = useState<number>();
   const [unmatchedCount, setUnmatchedCount] = useState<number>();
   const [stakedCount, setStakedCount] = useState<number>();
+  const [matchedCount, setMatchedCount] = useState<number>();
   const [othersCount, setOthersCount] = useState<number>();
 
   const { nodePubkeys } = useUserPubkeys();
@@ -68,6 +69,7 @@ export const usePubkeysHome = (
 
       let unmatchedCount = 0;
       let stakedCount = 0;
+      let matchedCout = 0;
       let othersCount = 0;
 
       const resList: NodePubkeyInfo[] = [];
@@ -91,6 +93,7 @@ export const usePubkeysHome = (
         const isUnmatch =
           displayStatus === 'Unmatched' ||
           (!canStake && displayStatus === 'Matched');
+        const isMatch = displayStatus === 'Matched';
         const isStaked =
           item._status === ChainPubkeyStatus.Staked &&
           item.beaconApiStatus !== 'EXITED_UNSLASHED' &&
@@ -104,6 +107,8 @@ export const usePubkeysHome = (
           unmatchedCount++;
         } else if (isStaked) {
           stakedCount++;
+        } else if (isMatch) {
+          matchedCout++;
         } else {
           othersCount++;
         }
@@ -113,6 +118,8 @@ export const usePubkeysHome = (
         if (isUnmatch && selectedPubkeyStatus === PubkeyStatus.Unmatched) {
           resList.push(newItem);
         } else if (isStaked && selectedPubkeyStatus === PubkeyStatus.Staked) {
+          resList.push(newItem);
+        } else if (isMatch && selectedPubkeyStatus === PubkeyStatus.Matched) {
           resList.push(newItem);
         } else if (
           !isUnmatch &&
@@ -128,6 +135,7 @@ export const usePubkeysHome = (
       setDisplayPubkeyInfos(resList);
       setUnmatchedCount(unmatchedCount);
       setStakedCount(stakedCount);
+      setMatchedCount(matchedCout);
       setOthersCount(othersCount);
     })();
   }, [
@@ -152,6 +160,7 @@ export const usePubkeysHome = (
     totalCount,
     unmatchedCount,
     stakedCount,
+    matchedCount,
     othersCount,
   };
 };
