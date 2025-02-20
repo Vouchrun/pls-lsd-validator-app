@@ -123,6 +123,14 @@ const MyDataPage = () => {
                 https://vouch.run/docs/introduction/vPLS_Token.html
               </a>
             </FaqItem>
+
+            <FaqItem text='Bulk Deposit and Staking Limits?'>
+              Vouch lets you desposit and stake multiple validators in a single 
+              transaction, however you can hit limits doing too many at once. 
+              As you will need to sign a long transaction wallets etc impose a
+              finite limit on the legnth of such messages. If you work on approx
+              40 deposits max in a single transaction you should be fine. 
+            </FaqItem>             
           </div>
         </div>
       </div>
