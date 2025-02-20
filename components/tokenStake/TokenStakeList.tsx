@@ -42,6 +42,8 @@ export const TokenStakeList = () => {
         return PubkeyStatus.Unmatched;
       case 'Staked':
         return PubkeyStatus.Staked;
+      case 'Matched':
+        return PubkeyStatus.Matched;
       case 'Others':
         return PubkeyStatus.Others;
     }
@@ -54,6 +56,7 @@ export const TokenStakeList = () => {
     totalCount,
     unmatchedCount,
     stakedCount,
+    matchedCount,
     othersCount,
   } = usePubkeysHome(metaMaskAccount, page, selectedStatus);
   // } = useNodePubkeys(
@@ -99,10 +102,12 @@ export const TokenStakeList = () => {
       setAllSelected(true);
       // Add item to the checkedItems array
       paginatedItems.map((pubkeyInfo) => {
-        setCheckedItems((prev: string[]) => [
-          ...prev,
-          pubkeyInfo.pubkeyAddress,
-        ]);
+        if (pubkeyInfo.canStake && isPubkeyStakeable(pubkeyInfo._status)) {
+          setCheckedItems((prev: string[]) => [
+            ...prev,
+            pubkeyInfo.pubkeyAddress,
+          ]);
+        }
       });
     } else {
       // Remove item from the checkedItems array
@@ -159,6 +164,7 @@ export const TokenStakeList = () => {
             totalCount={totalCount}
             unmatchedCount={unmatchedCount}
             stakedCount={stakedCount}
+            matchedCount={matchedCount}
             othersCount={othersCount}
           />
 

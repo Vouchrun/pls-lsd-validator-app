@@ -7,6 +7,7 @@ interface TokenStakeListTabsProps {
   totalCount: number | undefined;
   unmatchedCount: number | undefined;
   stakedCount: number | undefined;
+  matchedCount: number | undefined;
   othersCount: number | undefined;
 }
 
@@ -15,6 +16,7 @@ export const TokenStakeListTabs = (props: TokenStakeListTabsProps) => {
     totalCount,
     unmatchedCount,
     stakedCount,
+    matchedCount,
     othersCount,
     selectedTab,
     onChange,
@@ -97,6 +99,32 @@ export const TokenStakeListTabs = (props: TokenStakeListTabsProps) => {
           )}
         >
           <div className='scale-[.6] origin-center'>{stakedCount}</div>
+        </div>
+      </div>
+
+      <div
+        className={classNames(
+          'ml-[.1rem] px-[.24rem] flex items-center justify-center relative cursor-pointer',
+          selectedTab === 'Matched'
+            ? 'bg-color-highlight text-white dark:text-text1 rounded-[.4rem]'
+            : 'text-text1 dark:text-white'
+        )}
+        onClick={() => {
+          onChange('Matched');
+        }}
+      >
+        <div>Matched</div>
+
+        <div
+          className={classNames(
+            'absolute right-0 top-0 w-[.20rem] h-[.20rem] items-center justify-center rounded-full',
+            selectedTab === 'Staked'
+              ? 'bg-[#6C86AD] text-white'
+              : 'bg-[#E8EFFD] text-text2',
+            matchedCount === undefined ? 'hidden' : 'flex'
+          )}
+        >
+          <div className='scale-[.6] origin-center'>{matchedCount}</div>
         </div>
       </div>
 

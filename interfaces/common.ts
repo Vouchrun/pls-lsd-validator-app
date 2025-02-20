@@ -33,14 +33,16 @@ export enum ChainPubkeyStatus {
 export enum PubkeyStatus {
   Unmatched = '1',
   Staked = '2',
-  Others = '3',
+  Matched = '3',
+  Others = '4',
 }
 
 export enum PubkeyStatusType {
   Active = '1',
   Pending = '2',
   Exited = '3',
-  Others = '4',
+  Matched = '4',
+  Others = '5',
 }
 
 export enum ValidatorEjectionStatusType {

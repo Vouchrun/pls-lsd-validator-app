@@ -94,6 +94,8 @@ export const getPubkeyStatusTypeText = (status: string | undefined) => {
       return 'Pending';
     case 3:
       return 'Exited';
+    case 4:
+      return 'Matched';
     default:
       return 'Others';
   }
