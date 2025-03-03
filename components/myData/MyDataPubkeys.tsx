@@ -191,9 +191,9 @@ export const MyDataPubkeys = () => {
             style={{ color: '#6C86AD' }}
           >
             <option value={10}>10</option>
-            <option value={25}>25</option>
-            <option value={50}>50</option>
-            <option value={75}>75</option>
+            <option value={20}>20</option>
+            <option value={40}>40</option>
+            <option value={80}>80</option>
             <option value={100}>100</option>
           </select>
         </div>
