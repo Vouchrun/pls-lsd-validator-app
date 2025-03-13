@@ -275,8 +275,11 @@ export const handleEthValidatorDeposit =
           .soloNodeDepositAmount()
           .call();
         solodepositAmount = res;
+        // value: formatScientificNumber(res * validatorKeys.length),
         sendParams = {
-          value: formatScientificNumber(res * validatorKeys.length),
+          value: web3.utils.toWei(
+            (+web3.utils.fromWei(res) * validatorKeys.length).toString()
+          ),
         };
       }
 
