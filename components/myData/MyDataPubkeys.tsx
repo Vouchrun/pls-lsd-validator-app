@@ -349,8 +349,7 @@ const MyDataPubkeyItem = (props: MyDataPubkeyItemProps) => {
               ? '--'
               : apiData?.validator?.slashed
               ? '🔴 Slashed'
-              : parseInt(apiData?.validator?.balance) / 10 ** 9 <
-                MINIMUM_BALANCE
+              : parseInt(apiData?.balance) / 10 ** 9 < MINIMUM_BALANCE
               ? '🟡 Low Balance, Leaking'
               : '🟢 Active, OK'}
           </a>
