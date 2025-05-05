@@ -13,6 +13,8 @@ import { getLsdTokenIcon } from 'utils/iconUtils';
 import { formatNumber } from 'utils/numberUtils';
 import Web3 from 'web3';
 
+const MINIMUM_BALANCE = 32000000;
+
 export const PubkeyDetailAsset = (props: {
   pubkeyAddress: string | undefined;
   pubkeyInfo: NodePubkeyInfo | undefined;
@@ -130,10 +132,18 @@ export const PubkeyDetailAsset = (props: {
 
         <a
           className='flex items-center justify-center text-[.16rem] text-error'
-          href={getValidatorInfoURL() + 'validator/' + pubkeyInfo?.pubkeyAddress}
+          href={
+            getValidatorInfoURL() + 'validator/' + pubkeyInfo?.pubkeyAddress
+          }
           target='_blank'
         >
-          {!apiData ? '--' : apiData?.validator?.slashed ? '🔴' : '🟢'}
+          {!apiData
+            ? '--'
+            : apiData?.validator?.slashed
+            ? '🔴 Slashed'
+            : parseInt(apiData?.balance) / 10 ** 9 < MINIMUM_BALANCE
+            ? '🟡 Low Balance, Leaking'
+            : '🟢 Active, OK'}
         </a>
       </div>
     </div>
