@@ -76,7 +76,11 @@ export default function Validater({ nodes }: any) {
   };
 
   const getStatusIcon = (status: string) => {
-    return status === 'active' ? '🟢' : '🔴';
+    return status === 'slashed'
+      ? '🔴 (Slashed)'
+      : status === 'inactive'
+      ? '🟡 (Low Balance)'
+      : '🟢 (Active)';
   };
 
   const getInputClassName = (isDarkMode: boolean) => {
