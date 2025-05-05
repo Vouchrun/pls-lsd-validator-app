@@ -131,7 +131,7 @@ export const PubkeyDetailAsset = (props: {
         </div>
 
         <a
-          className='flex items-center justify-center text-[.16rem] text-error'
+          className='flex items-center justify-center text-[.16rem] text-color-text1'
           href={
             getValidatorInfoURL() + 'validator/' + pubkeyInfo?.pubkeyAddress
           }
