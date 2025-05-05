@@ -157,7 +157,7 @@ export const MyDataPubkeys = () => {
             Public Key List {!showLoading && `(${displayPubkeyInfos.length})`}
           </div>
           <div className='flex items-center justify-center text-[.16rem] text-color-text2'>
-            Slashed Health
+            Validator Health
           </div>
           <div className='flex items-center justify-center text-[.16rem] text-color-text2'>
             Status
@@ -348,11 +348,11 @@ const MyDataPubkeyItem = (props: MyDataPubkeyItemProps) => {
             {!apiData
               ? '--'
               : apiData?.validator?.slashed
-              ? '🔴 (Slashed)'
+              ? '🔴 Slashed'
               : parseInt(apiData?.validator?.balance) / 10 ** 9 <
                 MINIMUM_BALANCE
-              ? '🟡 (Low Balance)'
-              : '🟢 (Active)'}
+              ? '🟡 Low Balance, Leaking'
+              : '🟢 Active, OK'}
           </a>
         </div>
       </div>

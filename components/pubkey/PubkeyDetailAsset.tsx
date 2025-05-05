@@ -68,7 +68,7 @@ export const PubkeyDetailAsset = (props: {
         </div>
 
         <div className='flex items-center justify-center text-[.16rem] text-color-text2'>
-          Slashed Health
+          Validator Health
         </div>
       </div>
 
