@@ -143,6 +143,8 @@ export const PubkeyDetailAsset = (props: {
             ? '🔴 Slashed'
             : parseInt(apiData?.balance) / 10 ** 9 < MINIMUM_BALANCE
             ? '🟡 Low Balance, Leaking'
+            : pubkeyInfo?.displayStatus === 'Exited'
+            ? '⚪'
             : '🟢 Active, OK'}
         </a>
       </div>
