@@ -53,7 +53,7 @@ export const PoolAssets = () => {
           Unmatched {getTokenName()}
         </div>
         <div className='flex items-center justify-center text-[.16rem] text-color-text2'>
-          Matched Validators
+          Active Validators
         </div>
       </div>
 

@@ -155,16 +155,14 @@ export function usePoolPubkeyData() {
             )
             ?.status?.toUpperCase();
 
-          const isExited = [
-            'EXITED_UNSLASHED',
-            'EXITED_SLASHED',
-            'EXITED',
+          const isActive = [
+            'ACTIVE_ONGOING',
+            'ACTIVE_EXITING',
+            'ACTIVE_SLASHABLE',
+            'PENDING_QUEUED',
           ].includes(beaconStatus ?? '');
 
-          return (
-            item?._status === ChainPubkeyStatus.Staked &&
-            (isExited || (!isExited && beaconStatus !== undefined))
-          );
+          return item?._status === ChainPubkeyStatus.Staked && isActive;
         }
       ).length;
 
