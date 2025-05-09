@@ -19,7 +19,7 @@ const PoolDataPage = () => {
   const { darkMode } = useAppSlice();
   const router = useRouter();
 
-  const { apr } = useApr();
+  const { apr, yearlyApr } = useApr();
 
   return (
     <div>
@@ -45,14 +45,19 @@ const PoolDataPage = () => {
                   <span className='ml-[.06rem]'>APR Pending Update</span>
                 </CustomTag>
               ) : (
-                <CustomTag type='apr' ml='.12rem'>
-                  {apr === undefined ? (
-                    <DataLoading height='.12rem' />
-                  ) : (
-                    `${formatNumber(apr, { decimals: 2 })}%`
-                  )}
-                  <span className='ml-[.06rem]'>staking APR</span>
-                </CustomTag>
+                <div className='ml-[.06rem]'>
+                  <CustomTag type='apr'>
+                    <div className='px-1'>
+                      <span className='font-bold mr-1'>Staking APR:</span>
+                      <span className='mr-1'>
+                        7 Days Avg: {formatNumber(apr, { decimals: 2 })}%
+                      </span>
+                      <span>
+                        1 Year Avg: {formatNumber(yearlyApr, { decimals: 2 })}%
+                      </span>
+                    </div>
+                  </CustomTag>
+                </div>
               )}
             </div>
 

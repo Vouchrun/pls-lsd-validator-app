@@ -10,7 +10,7 @@ import {
   updateEthBalance,
   updateEthLatestBlockTimestamp,
 } from 'redux/reducers/EthSlice';
-import { updateApr } from 'redux/reducers/LsdEthSlice';
+import { updateApr, updateYearlyApr } from 'redux/reducers/LsdEthSlice';
 import {
   updateNodePubkeys,
   updateValidatorWithdrawalCredentials,
@@ -62,6 +62,7 @@ export function useInit() {
       dispatch(updateEthLatestBlockTimestamp());
       // query apr
       dispatch(updateApr());
+      dispatch(updateYearlyApr());
       // Query validator withdrawCredentials
       dispatch(updateValidatorWithdrawalCredentials());
     }

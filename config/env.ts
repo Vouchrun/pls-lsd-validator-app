@@ -108,6 +108,13 @@ export function getWithdrawContractDeploymentBlock() {
   return appProdConfig.withdrawContractDeploymentBlock;
 }
 
+export function getNetworkBalanceContractDeploymentBlock() {
+  if (isDev()) {
+    return appDevConfig.networkBalanceContractDeploymentBlock;
+  }
+  return appProdConfig.networkBalanceContractDeploymentBlock;
+}
+
 export function getWagmiChainConfig() {
   return {
     id: getEthereumChainId(),
