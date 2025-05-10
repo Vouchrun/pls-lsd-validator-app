@@ -76,7 +76,11 @@ export default function Validater({ nodes }: any) {
   };
 
   const getStatusIcon = (status: string) => {
-    return status === 'active' ? '🟢' : '🔴';
+    return status === 'slashed'
+      ? '🔴 Slashed'
+      : status === 'inactive'
+      ? '🟡 Low Balance, Leaking'
+      : '🟢 Active, OK';
   };
 
   const getInputClassName = (isDarkMode: boolean) => {
@@ -186,7 +190,7 @@ export default function Validater({ nodes }: any) {
                   </div>
                 </th>
                 <th className='bg-color-bg2 font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[.16rem] text-color-text2 px-[30px] py-[30px]'>
-                  Balance Status
+                  Node Health
                 </th>
                 <th className='bg-color-bg2 font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[.16rem] text-color-text2 px-[30px] py-[30px]'>
                   Active Validators

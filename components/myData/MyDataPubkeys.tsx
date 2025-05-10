@@ -36,6 +36,7 @@ export const MyDataPubkeys = () => {
   const [page, setPage] = useState(1);
   const [types, setTypes] = useState<PubkeyStatusType[]>([]);
   const { darkMode } = useAppSlice();
+
   // const statusList = useMemo(() => {
   //   if (types.length === 0) {
   //     return undefined;
@@ -156,7 +157,7 @@ export const MyDataPubkeys = () => {
             Public Key List {!showLoading && `(${displayPubkeyInfos.length})`}
           </div>
           <div className='flex items-center justify-center text-[.16rem] text-color-text2'>
-            Slashed Health
+            Validator Health
           </div>
           <div className='flex items-center justify-center text-[.16rem] text-color-text2'>
             Status
@@ -265,6 +266,7 @@ interface MyDataPubkeyItemProps {
   index: number;
   pubkeyInfo: NodePubkeyInfo;
 }
+const MINIMUM_BALANCE = 32000000;
 
 const MyDataPubkeyItem = (props: MyDataPubkeyItemProps) => {
   const router = useRouter();
@@ -343,7 +345,15 @@ const MyDataPubkeyItem = (props: MyDataPubkeyItemProps) => {
             }
             target='_blank'
           >
-            {!apiData ? '--' : apiData?.validator?.slashed ? '🔴' : '🟢'}
+            {!apiData
+              ? '--'
+              : apiData?.validator?.slashed
+              ? '🔴 Slashed'
+              : parseInt(apiData?.balance) / 10 ** 9 < MINIMUM_BALANCE
+              ? '🟡 Low Balance, Leaking'
+              : pubkeyInfo.displayStatus === 'Exited'
+              ? '⚪'
+              : '🟢 Active, OK'}
           </a>
         </div>
       </div>

@@ -9,7 +9,7 @@ interface ValidatorNodeAddressData {
   address: string;
   balance: number;
   activeCount: number;
-  status: 'active' | 'inactive';
+  status: 'active' | 'inactive' | 'slashed';
 }
 
 interface ValidatorState {
@@ -138,7 +138,6 @@ export const fetchValidatorData =
         const pubkeys = await fetchNodePubkeys(node);
         const validatorDetails = await fetchValidatorData(pubkeys);
         const isTrusted = await setNodesWithCheck(node);
-
         const activeValidators = validatorDetails.filter(
           (validator: any) => validator.status === 'active_ongoing'
         );
@@ -148,18 +147,36 @@ export const fetchValidatorData =
           0
         );
 
+        // Check if any validator has balance below minimum
+        const hasInsufficientBalance = activeValidators.some(
+          (validator: any) =>
+            parseInt(validator.balance) / 10 ** 9 < MINIMUM_BALANCE
+        );
+
+        const isSlashed = activeValidators.some(
+          (validator: any) => validator.slashed
+        );
+
         validatorInfo.push({
           address: node,
           balance: totalBalance,
           activeCount: activeValidators.length,
-          status: totalBalance >= MINIMUM_BALANCE ? 'active' : 'inactive',
+          status: isSlashed
+            ? 'slashed'
+            : !hasInsufficientBalance
+            ? 'active'
+            : 'inactive',
         });
         if (isTrusted) {
           trustedvalidatorInfo.push({
             address: node,
             balance: totalBalance,
             activeCount: activeValidators.length,
-            status: totalBalance >= MINIMUM_BALANCE ? 'active' : 'inactive',
+            status: isSlashed
+              ? 'slashed'
+              : !hasInsufficientBalance
+              ? 'active'
+              : 'inactive',
           });
         }
       }
