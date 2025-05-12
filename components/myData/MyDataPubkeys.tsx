@@ -344,15 +344,23 @@ const MyDataPubkeyItem = (props: MyDataPubkeyItemProps) => {
               getValidatorInfoURL() + 'validator/' + pubkeyInfo.pubkeyAddress
             }
             target='_blank'
+            className={
+              pubkeyInfo.displayStatus === 'Exited'
+                ? 'text-error'
+                : pubkeyInfo.displayStatus === 'Active'
+                ? 'text-color-text1'
+                : 'text-color-text2'
+            }
           >
-            {!apiData
+            {pubkeyInfo.displayStatus === 'Exited' ||
+            pubkeyInfo.displayStatus === 'Withdrawal'
+              ? '⚪'
+              : !apiData
               ? '--'
               : apiData?.validator?.slashed
               ? '🔴 Slashed'
               : parseInt(apiData?.balance) / 10 ** 9 < MINIMUM_BALANCE
               ? '🟡 Low Balance, Leaking'
-              : pubkeyInfo.displayStatus === 'Exited'
-              ? '⚪'
               : '🟢 Active, OK'}
           </a>
         </div>

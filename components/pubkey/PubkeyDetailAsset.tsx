@@ -137,14 +137,15 @@ export const PubkeyDetailAsset = (props: {
           }
           target='_blank'
         >
-          {!apiData
+          {pubkeyInfo?.displayStatus === 'Exited' ||
+          pubkeyInfo?.displayStatus === 'Withdrawal'
+            ? '⚪'
+            : !apiData
             ? '--'
             : apiData?.validator?.slashed
             ? '🔴 Slashed'
             : parseInt(apiData?.balance) / 10 ** 9 < MINIMUM_BALANCE
             ? '🟡 Low Balance, Leaking'
-            : pubkeyInfo?.displayStatus === 'Exited'
-            ? '⚪'
             : '🟢 Active, OK'}
         </a>
       </div>

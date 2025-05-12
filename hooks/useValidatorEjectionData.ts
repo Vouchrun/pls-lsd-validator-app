@@ -14,7 +14,7 @@ import { getEthWeb3 } from 'utils/web3Utils';
 const findStatus = (status: string) => {
   if (status === 'withdrawal_done') {
     return 'Exited';
-  } else if (status === 'active_exiting') {
+  } else if (status === 'active_exiting' || status === 'exited_unslashed') {
     return 'Pending';
   } else if (status === 'active_ongoing') {
     return 'Delayed';
@@ -30,6 +30,8 @@ const findStatusSymbol = (status: string) => {
     return '🟡';
   } else if (status === 'active_ongoing') {
     return '🔴';
+  } else if (status === 'exited_unslashed') {
+    return '⚪';
   } else {
     return 'Unknown';
   }
