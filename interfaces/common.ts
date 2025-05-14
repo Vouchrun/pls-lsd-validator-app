@@ -46,8 +46,8 @@ export enum PubkeyStatusType {
 }
 
 export enum ValidatorEjectionStatusType {
-  Exited = '1',
-  Pending = '2',
+  Withdrawn = '1',
+  Exiting = '2',
   Delayed = '3',
   Others = '4',
 }

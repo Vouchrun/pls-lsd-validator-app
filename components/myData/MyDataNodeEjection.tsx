@@ -11,6 +11,10 @@ import { useWalletAccount } from 'hooks/useWalletAccount';
 import { useMemo, useState } from 'react';
 import { getValidatorEjectionTypeText, openLink } from 'utils/commonUtils';
 import checkedIcon from 'public/images/checked.svg';
+import doubleLeftIcon from 'public/images/double-left.svg';
+import doubleRightIcon from 'public/images/double-right.svg';
+import leftIcon from 'public/images/arrow-left.svg';
+import rightIcon from 'public/images/arrow-right.svg';
 import { getShortAddress } from 'utils/stringUtils';
 import * as moment from 'moment';
 import { LoadingContent } from 'components/common/LoadingContent';
@@ -28,10 +32,11 @@ import { Popover } from '@mui/material';
 export const MyDataNodeEjection = () => {
   const { darkMode } = useAppSlice();
   const { metaMaskAccount } = useWalletAccount();
-  const [page, setPage] = useState(1);
   const router = useRouter();
 
   const [types, setTypes] = useState<ValidatorEjectionStatusType[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [resultsPerPage, setResultsPerPage] = useState(10);
 
   const displayTypesText = useMemo(() => {
     if (types.length === 0) {
@@ -60,6 +65,30 @@ export const MyDataNodeEjection = () => {
     variant: 'popover',
     popupId: 'type',
   });
+
+  // Pagination calculations
+  const filteredData = validatorElectionData.filter(
+    (item: any) => item.nodeAddress === metaMaskAccount
+  );
+  const totalPages = Math.ceil(filteredData.length / resultsPerPage);
+  const startIndex = (currentPage - 1) * resultsPerPage;
+  const endIndex = Math.min(startIndex + resultsPerPage, filteredData.length);
+  const paginatedData = filteredData.slice(startIndex, endIndex);
+
+  const handleChangeResultsPerPage = (
+    event: React.ChangeEvent<HTMLSelectElement>
+  ) => {
+    const newResultsPerPage = parseInt(event.target.value);
+    setResultsPerPage(newResultsPerPage);
+    setCurrentPage(1);
+  };
+
+  const handleFirstPage = () => setCurrentPage(1);
+  const handleLastPage = () => setCurrentPage(totalPages);
+  const handlePreviousPage = () =>
+    setCurrentPage((prev) => Math.max(1, prev - 1));
+  const handleNextPage = () =>
+    setCurrentPage((prev) => Math.min(totalPages, prev + 1));
 
   return (
     <div>
@@ -161,9 +190,9 @@ export const MyDataNodeEjection = () => {
         </div>
 
         <div className='max-h-[4.2rem] overflow-auto'>
-          {validatorElectionData
-            .filter((item: any) => item.nodeAddress == metaMaskAccount)
-            .map((item: any, index: number) => (
+          {!showLoading &&
+            !showEmptyContent &&
+            paginatedData.map((item: any, index: number) => (
               <div
                 key={index}
                 className={classNames(
@@ -213,6 +242,76 @@ export const MyDataNodeEjection = () => {
         {showLoading && (
           <div className='h-[2rem] flex items-center justify-center relative'>
             <LoadingContent />
+          </div>
+        )}
+
+        {!showEmptyContent && !showLoading && filteredData.length > 0 && (
+          <div className='flex items-center justify-center mt-1 md:flex-row flex-col p-[.16rem]'>
+            <div className='flex items-center'>
+              <div className='text-[#FE8A3C] text-[14px] mr-[10px]'>
+                Result per page
+              </div>
+              <select
+                value={resultsPerPage}
+                onChange={handleChangeResultsPerPage}
+                className='cursor-pointer px-[.16rem] h-[.42rem] inline-flex items-center justify-between rounded-[4px] border-[0.01rem] border-[#6C86AD80] bg-transparent shadow-none outline-none'
+                style={{ color: '#6C86AD' }}
+              >
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={40}>40</option>
+                <option value={80}>80</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
+            <div className='text-[#FE8A3C] text-[14px] mx-[40px] md:my-0 my-[15px] flex'>
+              {startIndex + 1}-{endIndex} of {filteredData.length}
+            </div>
+            <div className='flex items-center'>
+              <button
+                onClick={handleFirstPage}
+                disabled={currentPage === 1}
+                className='cursor-pointer h-[.42rem] w-[40px] rounded-[4px] mx-[3px] border-none flex items-center justify-center bg-gradient-to-r from-[#FE8A3C] via-[#E79D6C] to-[#FE8A3C] disabled:opacity-50'
+              >
+                <Image
+                  src={doubleLeftIcon}
+                  alt='First Page'
+                  height={12}
+                  width={16}
+                />
+              </button>
+              <button
+                onClick={handlePreviousPage}
+                disabled={currentPage === 1}
+                className='cursor-pointer h-[.42rem] w-[40px] rounded-[4px] mx-[3px] border-none flex items-center justify-center bg-gradient-to-r from-[#FE8A3C] via-[#E79D6C] to-[#FE8A3C] disabled:opacity-50'
+              >
+                <Image
+                  src={leftIcon}
+                  alt='Previous Page'
+                  height={5}
+                  width={9}
+                />
+              </button>
+              <button
+                onClick={handleNextPage}
+                disabled={currentPage === totalPages}
+                className='cursor-pointer h-[.42rem] w-[40px] rounded-[4px] mx-[3px] border-none flex items-center justify-center bg-gradient-to-r from-[#FE8A3C] via-[#E79D6C] to-[#FE8A3C] disabled:opacity-50'
+              >
+                <Image src={rightIcon} alt='Next Page' height={5} width={9} />
+              </button>
+              <button
+                onClick={handleLastPage}
+                disabled={currentPage === totalPages}
+                className='cursor-pointer h-[.42rem] w-[40px] rounded-[4px] border-none mx-[3px] flex items-center justify-center bg-gradient-to-r from-[#FE8A3C] via-[#E79D6C] to-[#FE8A3C] disabled:opacity-50'
+              >
+                <Image
+                  src={doubleRightIcon}
+                  alt='Last Page'
+                  height={12}
+                  width={16}
+                />
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -358,12 +457,12 @@ const ChooseTypePopover = (props: any) => {
         <div
           className='cursor-pointer flex items-center justify-between'
           onClick={() => {
-            onClickType(ValidatorEjectionStatusType.Pending);
+            onClickType(ValidatorEjectionStatusType.Exiting);
           }}
         >
           <div className='flex items-center'>
             <div className='ml-[.12rem] text-color-text1 text-[.16rem]'>
-              Pending
+              Exiting
             </div>
 
             <div
@@ -377,7 +476,7 @@ const ChooseTypePopover = (props: any) => {
             </div>
           </div>
 
-          {types.indexOf(ValidatorEjectionStatusType.Pending) >= 0 ? (
+          {types.indexOf(ValidatorEjectionStatusType.Exiting) >= 0 ? (
             <div className='w-[.16rem] h-[.16rem] relative'>
               <Image src={checkedIcon} alt='checked' layout='fill' />
             </div>
@@ -391,12 +490,12 @@ const ChooseTypePopover = (props: any) => {
         <div
           className='cursor-pointer flex items-center justify-between'
           onClick={() => {
-            onClickType(ValidatorEjectionStatusType.Exited);
+            onClickType(ValidatorEjectionStatusType.Withdrawn);
           }}
         >
           <div className='flex items-center'>
             <div className='ml-[.12rem] text-color-text1 text-[.16rem]'>
-              Exited
+              Withdrawn
             </div>
 
             <div
@@ -410,7 +509,7 @@ const ChooseTypePopover = (props: any) => {
             </div>
           </div>
 
-          {types.indexOf(ValidatorEjectionStatusType.Exited) >= 0 ? (
+          {types.indexOf(ValidatorEjectionStatusType.Withdrawn) >= 0 ? (
             <div className='w-[.16rem] h-[.16rem] relative'>
               <Image src={checkedIcon} alt='checked' layout='fill' />
             </div>
