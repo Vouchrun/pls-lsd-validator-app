@@ -108,13 +108,13 @@ export const getPubkeyStatusTypeText = (status: string | undefined) => {
 export const getValidatorEjectionTypeText = (status: string | undefined) => {
   switch (Number(status)) {
     case 1:
-      return 'Exited';
+      return 'Withdrawn';
     case 2:
-      return 'Pending';
+      return 'Exiting';
     case 3:
       return 'Delayed';
     default:
-      return 'Exited';
+      return 'Unknown';
   }
 };
 
