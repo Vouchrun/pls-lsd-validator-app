@@ -153,7 +153,6 @@ export const MyDataAssets = () => {
           <div className='flex-1 mx-[.28rem]'>
             <CustomButton
               loading={withdrawLoading}
-              type='stroke'
               onClick={() => {
                 dispatch(
                   withdrawValidatorEth(
