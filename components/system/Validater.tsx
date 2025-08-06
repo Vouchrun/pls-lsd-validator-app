@@ -114,9 +114,9 @@ export default function Validater({ nodes }: any) {
 
   const getInputClassName = (isDarkMode: boolean) => {
     if (isDarkMode) {
-      return "w-full rounded-[35px] bg-[#1B1B1F] text-center h-[42px] border-[0.01rem] border-[#6C86AD80]";
+      return "w-full rounded-[35px] bg-[#1B1B1F] text-center h-[42px] border-[0.01rem] border-[#6C86AD80] text-[12px] sm:text-[.16rem]";
     }
-    return "w-full rounded-[35px] bg-[#fff] text-center h-[42px] border-[0.01rem] border-[#6C86AD80]";
+    return "w-full rounded-[35px] bg-[#fff] text-center h-[42px] border-[0.01rem] border-[#6C86AD80] text-[12px] sm:text-[.16rem]";
   };
 
   const handleChangeResultsPerPage = (
@@ -148,7 +148,7 @@ export default function Validater({ nodes }: any) {
       return (
         <tbody>
           <tr>
-            <td colSpan={3} className="text-center py-[30px] text-red-500">
+            <td colSpan={3} className="text-center py-[30px] text-red-500 text-[12px] sm:text-[.16rem]">
               {error}
             </td>
           </tr>
@@ -160,7 +160,7 @@ export default function Validater({ nodes }: any) {
       return (
         <tbody>
           <tr>
-            <td colSpan={3} className="text-center py-[30px] text-white-500">
+            <td colSpan={3} className="text-center py-[30px] text-white-500 text-[12px] sm:text-[.16rem]">
               No validator data available
             </td>
           </tr>
@@ -181,16 +181,16 @@ export default function Validater({ nodes }: any) {
               key={startIndex + index + 1}
               className={getRowClassName(darkMode)}
             >
-              <td className="text-left text-[13px] truncate px-[30px] py-[15px]">
+              <td className="text-left text-[12px] sm:text-[.16rem] truncate px-[30px] py-[15px]">
                 {node.address}
               </td>
-              <td className="text-center font-semibold px-[30px] py-[15px]">
+              <td className="text-center font-semibold px-[30px] py-[15px] text-[12px] sm:text-[.16rem]">
                 {node.activeCount > 0 ? getStatusIcon(node.status) : "--"}
               </td>
-              <td className="text-center font-semibold px-[30px] py-[15px]">
+              <td className="text-center font-semibold px-[30px] py-[15px] text-[12px] sm:text-[.16rem]">
                 <UnclaimedRewardsCell address={node.address} />
               </td>
-              <td className="text-center font-semibold px-[30px] py-[15px]">
+              <td className="text-center font-semibold px-[30px] py-[15px] text-[12px] sm:text-[.16rem]">
                 {node.activeCount}
               </td>
             </tr>
@@ -285,7 +285,7 @@ export default function Validater({ nodes }: any) {
           <table className="w-full min-w-[800px]">
             <thead>
               <tr>
-                <th className="bg-color-bg2 text-left font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[.16rem] text-color-text2 px-[30px] py-[30px]">
+                <th className="bg-color-bg2 text-left font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[12px] sm:text-[.16rem] text-color-text2 px-[30px] py-[30px]">
                   <div className="flex items-center">
                     Validator Node Address
                     <div className="flex items-center ml-1">
@@ -323,13 +323,13 @@ export default function Validater({ nodes }: any) {
                     </div>
                   </div>
                 </th>
-                <th className="bg-color-bg2 font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[.16rem] text-color-text2 px-[30px] py-[30px]">
+                <th className="bg-color-bg2 font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[12px] sm:text-[.16rem] text-color-text2 px-[30px] py-[30px]">
                   Node Health
                 </th>
-                <th className="bg-color-bg2 font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[.16rem] text-color-text2 px-[30px] py-[30px]">
+                <th className="bg-color-bg2 font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[12px] sm:text-[.16rem] text-color-text2 px-[30px] py-[30px]">
                   Unclaimed Rewards
                 </th>
-                <th className="bg-color-bg2 font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[.16rem] text-color-text2 px-[30px] py-[30px]">
+                <th className="bg-color-bg2 font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[12px] sm:text-[.16rem] text-color-text2 px-[30px] py-[30px]">
                   Active Validators
                 </th>
               </tr>
@@ -348,7 +348,7 @@ export default function Validater({ nodes }: any) {
           <div className="mt-[10px] max-w-[100%] mx-auto flex items-center gap-1 w-[100%] justify-center">
             <CustomButton
               type="small"
-              height=".42rem"
+              height="35px"
               width="130px"
               disabled={admin !== metaMaskAccount}
               onClick={() => {
@@ -359,7 +359,7 @@ export default function Validater({ nodes }: any) {
             </CustomButton>
             <CustomButton
               type="small"
-              height=".42rem"
+              height="35px"
               width="130px"
               disabled={admin !== metaMaskAccount}
               onClick={() => {

@@ -72,7 +72,7 @@ export const CustomButton = (props: ButtonProps) => {
         color: props.textColor || textColor,
         height: props.height || '.56rem',
         marginTop: props.mt || '0',
-        fontSize: props.fontSize || '0.16rem',
+        fontSize: props.fontSize || '14px',
         // cursor: props.loading || props.disabled ? "default" : "pointer",
         borderRadius: props.radius || '.3rem',
         borderTopLeftRadius: props.tlRaidus || props.radius || '.3rem',

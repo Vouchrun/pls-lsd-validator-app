@@ -110,10 +110,10 @@ const VoterRow = memo(
         <td className="text-left text-[13px] truncate px-[30px] py-[15px]">
           {voter}
         </td>
-        <td className="text-center font-semibold px-[30px] py-[15px]">
+        <td className="text-center font-semibold px-[30px] py-[15px] text-[12px] sm:text-[.16rem]">
           {formattedBalance} PLS
         </td>
-        <td className="text-center font-semibold px-[30px] py-[15px]">
+        <td className="text-center font-semibold px-[30px] py-[15px] text-[12px] sm:text-[.16rem]">
           {rewardUpdateHour &&
             withdrawCycleSeconds &&
             (() => {
@@ -131,7 +131,7 @@ const VoterRow = memo(
               }
             })()}
         </td>
-        <td className="text-center px-[30px] py-[8px]">
+        <td className="text-center px-[30px] py-[8px] text-[12px] sm:text-[.16rem]">
           {moment.utc(lastVoted).local().format("D MMM YYYY h:mm a")}
         </td>
       </tr>
@@ -199,16 +199,16 @@ const Voter = memo(({ voters, voteManagerAddress }: any) => {
             <table className="w-full min-w-[800px]">
               <thead>
                 <tr>
-                  <th className="bg-color-bg2 text-left font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[.16rem] text-color-text2 px-[30px] py-[30px]">
+                  <th className="bg-color-bg2 text-left font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[12px] sm:text-[.16rem] text-color-text2 px-[30px] py-[30px]">
                     Voter / Relays
                   </th>
-                  <th className="bg-color-bg2 font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[.16rem] text-color-text2 px-[30px] py-[30px]">
+                  <th className="bg-color-bg2 font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[12px] sm:text-[.16rem] text-color-text2 px-[30px] py-[30px]">
                     Balance
                   </th>
-                  <th className="bg-color-bg2 font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[.16rem] text-color-text2 px-[30px] py-[30px]">
+                  <th className="bg-color-bg2 font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[12px] sm:text-[.16rem] text-color-text2 px-[30px] py-[30px]">
                     Status
                   </th>
-                  <th className="bg-color-bg2 font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[.16rem] text-color-text2 px-[30px] py-[30px]">
+                  <th className="bg-color-bg2 font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[12px] sm:text-[.16rem] text-color-text2 px-[30px] py-[30px]">
                     Last Voted
                   </th>
                 </tr>
@@ -230,14 +230,14 @@ const Voter = memo(({ voters, voteManagerAddress }: any) => {
               onChange={(e) => setVoterAddress(e.target.value)}
               className={
                 darkMode
-                  ? "w-full rounded-[35px] bg-[#1B1B1F] text-center h-[42px] border-[0.01rem] border-[#6C86AD80]"
-                  : "w-full rounded-[35px] bg-[#fff] text-center h-[42px] border-[0.01rem] border-[#6C86AD80]"
+                  ? "w-full rounded-[35px] bg-[#1B1B1F] text-center h-[42px] border-[0.01rem] border-[#6C86AD80] text-[12px] sm:text-[.16rem]"
+                  : "w-full rounded-[35px] bg-[#fff] text-center h-[42px] border-[0.01rem] border-[#6C86AD80] text-[12px] sm:text-[.16rem]"
               }
             />
             <div className="mt-[10px] max-w-[100%] mx-auto flex items-center gap-1 w-[100%] justify-center">
               <CustomButton
                 type="small"
-                height=".42rem"
+                height="35px"
                 width="130px"
                 disabled={metaMaskAccount !== voteManagerAddress}
                 onClick={handleAddAddress}
@@ -246,7 +246,7 @@ const Voter = memo(({ voters, voteManagerAddress }: any) => {
               </CustomButton>
               <CustomButton
                 type="small"
-                height=".42rem"
+                height="35px"
                 width="130px"
                 disabled={metaMaskAccount !== voteManagerAddress}
                 onClick={handleRemoveAddress}

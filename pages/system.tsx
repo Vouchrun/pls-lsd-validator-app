@@ -115,7 +115,10 @@ const SystemPage = () => {
       </PageTitleContainer>
 
       <div className="w-smallContentW xl:w-contentW 2xl:w-largeContentW mx-auto mb-[.56rem]">
-        <PoolAssets />
+        <div className="overflow-x-auto">
+<PoolAssets />
+        </div>
+        
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-1 mt-1">
           <div>
             <ProtocolStatus />
