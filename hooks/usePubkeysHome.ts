@@ -114,7 +114,7 @@ export const usePubkeysHome = (
         }
 
         const newItem = { ...item, displayStatus, canStake };
-
+        
         if (isUnmatch && selectedPubkeyStatus === PubkeyStatus.Unmatched) {
           resList.push(newItem);
         } else if (isStaked && selectedPubkeyStatus === PubkeyStatus.Staked) {
@@ -122,6 +122,7 @@ export const usePubkeysHome = (
         } else if (isMatch && selectedPubkeyStatus === PubkeyStatus.Matched) {
           resList.push(newItem);
         } else if (
+          !isMatch &&
           !isUnmatch &&
           !isStaked &&
           selectedPubkeyStatus === PubkeyStatus.Others

@@ -32,7 +32,7 @@ export const PoolAssets = () => {
   const networkwithdrawAddress = getNetworkWithdrawContract();
 
   return (
-    <div className='mt-[.24rem] bg-color-bg2 border-[0.01rem] border-color-border1 rounded-[.3rem]'>
+    <div className='mt-[.24rem] bg-color-bg2 border-[0.01rem] border-color-border1 rounded-[.3rem] min-w-[750px]'>
       <div
         className='h-[.7rem] grid items-center font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F]'
         style={{
@@ -40,19 +40,19 @@ export const PoolAssets = () => {
         }}
       >
         <div className='flex items-center justify-center text-[.16rem] text-color-text2'></div>
-        <div className='flex items-center justify-center text-[.16rem] text-color-text2'>
+        <div className='flex items-center justify-center text-[12px] sm:text-[.16rem] text-color-text2'>
           Pool {getTokenName()}
         </div>
-        <div className='flex items-center justify-center text-[.16rem] text-color-text2'>
+        <div className='flex items-center justify-center text-[12px] sm:text-[.16rem] text-color-text2'>
           Minted {getLsdTokenName()}
         </div>
-        <div className='flex items-center justify-center text-[.16rem] text-color-text2'>
+        <div className='flex items-center justify-center text-[12px] sm:text-[.16rem] text-color-text2'>
           Staked {getTokenName()}
         </div>
-        <div className='flex items-center justify-center text-[.16rem] text-color-text2'>
+        <div className='flex items-center justify-center text-[12px] sm:text-[.16rem] text-color-text2'>
           Unmatched {getTokenName()}
         </div>
-        <div className='flex items-center justify-center text-[.16rem] text-color-text2'>
+        <div className='flex items-center justify-center text-[12px] sm:text-[.16rem] text-color-text2'>
           Active Validators
         </div>
       </div>
@@ -78,7 +78,7 @@ export const PoolAssets = () => {
                 <Image src={getLsdTokenIcon()} alt='logo' layout='fill' />
               </div>
 
-              <div className='ml-[.08rem] text-[.16rem] text-color-text1'>
+              <div className='ml-[.08rem] text-[12px] sm:text-[.16rem] text-color-text1'>
                 {getLsdTokenName()}
               </div>
             </div>
@@ -89,7 +89,7 @@ export const PoolAssets = () => {
           </div>
         </div>
 
-        <div className='flex items-center justify-center text-[.16rem] text-color-text1'>
+        <div className='flex items-center justify-center text-[12px] sm:text-[.16rem] text-color-text1'>
           <div className='flex flex-col items-center'>
             <div className={robotoSemiBold.className}>
               {poolEth === undefined ? (
@@ -105,7 +105,7 @@ export const PoolAssets = () => {
           </div>
         </div>
 
-        <div className='flex items-center justify-center text-[.16rem] text-color-text1'>
+        <div className='flex items-center justify-center text-[12px] sm:text-[.16rem] text-color-text1'>
           <div className='flex flex-col items-center'>
             <div className={robotoSemiBold.className}>
               {mintedLsdToken === undefined ? (
@@ -133,7 +133,7 @@ export const PoolAssets = () => {
           </div>
         </div>
 
-        <div className='flex items-center justify-center text-[.16rem] text-color-text1'>
+        <div className='flex items-center justify-center text-[12px] sm:text-[.16rem] text-color-text1'>
           <div className='flex flex-col items-center'>
             <div className={robotoSemiBold.className}>
               {stakedToken === undefined ? (
@@ -161,7 +161,7 @@ export const PoolAssets = () => {
           </div>
         </div>
 
-        <div className='flex items-center justify-center text-[.16rem] text-color-text1'>
+        <div className='flex items-center justify-center text-[12px] sm:text-[.16rem] text-color-text1'>
           <div className='flex flex-col items-center'>
             <div className={robotoSemiBold.className}>
               {unmatchedEth === undefined ? (
@@ -176,7 +176,7 @@ export const PoolAssets = () => {
           </div>
         </div>
 
-        <div className='flex items-center justify-center text-[.16rem] text-color-text1'>
+        <div className='flex items-center justify-center text-[12px] sm:text-[.16rem] text-color-text1'>
           <div className='flex flex-col items-center'>
             <div className={robotoSemiBold.className}>
               {matchedValidators === undefined ? (
