@@ -41,7 +41,7 @@ const ChooseTypePage = () => {
             className='p-[.52rem] grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[20px]'
             
           >
-            <div className='rounded-[.16rem] bg-color-bgPage flex flex-col items-center justify-between'>
+            <div className='rounded-[.16rem] bg-[#E2E0D0] dark:bg-[#333333] flex flex-col items-center justify-between'>
               <div className='mt-[.32rem] flex flex-col items-center'>
                 <div
                   className={classNames(
@@ -74,7 +74,7 @@ const ChooseTypePage = () => {
               </div>
             </div>
 
-            <div className=' rounded-[.16rem] bg-color-bgPage flex flex-col items-center justify-between'>
+            <div className=' rounded-[.16rem] bg-[#E2E0D0] dark:bg-[#333333] flex flex-col items-center justify-between'>
               <div className='mt-[.32rem] flex flex-col items-center'>
                 <div
                   className={classNames(
@@ -121,7 +121,7 @@ const ChooseTypePage = () => {
               </div>
             </div>
 
-            <div className='rounded-[.16rem] bg-color-bgPage flex flex-col items-center justify-between'>
+            <div className='rounded-[.16rem] bg-[#E2E0D0] dark:bg-[#333333] flex flex-col items-center justify-between'>
               <div className='mt-[.32rem] flex flex-col items-center mx-[.16rem]'>
                 <div
                   className={classNames(

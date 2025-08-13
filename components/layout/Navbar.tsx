@@ -152,20 +152,20 @@ export const Navbar = () => {
             alt="stafi"
             height="30"
             width="30"
-            className="cursor-pointer block lg:hidden ml-[60px]"
+            className="cursor-pointer block xl:hidden ml-[60px]"
             onClick={handleClick}
           />
 
           <div
-            className={`w-[280px] sm:w-[420px] xl:w-[580px] h-auto p-[20px] lg:p-[.04rem]  items-stretch bg-color-bg1 rounded-[15px] lg:rounded-[.6rem] lg:grid absolute lg:relative top-[40px] lg:top-0 gap-0
+            className={`w-[280px] sm:w-[420px] xl:w-[580px] h-auto p-[20px] lg:p-[.04rem]  items-stretch bg-[#edece3] dark:bg-[#111111] rounded-[15px] lg:rounded-[.6rem] xl:grid absolute xl:relative top-[40px] xl:top-0 gap-0
             ${isActive ? "flex flex-col" : "hidden"} `}
             style={{
               gridTemplateColumns:
                 admin === metaMaskAccount ||
                 voters.find((voter: string) => voter === metaMaskAccount) ||
                 nodes.find((node: string) => node === metaMaskAccount)
-                  ? "25% 25% 25% 25%"
-                  : "40% 28% 32%",
+                  ? "20% 20% 20% 20% 20%"
+                  : "25% 25% 25% 25%",
             }}
           >
             <Link href={`/tokenStake/list`}>
@@ -222,6 +222,18 @@ export const Navbar = () => {
                 </div>
               </Link>
             )}
+            <Link href={"/dashboard"}>
+              <div
+                className={classNames(
+                  "h-[35px] cursor-pointer flex items-center justify-center text-[16px] rounded-[.6rem]",
+                  router.pathname.startsWith("/dashboard")
+                    ? "bg-color-selected text-text1 font-bold rounded-[.6rem] border-color-divider1 border-solid border-[0.01rem]"
+                    : "text-color-text1"
+                )}
+              >
+                Dashboard
+              </div>
+            </Link>
           </div>
 
           {/* <AuditComponent
@@ -233,9 +245,9 @@ export const Navbar = () => {
         <div className={classNames("flex items-center")}>
           <div
             className={classNames(
-              "ml-[16px] hidden md:flex rounded-[10px]",
-              isGalleryHomePage ? "hidden" : ""
-              // darkMode ? 'bg-[#333333]' : 'bg-[#d7d4be]'
+              "ml-[16px] hidden md:flex rounded-[80px]",
+              isGalleryHomePage ? "hidden" : "",
+              darkMode ? "bg-[#333333]" : "bg-[#d7d4be]"
             )}
           >
             {/* {displayAddress ? (

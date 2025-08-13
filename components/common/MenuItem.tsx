@@ -1,5 +1,6 @@
 import { Icomoon } from "components/icon/Icomoon";
 import { openLink } from "utils/commonUtils";
+import { useAppSlice } from 'hooks/selector';
 
 interface Props {
   text: string;
@@ -8,6 +9,7 @@ interface Props {
 }
 
 export const MenuItem = (props: Props) => {
+  const { darkMode, unreadNoticeFlag } = useAppSlice();
   return (
     <div
       className="cursor-pointer flex items-center justify-between"
@@ -19,7 +21,7 @@ export const MenuItem = (props: Props) => {
       }}
     >
       <div
-        className="text-[#6C86AD] text-[16px] font-[500] flex-1"
+        className="text-[16px] font-[500] flex-1"
         style={{
           maxLines: 1,
           overflow: "hidden",
@@ -28,6 +30,7 @@ export const MenuItem = (props: Props) => {
           lineClamp: 1,
           display: "-webkit-box",
           WebkitBoxOrient: "vertical",
+          color: darkMode ? '#fff' : '#1b1b1f'
         }}
       >
         {props.text}

@@ -7,26 +7,29 @@ import Box from '@mui/material/Box';
 import Modal from '@mui/material/Modal';
 import { Switch } from '@mui/material';
 import { useEffect, useState } from 'react';
+import { useAppSlice } from 'hooks/selector';
 
-const style = {
-  position: 'absolute',
-  top: '50%',
-  left: '50%',
-  maxWidth: '600px',
-  width: 'calc(100% - 20px)',
-  transform: 'translate(-50%, -50%)',
-  bgcolor: 'background.paper',
-  border: '1px solid #6C86AD80',
-  boxShadow: 20,
-  p: 4,
-  background: '#455168',
-  borderRadius: '0.3rem',
-  outline: 'none',
-};
+
+
 
 const TokenStakeListPage = () => {
   const router = useRouter();
-
+  const { darkMode, unreadNoticeFlag } = useAppSlice();
+  const style = {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    maxWidth: '600px',
+    width: 'calc(100% - 20px)',
+    transform: 'translate(-50%, -50%)',
+    bgcolor: 'background.paper',
+    border: '1px solid #6C86AD80',
+    boxShadow: 20,
+    p: 4,
+    background: darkMode ? '#333333' : '#e2e0d0',
+    borderRadius: '0.3rem',
+    outline: 'none',
+  };
   const [open, setOpen] = useState(false);
   const [show, setShow] = useState(false);
   const handleClose = (event: any, reason: string) => {
@@ -59,7 +62,7 @@ const TokenStakeListPage = () => {
           <div
             className={classNames(
               robotoBold.className,
-              "text-[24px] md:text-[34px] ml-[12px] text-color-text1"
+              "text-[.34rem] ml-[12px] text-color-text1"
             )}
           >
             Token Stake
@@ -155,9 +158,9 @@ const TokenStakeListPage = () => {
         aria-describedby='modal-modal-description'
       >
         <Box sx={style}>
-          <h4 className='d-title text-[20px] md:text-[24px]'>Disclaimer</h4>
+          <h4 className='d-title text-[20px] md:text-[24px]' style={{ color: darkMode ? '#ffffff' : '#333333' }}>Disclaimer</h4>
           <br />
-          <p id='modal-modal-description' className='d-subtitle text-[14px] md:text-[16px]'>
+          <p id='modal-modal-description' className='d-subtitle text-[14px] md:text-[16px]' style={{ color: darkMode ? '#ffffff' : '#333333' }}>
             I acknowledge that all transactions executed through connected smart
             contracts are irreversible and conducted solely on the applicable
             blockchain networks. I understand that using smart contracts carries
@@ -165,7 +168,7 @@ const TokenStakeListPage = () => {
             may result in loss of funds.
           </p>
           <br />
-          <p id='modal-modal-description' className='d-subtitle text-[14px] md:text-[16px]'>
+          <p id='modal-modal-description' className='d-subtitle text-[14px] md:text-[16px]' style={{ color: darkMode ? '#ffffff' : '#333333' }}>
             I understand the risks associated with entering into using Vouch
             protocol and agree with full{' '}
             <a
@@ -189,7 +192,7 @@ const TokenStakeListPage = () => {
               />
               <span className='sc-1ecf058b-0 dioEsS'></span>
             </label>
-            <div style={{ color: 'white' }} className='text-[14px]'>Do not show again</div>
+            <div style={{ color: darkMode ? '#ffffff' : '#333333' }} className='text-[14px]'>Do not show again</div>
           </div>
           <CustomButton
             mt='.18rem'

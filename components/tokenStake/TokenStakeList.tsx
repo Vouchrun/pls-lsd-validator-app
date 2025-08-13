@@ -239,10 +239,10 @@ export const TokenStakeList = () => {
         )}
       </div>
       <div className='overflow-x-auto'>
-        <div className='mt-[24px] bg-color-bg2 border-[0.01rem] border-color-border1 rounded-[.3rem] min-w-[600px]'>
+        <div className='mt-[24px] bg-color-bg2 border-[0.01rem] border-color-border1 rounded-[.3rem] min-w-[600px] overflow-hidden'>
           <div
             className={classNames(
-              'py-[15px] md:py-[20px] grid items-center font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F]',
+              'py-[15px] md:py-[20px] grid items-center font-[500] border-solid border-b-[.01rem] border-color-border1 bg-[#E2E0D0] dark:bg-[#333333]',
               robotoSemiBold.className
             )}
             style={{
@@ -428,8 +428,8 @@ export const TokenStakeList = () => {
           <select
             value={resultsPerPage}
             onChange={handleChangeResultsPerPage}
-            className='cursor-pointer px-[10px] h-[35px] inline-flex items-center justify-between rounded-[4px] border-[0.01rem] border-[#6C86AD80] bg-transparent shadow-none outline-none text-[14px]'
-            style={{ color: '#6C86AD' }}
+            className='cursor-pointer px-[10px] h-[35px] inline-flex items-center justify-between rounded-[4px] border-[0.01rem] bg-transparent shadow-none outline-none text-[14px] text-color-text2 border-color-border1'
+            
           >
             <option value={10}>10</option>
             <option value={20}>20</option>

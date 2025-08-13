@@ -79,8 +79,8 @@ export default function Validater({ nodes }: any) {
     return status === 'slashed'
       ? '🔴 Slashed'
       : status === 'inactive'
-      ? '🟡 Low Balance, Leaking'
-      : '🟢 Active, OK';
+        ? '🟡 Low Balance, Leaking'
+        : '🟢 Active, OK';
   };
 
   const getInputClassName = (isDarkMode: boolean) => {
@@ -151,7 +151,7 @@ export default function Validater({ nodes }: any) {
           <table className='w-full min-w-[800px]'>
             <thead>
               <tr>
-                <th className='bg-color-bg2 text-left font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[14px] md:text-[16px] text-color-text2 px-[30px] py-[30px]'>
+                <th className='bg-[#E2E0D0] dark:bg-[#333333] text-left font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[14px] md:text-[16px] text-color-text2 px-[30px] py-[30px]'>
                   <div className='flex items-center'>
                     Validator Node Address
                     <div className='flex items-center ml-1'>
@@ -189,10 +189,10 @@ export default function Validater({ nodes }: any) {
                     </div>
                   </div>
                 </th>
-                <th className='bg-color-bg2 font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[14px] md:text-[16px] text-color-text2 px-[30px] py-[30px]'>
+                <th className='bg-[#E2E0D0] dark:bg-[#333333] font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[14px] md:text-[16px] text-color-text2 px-[30px] py-[30px]'>
                   Node Health
                 </th>
-                <th className='bg-color-bg2 font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[14px] md:text-[16px] text-color-text2 px-[30px] py-[30px]'>
+                <th className='bg-[#E2E0D0] dark:bg-[#333333] font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[14px] md:text-[16px] text-color-text2 px-[30px] py-[30px]'>
                   Active Validators
                 </th>
               </tr>
@@ -204,9 +204,15 @@ export default function Validater({ nodes }: any) {
           <input
             type='text'
             placeholder='Enter Trusted Node Address'
+
             value={voterAddress}
             onChange={(e) => setVoterAddress(e.target.value)}
-            className={getInputClassName(darkMode)}
+            // className={getInputClassName(darkMode)}
+            className={
+              darkMode
+                ? 'w-full rounded-[35px] bg-[#1B1B1F] text-center h-[42px] border-[0.01rem] border-color-border1 text-[#8E9397] text-[14px] outline-none focus:border-[#ff4400]/30'
+                : 'w-full rounded-[35px] bg-[#fff] text-center h-[42px] border-[0.01rem] border-color-border1 text-[#7D794F] text-[14px] outline-none focus:border-[#ff4400]/30'
+            }
           />
           <div className='mt-[10px] max-w-[100%] mx-auto flex items-center gap-1 w-[100%] justify-center'>
             <CustomButton

@@ -29,7 +29,7 @@ export const ChooseTypeGuide = () => {
         />
       </a>
 
-      <div className="mt-[.12rem] rounded-[.16rem] w-full bg-[#6C86AD14] p-[.2rem] h-[3.67rem]">
+      <div className="mt-[.12rem] rounded-[.16rem] w-full bg-color-bg2 p-[.2rem] h-[3.67rem]">
         <div
           className={classNames(
             "text-color-text2 text-[16px]",

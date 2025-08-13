@@ -134,7 +134,6 @@ body {
   }
 
   .d-title {
-    color: rgb(255, 255, 255);
     font-size: 24px;
     font-style: normal;
     font-weight: 700;
@@ -144,13 +143,13 @@ body {
   }
 
   .d-subtitle {
-    color: rgb(255, 255, 255);
     font-size: 16px;
     font-style: normal;
     font-weight: 500;
     line-height: 150%;
     text-align: left;
   }
+  
 }
 
 select option {
@@ -160,3 +159,4 @@ select option {
 input[type='checkbox'] {
   accent-color: #5a5de0; /* Customize the checked color */
 }
+.dark button {color: #7D794F;}
