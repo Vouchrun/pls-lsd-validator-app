@@ -8,7 +8,7 @@ import { MyDataTabs } from 'components/myData/MyDataTabs';
 import { robotoBold } from 'config/font';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
-import tokenStakeIcon from 'public/images/token_stake.svg';
+import tokenStakeIcon from 'public/images/vPLS_trans.svg';
 import { useMemo, useState } from 'react';
 import { getTokenName } from 'utils/configUtils';
 
