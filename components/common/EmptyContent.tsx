@@ -19,14 +19,14 @@ export const EmptyContent = (props: EmptyContentProps) => {
         <div
           className="relative"
           style={{
-            width: props.size || ".4rem",
-            height: props.size || ".4rem",
+            width: props.size || "40px",
+            height: props.size || "40px",
           }}
         >
           <Image src={empty} alt="empty" layout="fill" />
         </div>
         {!props.hideText && (
-          <div className="mt-[.16rem] text-[.14rem] text-color-text2">
+          <div className="mt-[16px] text-[14px] text-[#6C86AD]">
             There is Nothing Here
           </div>
         )}

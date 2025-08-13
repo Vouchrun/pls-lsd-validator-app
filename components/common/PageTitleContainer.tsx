@@ -14,8 +14,8 @@ export const PageTitleContainer = (props: Props) => {
   return (
     <div
       className={classNames(
-        'flex justify-center ',
-        showBackButton ? 'h-[1.56rem]' : 'h-[1.16rem]'
+        'flex justify-center pb-[15px]',
+        showBackButton ? 'h-auto' : 'h-auto'
       )}
       style={{
         background: darkMode
@@ -26,7 +26,7 @@ export const PageTitleContainer = (props: Props) => {
     >
       <div className='w-smallContentW xl:w-contentW 2xl:w-largeContentW flex flex-col'>
         {showBackButton && onClickBack && (
-          <div className='mb-[.24rem]'>
+          <div className='mb-[24px]'>
             <BackNavigation onClick={onClickBack} />
           </div>
         )}

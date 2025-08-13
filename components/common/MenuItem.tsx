@@ -19,7 +19,7 @@ export const MenuItem = (props: Props) => {
       }}
     >
       <div
-        className="text-color-text2 text-[.16rem] font-[500] flex-1"
+        className="text-[#6C86AD] text-[16px] font-[500] flex-1"
         style={{
           maxLines: 1,
           overflow: "hidden",
@@ -33,7 +33,7 @@ export const MenuItem = (props: Props) => {
         {props.text}
       </div>
 
-      <Icomoon icon="right" size=".12rem" color="#6C86AD" />
+      <Icomoon icon="right" size="12px" color="#6C86AD" />
     </div>
   );
 };

@@ -62,7 +62,7 @@ export const CustomButton = (props: ButtonProps) => {
         { 'opacity-50': props.loading },
         'cursor-pointer overflow-hidden',
         !props.className || props.className?.indexOf('px-') < 0
-          ? 'px-[.28rem]'
+          ? 'px-[28px]'
           : '',
         props.className || '',
         'active:opacity-50'
@@ -70,15 +70,15 @@ export const CustomButton = (props: ButtonProps) => {
       style={{
         ...(props.width ? { width: props.width } : {}),
         color: props.textColor || textColor,
-        height: props.height || '.56rem',
+        height: props.height || '48px',
         marginTop: props.mt || '0',
-        fontSize: props.fontSize || '14px',
+        fontSize: props.fontSize || '16px',
         // cursor: props.loading || props.disabled ? "default" : "pointer",
         borderRadius: props.radius || '.3rem',
-        borderTopLeftRadius: props.tlRaidus || props.radius || '.3rem',
-        borderTopRightRadius: props.trRaidus || props.radius || '.3rem',
-        borderBottomLeftRadius: props.blRaidus || props.radius || '.3rem',
-        borderBottomRightRadius: props.brRaidus || props.radius || '.3rem',
+        borderTopLeftRadius: props.tlRaidus || props.radius || '30px',
+        borderTopRightRadius: props.trRaidus || props.radius || '30px',
+        borderBottomLeftRadius: props.blRaidus || props.radius || '30px',
+        borderBottomRightRadius: props.brRaidus || props.radius || '30px',
         ...(props.type !== 'stroke'
           ? {
               border: props.hasBorder

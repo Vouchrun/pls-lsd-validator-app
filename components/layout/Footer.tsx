@@ -8,13 +8,13 @@ export default function Footer() {
   const { darkMode, unreadNoticeFlag } = useAppSlice();
   return (
     <div className='w-smallContentW xl:w-contentW 2xl:w-largeContentW mx-auto pb-1 flex flex-row justify-between items-center'>
-      <div style={{ color: darkMode ? '#fff' : '#000' }}>v1.0.7</div>
+      <div style={{ color: darkMode ? '#fff' : '#000' }} className='text-[14px]'>v1.0.7</div>
       <a
         href='https://www.stafi.io/'
         target='_blank'
         className='flex items-center justify-end'
       >
-        <div style={{ color: darkMode ? '#fff' : '#000' }}>
+        <div style={{ color: darkMode ? '#fff' : '#000' }} className='text-[14px]'>
           Powered by StaFi LSaaS
         </div>
         <Image

@@ -6,27 +6,19 @@ export const STORAGE_KEY_NOTICE = "eth_lsd_notice_v2";
 export const STORAGE_KEY_UNREAD_NOTICE = "eth_lsd_unread_notice_v2";
 export const STORAGE_KEY_UNBOND_RECORDS = "eth_lsd_unbond_records";
 export const STORAGE_KEY_DISCONNECT_METAMASK = "eth_lsd_disconnect_metamask";
-export const STORAGE_KEY_CUSTOM_RPC = "eth_lsd_custom_rpc";
 
 const tokenName = getTokenName();
 
 export function saveStorage(key: string, value: string) {
-  if (typeof window !== 'undefined') {
-    window.localStorage.setItem(key, value);
-  }
+  localStorage.setItem(key, value);
 }
 
 export function getStorage(key: string): string | null {
-  if (typeof window !== 'undefined') {
-    return window.localStorage.getItem(key);
-  }
-  return null;
+  return localStorage.getItem(key);
 }
 
 export function removeStorage(key: string) {
-  if (typeof window !== 'undefined') {
-    window.localStorage.removeItem(key);
-  }
+  localStorage.removeItem(key);
 }
 
 export function addRTokenUnbondRecords(record: any) {

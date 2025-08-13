@@ -49,7 +49,7 @@ export const ConfirmModal = (props: ConfirmModalProps) => {
           )}
         >
           <div
-            className="self-end mr-[.24rem] mt-[.24rem] cursor-pointer"
+            className="self-end mr-[.24rem] mt-[24px] cursor-pointer"
             onClick={props.onClose}
           >
             <Icomoon icon="close" size=".16rem" />
@@ -68,7 +68,7 @@ export const ConfirmModal = (props: ConfirmModalProps) => {
             {props.content}
           </div>
 
-          <div className="mt-[.24rem] px-[.24rem]">
+          <div className="mt-[24px] px-[.24rem]">
             <CustomButton height=".56rem" onClick={props.onConfirm}>
               {props.confirmText}
             </CustomButton>

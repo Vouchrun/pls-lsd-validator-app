@@ -43,145 +43,151 @@ export const MyDataAssets = () => {
   }, [availableExitDeposit]);
 
   return (
-    <div className='mt-[.24rem] bg-color-bg2 border-[0.01rem] border-color-border1 rounded-[.3rem]'>
-      <div
-        className='h-[.7rem] grid items-center font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F]'
-        style={{
-          gridTemplateColumns: '20% 20% 20% 20% 20%',
-        }}
-      >
-        <div className='flex items-center justify-center text-[.16rem] text-color-text2'></div>
-        <div className='flex items-center justify-center text-[.16rem] text-color-text2'>
-          Self-deposited {getTokenName()}
-        </div>
-        <div className='flex items-center justify-center text-[.16rem] text-color-text2'>
-          Total Managed {getTokenName()}
-        </div>
-        <div className='flex items-center justify-center text-[.16rem] text-color-text2'>
-          My Reward {getTokenName()}
-        </div>
-        <div className='flex items-center justify-center text-[.16rem] text-color-text2'>
-          Slashed {getTokenName()}
-        </div>
-      </div>
+    <>
+      <div className='overflow-x-auto'>
+        <div className='mt-[24px] bg-color-bg2 border-[0.01rem] border-color-border1 rounded-[.3rem] min-w-[700px]'>
 
-      <div
-        className={classNames(
-          'h-[.74rem] grid items-center font-[500]',
-          'bg-bgPage/50 dark:bg-bgPageDark/50'
-        )}
-        style={{
-          gridTemplateColumns: '20% 20% 20% 20% 20%',
-        }}
-      >
-        <div className='flex items-center justify-center text-[.16rem] text-color-text1'>
           <div
-            className='cursor-pointer mx-[.24rem] flex-1 h-[.42rem] flex items-center justify-between bg-color-bgPage rounded-[.6rem] border-[0.01rem] border-color-border1'
-            onClick={() => {
-              openLink(getLsdAppUrl());
+            className='py-[15px] md:py-[20px] grid items-center font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F]'
+            style={{
+              gridTemplateColumns: '20% 20% 20% 20% 20%',
             }}
           >
-            <div className='flex items-center'>
-              <div className='w-[.34rem] h-[.34rem] min-w-[.34rem] relative ml-[.04rem]'>
-                <Image src={getLsdTokenIcon()} alt='logo' layout='fill' />
-              </div>
+            <div className='flex items-center justify-center text-[14px] md:text-[16px] text-color-text2'></div>
+            <div className='flex items-center justify-center text-[14px] md:text-[16px] text-color-text2'>
+              Self-deposited {getTokenName()}
+            </div>
+            <div className='flex items-center justify-center text-[14px] md:text-[16px] text-color-text2'>
+              Total Managed {getTokenName()}
+            </div>
+            <div className='flex items-center justify-center text-[14px] md:text-[16px] text-color-text2'>
+              My Reward {getTokenName()}
+            </div>
+            <div className='flex items-center justify-center text-[14px] md:text-[16px] text-color-text2'>
+              Slashed {getTokenName()}
+            </div>
+          </div>
 
-              <div className='ml-[.08rem] text-[.16rem] text-color-text1'>
-                {getLsdTokenName()}
+          <div
+            className={classNames(
+              'py-[15px] md:py-[20px] grid items-center font-[500]',
+              'bg-bgPage/50 dark:bg-bgPageDark/50'
+            )}
+            style={{
+              gridTemplateColumns: '20% 20% 20% 20% 20%',
+            }}
+          >
+            <div className='flex items-center justify-center text-[.16rem] text-color-text1'>
+              <div
+                className='cursor-pointer mx-[.24rem] flex-1 h-[42px] flex items-center justify-between bg-color-bgPage rounded-[.6rem] border-[0.01rem] border-color-border1'
+                onClick={() => {
+                  openLink(getLsdAppUrl());
+                }}
+              >
+                <div className='flex items-center'>
+                  <div className='w-[34px] h-[34px] min-w-[34px] relative ml-[.04rem]'>
+                    <Image src={getLsdTokenIcon()} alt='logo' layout='fill' />
+                  </div>
+
+                  <div className='ml-[.08rem] text-[16px] text-color-text1'>
+                    {getLsdTokenName()}
+                  </div>
+                </div>
+
+                <div className='mr-[.16rem] -rotate-90'>
+                  <Icomoon icon='arrow-down' size='16px' color='#848B97' />
+                </div>
               </div>
             </div>
 
-            <div className='mr-[.16rem] -rotate-90'>
-              <Icomoon icon='arrow-down' size='.1rem' color='#848B97' />
+            <div className='flex items-center justify-center text-[16px] text-color-text1'>
+              {selfDepositedToken === undefined ? (
+                <DataLoading height='16px' />
+              ) : (
+                formatNumber(selfDepositedToken, { fixedDecimals: false })
+              )}
+            </div>
+            <div className='flex items-center justify-center text-[16px] text-color-text1'>
+              {totalManagedToken === undefined ? (
+                <DataLoading height='16px' />
+              ) : (
+                formatNumber(totalManagedToken, { fixedDecimals: false })
+              )}
+            </div>
+            <div className='flex items-center justify-center text-[16px] text-color-text1'>
+              {myRewardTokenAmount === undefined ? (
+                <DataLoading height='16px' />
+              ) : (
+                formatNumber(myRewardTokenAmount, { fixedDecimals: false })
+              )}
+            </div>
+            <div className='flex items-center justify-center text-[16px] text-error'>
+              --
             </div>
           </div>
-        </div>
 
-        <div className='flex items-center justify-center text-[.16rem] text-color-text1'>
-          {selfDepositedToken === undefined ? (
-            <DataLoading height='.16rem' />
-          ) : (
-            formatNumber(selfDepositedToken, { fixedDecimals: false })
-          )}
-        </div>
-        <div className='flex items-center justify-center text-[.16rem] text-color-text1'>
-          {totalManagedToken === undefined ? (
-            <DataLoading height='.16rem' />
-          ) : (
-            formatNumber(totalManagedToken, { fixedDecimals: false })
-          )}
-        </div>
-        <div className='flex items-center justify-center text-[.16rem] text-color-text1'>
-          {myRewardTokenAmount === undefined ? (
-            <DataLoading height='.16rem' />
-          ) : (
-            formatNumber(myRewardTokenAmount, { fixedDecimals: false })
-          )}
-        </div>
-        <div className='flex items-center justify-center text-[.16rem] text-error'>
-          --
-        </div>
-      </div>
+          <div className='my-[.32rem] flex px-[.4rem]'>
+            <div className='flex-1 mx-[.28rem]'>
+              <CustomButton
+                loading={claimRewardsLoading}
+                disabled={!myRewardTokenAmount || Number(myRewardTokenAmount) <= 0}
+                onClick={() => {
+                  setClaimRewardModalVisible(true);
+                }}
+              >
+                Claim Rewards
+              </CustomButton>
+            </div>
 
-      <div className='my-[.32rem] flex px-[.4rem]'>
-        <div className='flex-1 mx-[.28rem]'>
-          <CustomButton
-            loading={claimRewardsLoading}
-            disabled={!myRewardTokenAmount || Number(myRewardTokenAmount) <= 0}
-            onClick={() => {
-              setClaimRewardModalVisible(true);
-            }}
-          >
-            Claim Rewards
-          </CustomButton>
-        </div>
+            <div className='flex-1 mx-[.28rem]'>
+              <CustomButton
+                type='stroke'
+                onClick={() => {
+                  openLink(
+                    'https://vouch.run/docs/validator_guide/getting_started.html'
+                  );
+                }}
+              >
+                Exit Staking
+              </CustomButton>
+            </div>
 
-        <div className='flex-1 mx-[.28rem]'>
-          <CustomButton
-            type='stroke'
-            onClick={() => {
-              openLink(
-                'https://vouch.run/docs/validator_guide/getting_started.html'
-              );
-            }}
-          >
-            Exit Staking
-          </CustomButton>
-        </div>
-
-        {showWithdraw && (
-          <div className='flex-1 mx-[.28rem]'>
-            <CustomButton
-              loading={withdrawLoading}
-              onClick={() => {
-                dispatch(
-                  withdrawValidatorEth(
-                    writeContractAsync,
-                    ipfsMyRewardInfo,
-                    availableExitDeposit || '0',
-                    myRewardTokenAmount || '0',
-                    false
-                  )
-                );
-              }}
-            >
-              Withdraw
-            </CustomButton>
+            {showWithdraw && (
+              <div className='flex-1 mx-[.28rem]'>
+                <CustomButton
+                  loading={withdrawLoading}
+                  onClick={() => {
+                    dispatch(
+                      withdrawValidatorEth(
+                        writeContractAsync,
+                        ipfsMyRewardInfo,
+                        availableExitDeposit || '0',
+                        myRewardTokenAmount || '0',
+                        false
+                      )
+                    );
+                  }}
+                >
+                  Withdraw
+                </CustomButton>
+              </div>
+            )}
           </div>
-        )}
+
+          <ClaimRewardModal
+            ipfsMyRewardInfo={ipfsMyRewardInfo}
+            myRewardTokenAmount={myRewardTokenAmount}
+            totalManagedAmount={totalManagedToken}
+            myShareAmount={myShareAmount}
+            mySharePercentage={mySharePercentage}
+            visible={claimRewardModalVisible}
+            onClose={() => {
+              setClaimRewardModalVisible(false);
+            }}
+          />
+        </div>
       </div>
 
-      <ClaimRewardModal
-        ipfsMyRewardInfo={ipfsMyRewardInfo}
-        myRewardTokenAmount={myRewardTokenAmount}
-        totalManagedAmount={totalManagedToken}
-        myShareAmount={myShareAmount}
-        mySharePercentage={mySharePercentage}
-        visible={claimRewardModalVisible}
-        onClose={() => {
-          setClaimRewardModalVisible(false);
-        }}
-      />
-    </div>
+    </>
   );
 };

@@ -31,7 +31,7 @@ export const DrawerNoticeList = (props: Props) => {
   };
 
   return (
-    <div className="pt-[.24rem]">
+    <div className="pt-[24px]">
       {noticeList.length === 0 && <EmptyContent mt="1rem" />}
       {noticeList.map((notice, index) => (
         <div key={notice.id}>

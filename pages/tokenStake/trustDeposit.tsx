@@ -175,10 +175,10 @@ const TrustDepositPage = () => {
         }}
       />
 
-      <div className='flex mt-[.24rem] items-start'>
-        <CardContainer width='6.2rem' title='Trusted Validator Deposit'>
+      <div className='flex mt-[24px] items-start flex-col lg:flex-row'>
+        <CardContainer width='100%' title='Trusted Validator Deposit'>
           <div className='flex flex-col items-center pb-[.24rem]'>
-            <div className='mt-[.32rem] flex items-center text-[.14rem]'>
+            <div className='mt-[.32rem] flex items-center flex-col lg:flex-row text-[14px]'>
               <div
                 className={classNames(
                   robotoBold.className,
@@ -187,7 +187,7 @@ const TrustDepositPage = () => {
               >
                 <div className='mr-[.04rem]'>
                   {unmatchedEth === undefined ? (
-                    <DataLoading height='.14rem' />
+                    <DataLoading height='14px' />
                   ) : (
                     formatNumber(unmatchedEth, { hideDecimalsForZero: true })
                   )}
@@ -201,7 +201,7 @@ const TrustDepositPage = () => {
               </div>
 
               <div
-                className='ml-[.12rem] flex items-center text-[.14rem] text-color-text2 cursor-pointer'
+                className='ml-[12px] flex items-center text-[14px] text-color-text2 cursor-pointer'
                 onClick={() => {
                   router.push('/poolData');
                 }}
@@ -209,7 +209,7 @@ const TrustDepositPage = () => {
                 <div className='mr-[.06rem]'>Pool Status</div>
                 <Icomoon
                   icon='arrow-right'
-                  size='.13rem'
+                  size='13px'
                   color={darkMode ? '#ffffff80' : '#6C86AD'}
                 />
               </div>
@@ -226,11 +226,11 @@ const TrustDepositPage = () => {
                 >
                   <div>
                     <div className='flex flex-col items-center'>
-                      <div className='w-[.5rem] h-[.6rem] relative'>
+                      <div className='w-[50px] h-[60px] relative'>
                         <Image src={uploadIcon} alt='upload' layout='fill' />
                       </div>
 
-                      <div className='text-color-text2 text-[.14rem] mt-[.15rem]'>
+                      <div className='text-color-text2 text-[14px] mt-[15px]'>
                         Drag and drop file
                       </div>
                     </div>
@@ -262,7 +262,7 @@ const TrustDepositPage = () => {
 
                     <div className='ml-[.2rem]'>
                       <div
-                        className='text-color-text2 text-[.12rem] mr-[.4rem] leading-normal'
+                        className='text-color-text2 text-[12px] mr-[.4rem] leading-normal'
                         style={{
                           maxLines: 2,
                           overflow: 'hidden',
@@ -358,7 +358,7 @@ const TrustDepositPage = () => {
 
             <div className='self-stretch mx-[.24rem] mt-[.46rem]'>
               <CustomButton
-                height='.56rem'
+                height='48px'
                 loading={ethTxLoading}
                 disabled={
                   !!metaMaskAccount &&
@@ -455,7 +455,7 @@ const TrustDepositPage = () => {
             </div>
 
             {validatorKeys.length > 0 && (
-              <div className='mt-[.24rem] text-color-text2 text-[.14rem]'>
+              <div className='mt-[24px] text-color-text2 text-[.14rem]'>
                 <span className={classNames('text-color-text1')}>
                   {validatorKeys.length} Node Number
                 </span>{' '}
@@ -465,7 +465,7 @@ const TrustDepositPage = () => {
           </div>
         </CardContainer>
 
-        <div className='ml-[.85rem]'>
+        <div className='w-full lg:pl-[50px] mt-2 lg:mt-0'>
           <DepositGuide />
         </div>
       </div>

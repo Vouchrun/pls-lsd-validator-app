@@ -29,7 +29,7 @@ export default function ProtocolRevenue() {
 
   return (
     <div className='bg-color-bg2 border-[0.01rem] border-color-border1 rounded-[.3rem]'>
-      <div className='h-[.7rem] flex items-center justify-center font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[16px] sm:text-[.16rem] text-color-text2'>
+      <div className='py-[15px] md:py-[20px] flex items-center justify-center font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[16px] text-color-text2'>
         Protocol Revenue
       </div>
       <div
@@ -41,8 +41,8 @@ export default function ProtocolRevenue() {
         <div
           className={
             darkMode
-              ? 'flex items-center justify-between px-[20px] py-[8px] border-b-[0.01rem] border-[#303745] text-[12px] sm:text-[.16rem] text-color-text1'
-              : 'flex items-center justify-between px-[20px] py-[5px] border-b-[0.01rem] border-[#ffffff] text-[12px] sm:text-[.16rem] text-color-text1'
+              ? 'flex items-center justify-between px-[20px] py-[8px] border-b-[0.01rem] border-[#303745] text-[14px] text-color-text1'
+              : 'flex items-center justify-between px-[20px] py-[5px] border-b-[0.01rem] border-[#ffffff] text-[14px] text-color-text1'
           }
         >
           <div className='text-color-text2'>Total Platform Commissions</div>
@@ -56,8 +56,8 @@ export default function ProtocolRevenue() {
         <div
           className={
             darkMode
-              ? 'flex items-center justify-between px-[20px] py-[8px] border-b-[0.01rem] border-[#303745] text-[12px] sm:text-[.16rem] text-color-text1'
-              : 'flex items-center justify-between px-[20px] py-[5px] border-b-[0.01rem] border-[#ffffff] text-[12px] sm:text-[.16rem] text-color-text1'
+              ? 'flex items-center justify-between px-[20px] py-[8px] border-b-[0.01rem] border-[#303745] text-[14px] text-color-text1'
+              : 'flex items-center justify-between px-[20px] py-[5px] border-b-[0.01rem] border-[#ffffff] text-[14px] text-color-text1'
           }
         >
           <div className='text-color-text2'>Platform Commissions Withdrawn</div>
@@ -71,8 +71,8 @@ export default function ProtocolRevenue() {
         <div
           className={
             darkMode
-              ? 'flex items-center justify-between px-[20px] py-[8px] border-b-[0.01rem] border-[#303745] text-[12px] sm:text-[.16rem] text-color-text1'
-              : 'flex items-center justify-between px-[20px] py-[5px] border-b-[0.01rem] border-[#ffffff] text-[12px] sm:text-[.16rem] text-color-text1'
+              ? 'flex items-center justify-between px-[20px] py-[8px] border-b-[0.01rem] border-[#303745] text-[14px] text-color-text1'
+              : 'flex items-center justify-between px-[20px] py-[5px] border-b-[0.01rem] border-[#ffffff] text-[14px] text-color-text1'
           }
         >
           <div className='text-color-text2'>Total Stack Commissions</div>
@@ -86,8 +86,8 @@ export default function ProtocolRevenue() {
         <div
           className={
             darkMode
-              ? 'flex items-center justify-between px-[20px] py-[8px] border-b-[0.01rem] border-[#303745] text-[12px] sm:text-[.16rem] text-color-text1'
-              : 'flex items-center justify-between px-[20px] py-[5px] border-b-[0.01rem] border-[#ffffff] text-[12px] sm:text-[.16rem] text-color-text1'
+              ? 'flex items-center justify-between px-[20px] py-[8px] border-b-[0.01rem] border-[#303745] text-[14px] text-color-text1'
+              : 'flex items-center justify-between px-[20px] py-[5px] border-b-[0.01rem] border-[#ffffff] text-[14px] text-color-text1'
           }
         >
           <div className='text-color-text2'>Fee Pool Balance</div>
@@ -101,8 +101,8 @@ export default function ProtocolRevenue() {
         <div
           className={
             darkMode
-              ? 'flex items-center justify-between px-[20px] py-[8px] border-b-[0.01rem] border-[#303745] text-[12px] sm:text-[.16rem] text-color-text1'
-              : 'flex items-center justify-between px-[20px] py-[5px] border-b-[0.01rem] border-[#ffffff] text-[12px] sm:text-[.16rem] text-color-text1'
+              ? 'flex items-center justify-between px-[20px] py-[8px] border-b-[0.01rem] border-[#303745] text-[14px] text-color-text1'
+              : 'flex items-center justify-between px-[20px] py-[5px] border-b-[0.01rem] border-[#ffffff] text-[14px] text-color-text1'
           }
         >
           <div className='text-color-text2'>DAO Treasury Account (DTA)</div>
@@ -116,8 +116,8 @@ export default function ProtocolRevenue() {
         <div
           className={
             darkMode
-              ? 'flex items-center justify-between px-[20px] py-[8px] border-b-[0.01rem] border-[#303745] text-[12px] sm:text-[.16rem] text-color-text1'
-              : 'flex items-center justify-between px-[20px] py-[5px] border-b-[0.01rem] border-[#ffffff] text-[12px] sm:text-[.16rem] text-color-text1'
+              ? 'flex items-center justify-between px-[20px] py-[8px] border-b-[0.01rem] border-[#303745] text-[14px] text-color-text1'
+              : 'flex items-center justify-between px-[20px] py-[5px] border-b-[0.01rem] border-[#ffffff] text-[14px] text-color-text1'
           }
         >
           <div className='text-color-text2'>Master Validator Account (MVA)</div>
@@ -131,8 +131,8 @@ export default function ProtocolRevenue() {
         <div
           className={
             darkMode
-              ? 'flex items-center justify-between px-[20px] py-[8px] border-b-[0.01rem] border-[#303745] text-[12px] sm:text-[.16rem] text-color-text1'
-              : 'flex items-center justify-between px-[20px] py-[5px] border-b-[0.01rem] border-[#ffffff] text-[12px] sm:text-[.16rem] text-color-text1'
+              ? 'flex items-center justify-between px-[20px] py-[8px] border-b-[0.01rem] border-[#303745] text-[14px] text-color-text1'
+              : 'flex items-center justify-between px-[20px] py-[5px] border-b-[0.01rem] border-[#ffffff] text-[14px] text-color-text1'
           }
         >
           <div className='text-color-text2'>SAFU Account (SAFU)</div>
@@ -143,7 +143,7 @@ export default function ProtocolRevenue() {
             })}
           </div>
         </div>
-        <div className='text-[12px] sm:text-[.16rem] text-color-text1 mt-1 text-center mb-[10px]'>
+        <div className='text-[14px] text-color-text1 mt-1 text-center mb-[10px]'>
           <span className='text-color-text2'>Withdrawable Balance:</span>{' '}
           <span className={robotoSemiBold.className}>
             {millify(totalPlatformCommission - totalPlatformClaimedAmount, {
@@ -160,14 +160,14 @@ export default function ProtocolRevenue() {
           value={distributionAddress}
           className={
             darkMode
-              ? 'w-full rounded-[35px] bg-[#1B1B1F] text-center h-[42px] border-[0.01rem] border-[#6C86AD80] text-white text-[12px] sm:text-[.16rem]'
-              : 'w-full rounded-[35px] bg-[#fff] text-center h-[42px] border-[0.01rem] border-[#6C86AD80] text-black text-[12px] sm:text-[.16rem]'
+              ? 'w-full rounded-[35px] bg-[#1B1B1F] text-center h-[42px] border-[0.01rem] border-[#6C86AD80] text-white text-[14px]'
+              : 'w-full rounded-[35px] bg-[#fff] text-center h-[42px] border-[0.01rem] border-[#6C86AD80] text-black text-[14px]'
           }
         />
         <div className='mt-[10px] max-w-[250px] mx-auto'>
           <CustomButton
             type='small'
-            height='35px'
+            height='42px'
             disabled={admin !== metaMaskAccount}
             onClick={() => {
               dispatch(withDrawAdmin(writeContractAsync, distributionAddress));

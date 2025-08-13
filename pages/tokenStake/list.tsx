@@ -53,13 +53,13 @@ const TokenStakeListPage = () => {
     <div>
       {/* <PageTitleContainer>
         <div className="h-full flex items-center w-smallContentW xl:w-contentW 2xl:w-largeContentW">
-          <div className="w-[.68rem] h-[.68rem] relative">
+          <div className="w-[48px] h-[48px] md:w-[68px] md:h-[68px] relative">
             <Image src={tokenStakeIcon} layout="fill" alt="icon" />
           </div>
           <div
             className={classNames(
               robotoBold.className,
-              "text-[.34rem] ml-[.12rem] text-color-text1"
+              "text-[24px] md:text-[34px] ml-[12px] text-color-text1"
             )}
           >
             Token Stake
@@ -71,10 +71,10 @@ const TokenStakeListPage = () => {
         <TokenStakeList />
 
         <div className={classNames('mt-[.56rem] mr-[.16rem] pb-[.56rem]')}>
-          <div className='mt-[.16rem] text-[.24rem] text-color-text1'>FAQ</div>
+          <div className='mt-[.16rem] text-[18px] md:text-[24px] text-color-text1'>FAQ</div>
 
           <div
-            className='grid items-start mt-[.16rem]'
+            className='block sm:grid items-start mt-[.16rem]'
             style={{
               gridTemplateColumns: '48% 48%',
               columnGap: '4%',
@@ -82,29 +82,31 @@ const TokenStakeListPage = () => {
             }}
           >
             <FaqItem text='What is the maximum number validators I can run?'>
-              <div>
-              In short you can run as many as you wish, however;
+              <div className='text-[14px]'>
+                In short you can run as many as you wish, however;
               </div>
-              
-              <div className='mt-faqGap'>
-              When running validators in Vouch you can deposit and stake multiple
-              Validators from the same deposit address (i.e. Connected Account).
-              In Vouch we call this the "Node Addr". It is strongly advised to NOT  
-              exceed 300 pubkeys per connected account, while this is a soft limit, 
-              for security and performance reasons you should use muliple connected
-              accounts if you intend on running more than 300 validators.
+
+              <div className='mt-faqGap text-[14px]'>
+                When running validators in Vouch you can deposit and stake multiple
+                Validators from the same deposit address (i.e. Connected Account).
+                In Vouch we call this the "Node Addr". It is strongly advised to NOT
+                exceed 300 pubkeys per connected account, while this is a soft limit,
+                for security and performance reasons you should use muliple connected
+                accounts if you intend on running more than 300 validators.
               </div>
 
             </FaqItem>
 
             <FaqItem text='What are the commissions and fees associated with staking PLS?'>
-              Staking Reward Commission: 10% of your staking reward. 5% will be
-              allocated to the Vouch DAO, 5% will be allocated to validator
-              Nodes (Operators).
+              <div className='text-[14px]'>
+                Staking Reward Commission: 10% of your staking reward. 5% will be
+                allocated to the Vouch DAO, 5% will be allocated to validator
+                Nodes (Operators).
+              </div>
             </FaqItem>
-            
+
             <FaqItem text='What are the factors that affect the staking rewards?'>
-              <div>
+              <div className='text-[14px]'>
                 Staking rewards in the Vouch protocol are influenced by various
                 factors including the total amount of native tokens staked and
                 redeemed, the staking rewards earned, slash occurrences,
@@ -118,13 +120,13 @@ const TokenStakeListPage = () => {
                 rewards.
               </div>
 
-              <div className='mt-faqGap'>
+              <div className='mt-faqGap text-[14px]'>
                 To learn more about how staking rewards are calculated, please
                 read:
               </div>
 
               <a
-                className='block mt-faqGap text-color-link'
+                className='block mt-faqGap text-color-link text-[14px]'
                 href='https://vouch.run/docs/introduction/vPLS_Token.html'
                 target='_blank'
                 rel='noreferrer'
@@ -134,13 +136,15 @@ const TokenStakeListPage = () => {
             </FaqItem>
 
             <FaqItem text='Bulk Deposit and Staking Limits?'>
-              Vouch lets you desposit and stake multiple validators in a single 
-              transaction, however you can hit limits doing too many at once. 
-              As you will need to sign a long transaction wallets etc impose a
-              finite limit on the legnth of such messages. If you work on approx
-              40 deposits max in a single transaction you should be fine. 
-            </FaqItem>          
-            </div>
+              <div className='text-[14px]'>
+                Vouch lets you desposit and stake multiple validators in a single
+                transaction, however you can hit limits doing too many at once.
+                As you will need to sign a long transaction wallets etc impose a
+                finite limit on the legnth of such messages. If you work on approx
+                40 deposits max in a single transaction you should be fine.
+              </div>
+            </FaqItem>
+          </div>
         </div>
       </div>
 
@@ -151,9 +155,9 @@ const TokenStakeListPage = () => {
         aria-describedby='modal-modal-description'
       >
         <Box sx={style}>
-          <h4 className='d-title'>Disclaimer</h4>
+          <h4 className='d-title text-[20px] md:text-[24px]'>Disclaimer</h4>
           <br />
-          <p id='modal-modal-description' className='d-subtitle'>
+          <p id='modal-modal-description' className='d-subtitle text-[14px] md:text-[16px]'>
             I acknowledge that all transactions executed through connected smart
             contracts are irreversible and conducted solely on the applicable
             blockchain networks. I understand that using smart contracts carries
@@ -161,7 +165,7 @@ const TokenStakeListPage = () => {
             may result in loss of funds.
           </p>
           <br />
-          <p id='modal-modal-description' className='d-subtitle'>
+          <p id='modal-modal-description' className='d-subtitle text-[14px] md:text-[16px]'>
             I understand the risks associated with entering into using Vouch
             protocol and agree with full{' '}
             <a
@@ -185,17 +189,17 @@ const TokenStakeListPage = () => {
               />
               <span className='sc-1ecf058b-0 dioEsS'></span>
             </label>
-            <div style={{ color: 'white' }}>Do not show again</div>
+            <div style={{ color: 'white' }} className='text-[14px]'>Do not show again</div>
           </div>
           <CustomButton
             mt='.18rem'
             className='mx-[.24rem]'
-            height='.56rem'
+            height='50px'
             type='primary'
             onClick={() => onConfirm()}
             border='none'
           >
-            <div className='flex items-center'>Accept</div>
+            <div className='flex items-center text-[16px]'>Accept</div>
           </CustomButton>
         </Box>
       </Modal>

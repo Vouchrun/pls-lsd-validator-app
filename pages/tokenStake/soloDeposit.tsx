@@ -163,7 +163,7 @@ const SoloDepositPage = () => {
         }}
       />
 
-      <div className='flex mt-[.24rem] items-start'>
+      <div className='flex mt-[24px] items-start'>
         <CardContainer width='6.2rem' title='Solo Validator Deposit'>
           <div className='flex flex-col items-center pb-[.24rem]'>
             <div className='mt-[.32rem] flex items-center text-[.14rem]'>
@@ -189,7 +189,7 @@ const SoloDepositPage = () => {
               </div>
 
               <div
-                className='ml-[.12rem] flex items-center text-[.14rem] text-color-text2 cursor-pointer'
+                className='ml-[12px] flex items-center text-[.14rem] text-color-text2 cursor-pointer'
                 onClick={() => {
                   router.push('/poolData');
                 }}
@@ -251,7 +251,7 @@ const SoloDepositPage = () => {
 
                     <div className='ml-[.2rem]'>
                       <div
-                        className='text-color-text2 text-[.12rem] mr-[.4rem] leading-normal'
+                        className='text-color-text2 text-[12px] mr-[.4rem] leading-normal'
                         style={{
                           maxLines: 2,
                           overflow: 'hidden',
@@ -437,7 +437,7 @@ const SoloDepositPage = () => {
             </div>
 
             {validatorKeys.length > 0 && (
-              <div className='mt-[.24rem] text-color-text2 text-[.14rem]'>
+              <div className='mt-[24px] text-color-text2 text-[.14rem]'>
                 <span className={classNames('text-color-text1')}>
                   {validatorKeys.length} Node Number
                 </span>{' '}

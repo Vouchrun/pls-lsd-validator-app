@@ -32,190 +32,193 @@ export const PoolAssets = () => {
   const networkwithdrawAddress = getNetworkWithdrawContract();
 
   return (
-    <div className='mt-[.24rem] bg-color-bg2 border-[0.01rem] border-color-border1 rounded-[.3rem] min-w-[750px]'>
-      <div
-        className='h-[.7rem] grid items-center font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F]'
-        style={{
-          gridTemplateColumns: '20% 16% 16% 16% 16% 16%',
-        }}
-      >
-        <div className='flex items-center justify-center text-[.16rem] text-color-text2'></div>
-        <div className='flex items-center justify-center text-[12px] sm:text-[.16rem] text-color-text2'>
-          Pool {getTokenName()}
-        </div>
-        <div className='flex items-center justify-center text-[12px] sm:text-[.16rem] text-color-text2'>
-          Minted {getLsdTokenName()}
-        </div>
-        <div className='flex items-center justify-center text-[12px] sm:text-[.16rem] text-color-text2'>
-          Staked {getTokenName()}
-        </div>
-        <div className='flex items-center justify-center text-[12px] sm:text-[.16rem] text-color-text2'>
-          Unmatched {getTokenName()}
-        </div>
-        <div className='flex items-center justify-center text-[12px] sm:text-[.16rem] text-color-text2'>
-          Active Validators
-        </div>
-      </div>
-
-      <div
-        className={classNames(
-          'h-[1.17rem] grid items-center font-[500]',
-          'bg-bgPage/50 dark:bg-bgPageDark/50'
-        )}
-        style={{
-          gridTemplateColumns: '20% 16% 16% 16% 16% 16%',
-        }}
-      >
-        <div className='flex items-center justify-center text-[.16rem] text-color-text1'>
-          <div
-            className='cursor-pointer mx-[.24rem] flex-1 h-[.42rem] flex items-center justify-between bg-color-bgPage rounded-[.6rem] border-[0.01rem] border-color-border1'
-            onClick={() => {
-              openLink(getLsdAppUrl());
-            }}
-          >
-            <div className='flex items-center'>
-              <div className='w-[.34rem] h-[.34rem] min-w-[.34rem] relative ml-[.04rem]'>
-                <Image src={getLsdTokenIcon()} alt='logo' layout='fill' />
-              </div>
-
-              <div className='ml-[.08rem] text-[12px] sm:text-[.16rem] text-color-text1'>
-                {getLsdTokenName()}
-              </div>
-            </div>
-
-            <div className='mr-[.16rem] -rotate-90'>
-              <Icomoon icon='arrow-down' size='.1rem' color='#848B97' />
-            </div>
+    <div className='overflow-x-auto'>
+      <div className='mt-[24px] bg-color-bg2 border-[0.01rem] border-color-border1 rounded-[.3rem] min-w-[700px]'>
+        <div
+          className='py-[15px] md:py-[20px] grid items-center font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F]'
+          style={{
+            gridTemplateColumns: '20% 16% 16% 16% 16% 16%',
+          }}
+        >
+          <div className='flex items-center justify-center text-[14px] md:text-[16px] text-color-text2'></div>
+          <div className='flex items-center justify-center text-[14px] md:text-[16px] text-color-text2'>
+            Pool {getTokenName()}
+          </div>
+          <div className='flex items-center justify-center text-[14px] md:text-[16px] text-color-text2'>
+            Minted {getLsdTokenName()}
+          </div>
+          <div className='flex items-center justify-center text-[14px] md:text-[16px] text-color-text2'>
+            Staked {getTokenName()}
+          </div>
+          <div className='flex items-center justify-center text-[14px] md:text-[16px] text-color-text2'>
+            Unmatched {getTokenName()}
+          </div>
+          <div className='flex items-center justify-center text-[14px] md:text-[16px] text-color-text2'>
+            Active Validators
           </div>
         </div>
 
-        <div className='flex items-center justify-center text-[12px] sm:text-[.16rem] text-color-text1'>
-          <div className='flex flex-col items-center'>
-            <div className={robotoSemiBold.className}>
-              {poolEth === undefined ? (
-                <DataLoading height='.16rem' />
-              ) : (
-                formatNumber(poolEth, { hideDecimalsForZero: true })
-              )}
-            </div>
-
-            <div className='text-color-text2 mt-[.24rem] hidden'>
-              -- Contracts
-            </div>
-          </div>
-        </div>
-
-        <div className='flex items-center justify-center text-[12px] sm:text-[.16rem] text-color-text1'>
-          <div className='flex flex-col items-center'>
-            <div className={robotoSemiBold.className}>
-              {mintedLsdToken === undefined ? (
-                <DataLoading height='.16rem' />
-              ) : (
-                formatNumber(mintedLsdToken, { hideDecimalsForZero: true })
-              )}
-            </div>
-
+        <div
+          className={classNames(
+            'py-[15px] md:py-[20px] grid items-center font-[500]',
+            'bg-bgPage/50 dark:bg-bgPageDark/50'
+          )}
+          style={{
+            gridTemplateColumns: '20% 16% 16% 16% 16% 16%',
+          }}
+        >
+          <div className='flex items-center justify-center text-[14px] md:text-[16px] text-color-text1'>
             <div
-              className={classNames(
-                'text-color-text2 mt-[.24rem]',
-                isSupportTokenPrice() ? '' : 'hidden'
-              )}
-            >
-              {mintedLsdTokenValue === undefined ? (
-                <DataLoading height='.16rem' />
-              ) : (
-                `$ ${formatNumber(mintedLsdTokenValue, {
-                  hideDecimalsForZero: true,
-                  decimals: 2,
-                })}`
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className='flex items-center justify-center text-[12px] sm:text-[.16rem] text-color-text1'>
-          <div className='flex flex-col items-center'>
-            <div className={robotoSemiBold.className}>
-              {stakedToken === undefined ? (
-                <DataLoading height='.16rem' />
-              ) : (
-                formatNumber(stakedToken, { hideDecimalsForZero: true })
-              )}
-            </div>
-
-            <div
-              className={classNames(
-                'text-color-text2 mt-[.24rem]',
-                isSupportTokenPrice() ? '' : 'hidden'
-              )}
-            >
-              {stakedTokenValue === undefined ? (
-                <DataLoading height='.16rem' />
-              ) : (
-                `$ ${formatNumber(stakedTokenValue, {
-                  hideDecimalsForZero: true,
-                  decimals: 2,
-                })}`
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className='flex items-center justify-center text-[12px] sm:text-[.16rem] text-color-text1'>
-          <div className='flex flex-col items-center'>
-            <div className={robotoSemiBold.className}>
-              {unmatchedEth === undefined ? (
-                <DataLoading height='.16rem' />
-              ) : (
-                formatNumber(unmatchedEth, { hideDecimalsForZero: true })
-              )}
-            </div>
-            <div className='text-color-text2 mt-[.24rem]'>
-              {formatValidatorDespositAmount} {getTokenName()} / Pool
-            </div>
-          </div>
-        </div>
-
-        <div className='flex items-center justify-center text-[12px] sm:text-[.16rem] text-color-text1'>
-          <div className='flex flex-col items-center'>
-            <div className={robotoSemiBold.className}>
-              {matchedValidators === undefined ? (
-                <DataLoading height='.16rem' />
-              ) : (
-                <>
-                  {matchedValidators}
-                  <a
-                    className='min-w-[.15rem] min-h-[.15rem] ml-[.1rem]'
-                    href={
-                      getValidatorInfoURL() +
-                      'validators?v=' +
-                      networkwithdrawAddress
-                    }
-                    target='_blank'
-                  >
-                    <Icomoon icon='share' size='.12rem' />
-                  </a>
-                </>
-              )}
-            </div>
-
-            <div
-              className='flex items-center mt-[.24rem] cursor-pointer'
+              className='cursor-pointer mx-[.24rem] flex-1 h-[42px] flex items-center justify-between bg-color-bgPage rounded-[.6rem] border-[0.01rem] border-color-border1'
               onClick={() => {
-                router.push('/tokenStake/chooseType');
+                openLink(getLsdAppUrl());
               }}
             >
-              <div className='mr-[.06rem]'>Apply For Validator</div>
+              <div className='flex items-center'>
+                <div className='w-[34px] h-[34px] min-w-[34px] relative ml-[.04rem]'>
+                  <Image src={getLsdTokenIcon()} alt='logo' layout='fill' />
+                </div>
 
-              <Icomoon
-                icon='right'
-                color={darkMode ? '#ffffff80' : '#6C86AD'}
-                size='.12rem'
-              />
+                <div className='ml-[.08rem] text-[14px] md:text-[16px] text-color-text1'>
+                  {getLsdTokenName()}
+                </div>
+              </div>
+
+              <div className='mr-[16px] -rotate-90'>
+                <Icomoon icon='arrow-down' size='10px' color='#848B97' />
+              </div>
+            </div>
+          </div>
+
+          <div className='flex items-center justify-center text-[14px] md:text-[16px] text-color-text1'>
+            <div className='flex flex-col items-center'>
+              <div className={robotoSemiBold.className}>
+                {poolEth === undefined ? (
+                  <DataLoading height='16px' />
+                ) : (
+                  formatNumber(poolEth, { hideDecimalsForZero: true })
+                )}
+              </div>
+
+              <div className='text-color-text2 mt-[24px] hidden'>
+                -- Contracts
+              </div>
+            </div>
+          </div>
+
+          <div className='flex items-center justify-center text-[14px] md:text-[16px] text-color-text1'>
+            <div className='flex flex-col items-center'>
+              <div className={robotoSemiBold.className}>
+                {mintedLsdToken === undefined ? (
+                  <DataLoading height='16px' />
+                ) : (
+                  formatNumber(mintedLsdToken, { hideDecimalsForZero: true })
+                )}
+              </div>
+
+              <div
+                className={classNames(
+                  'text-color-text2 mt-[24px]',
+                  isSupportTokenPrice() ? '' : 'hidden'
+                )}
+              >
+                {mintedLsdTokenValue === undefined ? (
+                  <DataLoading height='16px' />
+                ) : (
+                  `$ ${formatNumber(mintedLsdTokenValue, {
+                    hideDecimalsForZero: true,
+                    decimals: 2,
+                  })}`
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className='flex items-center justify-center text-[14px] md:text-[16px] text-color-text1'>
+            <div className='flex flex-col items-center'>
+              <div className={robotoSemiBold.className}>
+                {stakedToken === undefined ? (
+                  <DataLoading height='16px' />
+                ) : (
+                  formatNumber(stakedToken, { hideDecimalsForZero: true })
+                )}
+              </div>
+
+              <div
+                className={classNames(
+                  'text-color-text2 mt-[24px]',
+                  isSupportTokenPrice() ? '' : 'hidden'
+                )}
+              >
+                {stakedTokenValue === undefined ? (
+                  <DataLoading height='16px' />
+                ) : (
+                  `$ ${formatNumber(stakedTokenValue, {
+                    hideDecimalsForZero: true,
+                    decimals: 2,
+                  })}`
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className='flex items-center justify-center text-[14px] md:text-[16px] text-color-text1'>
+            <div className='flex flex-col items-center'>
+              <div className={robotoSemiBold.className}>
+                {unmatchedEth === undefined ? (
+                  <DataLoading height='16px' />
+                ) : (
+                  formatNumber(unmatchedEth, { hideDecimalsForZero: true })
+                )}
+              </div>
+              <div className='text-color-text2 mt-[24px]'>
+                {formatValidatorDespositAmount} {getTokenName()} / Pool
+              </div>
+            </div>
+          </div>
+
+          <div className='flex items-center justify-center text-[14px] md:text-[16px] text-color-text1'>
+            <div className='flex flex-col items-center'>
+              <div className={robotoSemiBold.className}>
+                {matchedValidators === undefined ? (
+                  <DataLoading height='16px' />
+                ) : (
+                  <>
+                    {matchedValidators}
+                    <a
+                      className='min-w-[.15rem] min-h-[.15rem] ml-[.1rem]'
+                      href={
+                        getValidatorInfoURL() +
+                        'validators?v=' +
+                        networkwithdrawAddress
+                      }
+                      target='_blank'
+                    >
+                      <Icomoon icon='share' size='12px' />
+                    </a>
+                  </>
+                )}
+              </div>
+
+              <div
+                className='flex items-center mt-[24px] cursor-pointer'
+                onClick={() => {
+                  router.push('/tokenStake/chooseType');
+                }}
+              >
+                <div className='mr-[.06rem]'>Apply For Validator</div>
+
+                <Icomoon
+                  icon='right'
+                  color={darkMode ? '#ffffff80' : '#6C86AD'}
+                  size='12px'
+                />
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
+
   );
 };

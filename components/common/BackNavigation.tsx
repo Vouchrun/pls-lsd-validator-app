@@ -13,10 +13,10 @@ export const BackNavigation = (props: BackNavigationProps) => {
   return (
     <div className="flex ">
       <div
-        className="h-[.4rem] rounded-[.12rem] bg-color-bg2 text-color-text1 text-[.16rem] flex justify-between items-center px-[.16rem] gap-[.08rem] cursor-pointer"
+        className="h-[40px] rounded-[12px] bg-color-bg2 text-color-text1 text-[16px] flex justify-between items-center px-[16px] gap-[.08rem] cursor-pointer"
         onClick={props.onClick}
       >
-        <div className="w-[.13rem] h-[.12rem] relative text-color-text1">
+        <div className="w-[13px] h-[12px] relative text-color-text1">
           <Image
             src={darkMode ? arrowLeftLightImg : arrowLeftImg}
             layout="fill"
