@@ -170,7 +170,7 @@ const StakePage = () => {
   };
 
   return (
-    <div className='w-smallContentW xl:w-contentW 2xl:w-largeContentW mx-auto'>
+    <div className='w-smallContentW xl:w-contentW 2xl:w-largeContentW mx-auto pt-[30px]'>
       <BackNavigation
         onClick={() => {
           setEditMode(false);

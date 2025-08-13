@@ -32,7 +32,7 @@ export const DepositGuide = () => {
         />
       </a>
 
-      <div className='mt-[12px] rounded-[.16rem] w-full bg-[#6C86AD14] p-[20px]'>
+      <div className='mt-[12px] rounded-[.16rem] w-full bg-color-bg2 p-[20px]'>
         <div className='flex items-center'>
           <div
             className={classNames(

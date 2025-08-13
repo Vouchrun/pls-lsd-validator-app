@@ -28,14 +28,13 @@ export default function ProtocolRevenue() {
     useFeePoolData();
 
   return (
-    <div className='bg-color-bg2 border-[0.01rem] border-color-border1 rounded-[.3rem]'>
-      <div className='py-[15px] md:py-[20px] flex items-center justify-center font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[16px] text-color-text2'>
+    <div className='bg-color-bg2 border-[0.01rem] border-color-border1 rounded-[.3rem] overflow-hidden'>
+      <div className='py-[15px] md:py-[20px] flex items-center justify-center font-[500] border-solid border-b-[.01rem] border-color-border1 bg-[#E2E0D0] dark:bg-[#333333] text-[16px] text-color-text2'>
         Protocol Revenue
       </div>
       <div
         className={classNames(
           'font-[500] min-h-[415px] px-[10px] py-[20px]',
-          'bg-bgPage/50 dark:bg-bgPageDark/50'
         )}
       >
         <div
@@ -160,8 +159,8 @@ export default function ProtocolRevenue() {
           value={distributionAddress}
           className={
             darkMode
-              ? 'w-full rounded-[35px] bg-[#1B1B1F] text-center h-[42px] border-[0.01rem] border-[#6C86AD80] text-white text-[14px]'
-              : 'w-full rounded-[35px] bg-[#fff] text-center h-[42px] border-[0.01rem] border-[#6C86AD80] text-black text-[14px]'
+              ? 'w-full rounded-[35px] bg-[#1B1B1F] text-center h-[42px] border-[0.01rem] border-color-border1 text-[#8E9397] text-[14px] outline-none focus:border-[#ff4400]/30'
+              : 'w-full rounded-[35px] bg-[#fff] text-center h-[42px] border-[0.01rem] border-color-border1 text-[#7D794F] text-[14px] outline-none focus:border-[#ff4400]/30'
           }
         />
         <div className='mt-[10px] max-w-[250px] mx-auto'>

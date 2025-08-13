@@ -21,7 +21,7 @@ export const NoticeDrawer = (props: Props) => {
       onClose={() => onChangeOpen(false)}
       sx={{
         '& .MuiPaper-root': {
-          background: darkMode ? '#333333' : '#e2e0d1',
+          background: darkMode ? '#1a1a1a' : '#f3f3ec',
           width: '300px',
           paddingTop: '1rem',
         },

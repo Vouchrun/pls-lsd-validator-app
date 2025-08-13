@@ -115,11 +115,11 @@ const VoterRow = memo(
         </td>
         <td className='text-center font-semibold px-[30px] py-[15px] text-[14px] md:text-[16px]'>
           {rewardUpdateHour &&
-          withdrawCycleSeconds &&
-          moment
-            .utc(lastVoted)
-            .add(+withdrawCycleSeconds + +rewardUpdateHour * 3600, 'seconds')
-            .isBefore(moment.utc())
+            withdrawCycleSeconds &&
+            moment
+              .utc(lastVoted)
+              .add(+withdrawCycleSeconds + +rewardUpdateHour * 3600, 'seconds')
+              .isBefore(moment.utc())
             ? '🔴'
             : '🟢'}
         </td>
@@ -191,16 +191,16 @@ const Voter = memo(({ voters, voteManagerAddress }: any) => {
             <table className='w-full min-w-[800px]'>
               <thead>
                 <tr>
-                  <th className='bg-color-bg2 text-left font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[14px] md:text-[16px] text-color-text2 px-[30px] py-[30px]'>
+                  <th className='bg-[#E2E0D0] dark:bg-[#333333] text-left font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[14px] md:text-[16px] text-color-text2 px-[30px] py-[30px]'>
                     Voter / Relays
                   </th>
-                  <th className='bg-color-bg2 font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[14px] md:text-[16px] text-color-text2 px-[30px] py-[30px]'>
+                  <th className='bg-[#E2E0D0] dark:bg-[#333333] font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[14px] md:text-[16px] text-color-text2 px-[30px] py-[30px]'>
                     Balance
                   </th>
-                  <th className='bg-color-bg2 font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[14px] md:text-[16px] text-color-text2 px-[30px] py-[30px]'>
+                  <th className='bg-[#E2E0D0] dark:bg-[#333333] font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[14px] md:text-[16px] text-color-text2 px-[30px] py-[30px]'>
                     Status
                   </th>
-                  <th className='bg-color-bg2 font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[14px] md:text-[16px] text-color-text2 px-[30px] py-[30px]'>
+                  <th className='bg-[#E2E0D0] dark:bg-[#333333] font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[14px] md:text-[16px] text-color-text2 px-[30px] py-[30px]'>
                     Last Voted
                   </th>
                 </tr>
@@ -222,8 +222,8 @@ const Voter = memo(({ voters, voteManagerAddress }: any) => {
               onChange={(e) => setVoterAddress(e.target.value)}
               className={
                 darkMode
-                  ? 'w-full rounded-[35px] bg-[#1B1B1F] text-center h-[42px] border-[0.01rem] border-[#6C86AD80] text-[14px]'
-                  : 'w-full rounded-[35px] bg-[#fff] text-center h-[42px] border-[0.01rem] border-[#6C86AD80] text-[14px]'
+                  ? 'w-full rounded-[35px] bg-[#1B1B1F] text-center h-[42px] border-[0.01rem] border-color-border1 text-[#8E9397] text-[14px] outline-none focus:border-[#ff4400]/30'
+                  : 'w-full rounded-[35px] bg-[#fff] text-center h-[42px] border-[0.01rem] border-color-border1 text-[#7D794F] text-[14px] outline-none focus:border-[#ff4400]/30'
               }
             />
             <div className='mt-[10px] max-w-[100%] mx-auto flex items-center gap-1 w-[100%] justify-center'>

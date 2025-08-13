@@ -42,9 +42,9 @@ export const UnstakingPoolStatus = () => {
         </div>
       </div>
       <div className='overflow-x-auto'>
-        <div className='mt-[24px] bg-color-bg2 border-[0.01rem] border-color-border1 rounded-[.3rem] min-w-[600px]'>
+        <div className='mt-[24px] bg-color-bg2 border-[0.01rem] border-color-border1 rounded-[.3rem] min-w-[600px] overflow-hidden'>
           <div
-            className='py-[15px] md:py-[20px] grid items-center font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F]'
+            className='py-[15px] md:py-[20px] grid items-center font-[500] border-solid border-b-[.01rem] border-color-border1 bg-[#E2E0D0] dark:bg-[#333333]'
             style={{
               gridTemplateColumns: '33% 33% 33%',
             }}

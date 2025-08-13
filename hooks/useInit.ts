@@ -106,6 +106,6 @@ export function useInit() {
 
   // Change body backgroundColor
   useEffect(() => {
-    document.body.style.backgroundColor = darkMode ? '#1a1a1a' : '#f3f3eb';
+    document.body.style.backgroundColor = darkMode ? '#111111' : '#EDECE3';
   }, [darkMode]);
 }

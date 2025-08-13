@@ -11,12 +11,12 @@ module.exports = {
       white: '#ffffff',
       primary: '#00F3AB',
       // Background
-      bgPage: '#ecece2',
-      bgPageDark: '#111111',
+      bgPage: '#f3f3ec',
+      bgPageDark: '#1a1a1a',
       bg1: '#dfe1d3',
       bg1Dark: '#333333',
-      bg2: '#e2e0d1',
-      bg2Dark: '#333333',
+      bg2: '#F3F3EC',
+      bg2Dark: '#1A1A1A',
       bg3: '#6C86AD1A',
       bg3Dark: '#6C86AD1A',
       bgHighlight: '#1B1B1F',
@@ -25,8 +25,8 @@ module.exports = {
       bgHoverDark: '#6C86AD80',
       bgSuccess: '#80CAFF80',
       // Border
-      border1: '#ffffff',
-      border1Dark: '#6C86AD80',
+      border1: '#E2E0D0',
+      border1Dark: '#333333',
       borderActive: '#85E0A3',
       borderActiveDark: '#85E0A350',
       // Divider
