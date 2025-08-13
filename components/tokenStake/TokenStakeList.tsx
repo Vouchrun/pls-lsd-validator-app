@@ -156,8 +156,8 @@ export const TokenStakeList = () => {
 
   return (
     <div>
-      <div className='pt-[.24rem] flex items-center justify-between'>
-        <div className='flex items-center'>
+      <div className='pt-[.24rem] flex items-center justify-between flex-col md:flex-row'>
+        <div className='flex items-center flex-col md:flex-row'>
           <TokenStakeListTabs
             selectedTab={selectedTab}
             onChange={setSelectedTab}
@@ -168,20 +168,20 @@ export const TokenStakeList = () => {
             othersCount={othersCount}
           />
 
-          <div className='ml-[.24rem]'>
+          <div className='md:ml-[.24rem] mt-[15px] mb-[15px] md:mt-[0px] md:mb-[0px]'>
             <CustomButton
               type='stroke'
-              height='.42rem'
+              height='42px'
               className='px-[.16rem]'
               onClick={() => {
                 router.push('/tokenStake/chooseType');
               }}
             >
-              <div className='flex items-center'>
+              <div className='flex items-center text-[14px] md:text-[16px]'>
                 <div>New Deposit</div>
 
                 <div className='ml-[.06rem] rotate-[-90deg]'>
-                  <Icomoon icon='arrow-down' size='.1rem' color='#848B97' />
+                  <Icomoon icon='arrow-down' size='10px' color='#848B97' />
                 </div>
               </div>
             </CustomButton>
@@ -193,7 +193,7 @@ export const TokenStakeList = () => {
             <CustomButton
               type='stroke'
               className='px-[.16rem]'
-              height='.42rem'
+              height='42px'
               disabled={checkedItems.length === 0}
               onClick={() => {
                 const stakeablePubkeyInfos = (
@@ -227,197 +227,199 @@ export const TokenStakeList = () => {
                 );
               }}
             >
-              <div className='flex items-center'>
+              <div className='flex items-center text-[14px] md:text-[16px]'>
                 <div>Stake Selected Nodes</div>
 
                 <div className='ml-[.06rem] rotate-[-90deg]'>
-                  <Icomoon icon='arrow-down' size='.1rem' color='#848B97' />
+                  <Icomoon icon='arrow-down' size='10px' color='#848B97' />
                 </div>
               </div>
             </CustomButton>
           </div>
         )}
       </div>
-
-      <div className='mt-[.24rem] bg-color-bg2 border-[0.01rem] border-color-border1 rounded-[.3rem]'>
-        <div
-          className={classNames(
-            'h-[.7rem] grid items-center font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F]',
-            robotoSemiBold.className
-          )}
-          style={{
-            gridTemplateColumns: '20% 20% 20% 40%',
-          }}
-        >
-          <div className='flex items-center justify-center text-[.16rem] text-color-text2'>
-            Pool Addr
-          </div>
-
-          <div className='flex items-center justify-center text-[.16rem] text-color-text2'>
-            Node Addr
-          </div>
-
-          <div className='flex items-center justify-center text-[.16rem] text-color-text2'>
-            Status
-          </div>
-
-          {selectedTab !== 'Unmatched' && selectedTab !== 'Staked' && (
-            <div className='flex items-right justify-end text-[.16rem] text-color-text2 pr-[.60rem]'>
-              Select Displayed
-              <input
-                type='checkbox'
-                className='ml-[.24rem]'
-                checked={allSelected}
-                onChange={(e) => handleAllSelected(e)}
-              />
-            </div>
-          )}
-        </div>
-
-        {showEmptyContent && (
-          <div className='h-[2rem] flex items-center justify-center'>
-            <EmptyContent />
-          </div>
-        )}
-
-        {showLoading && (
-          <div className='h-[2rem] flex items-center justify-center relative'>
-            <LoadingContent />
-          </div>
-        )}
-
-        {paginatedItems.map((pubkeyInfo, index) => (
+      <div className='overflow-x-auto'>
+        <div className='mt-[24px] bg-color-bg2 border-[0.01rem] border-color-border1 rounded-[.3rem] min-w-[600px]'>
           <div
-            key={index}
             className={classNames(
-              'h-[.74rem] grid items-center font-[500]',
-              index % 2 === 0 ? 'bg-bgPage/50 dark:bg-bgPageDark/50' : ''
+              'py-[15px] md:py-[20px] grid items-center font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F]',
+              robotoSemiBold.className
             )}
             style={{
               gridTemplateColumns: '20% 20% 20% 40%',
             }}
           >
-            <div className='flex items-center justify-center text-[.16rem] text-color-text2 cursor-pointer'>
-              <Icomoon
-                icon='copy'
-                size='.133rem'
-                color={darkMode ? '#ffffff80' : '#6C86AD'}
-                onClick={() => {
-                  navigator.clipboard
-                    .writeText(pubkeyInfo.pubkeyAddress)
-                    .then(() => {
-                      snackbarUtil.success('Copy success');
-                    });
-                }}
-              />
+            <div className='flex items-center justify-center text-[14px] md:text-[16px] text-color-text2'>
+              Pool Addr
+            </div>
 
-              <div
-                className='flex items-center'
-                onClick={() => {
-                  router.push(`/pubkey/${pubkeyInfo.pubkeyAddress}`);
-                }}
-              >
-                <div className='mx-[.06rem]'>
-                  {getShortAddress(pubkeyInfo.pubkeyAddress, 4)}
-                </div>
+            <div className='flex items-center justify-center text-[14px] md:text-[16px] text-color-text2'>
+              Node Addr
+            </div>
 
-                <Icomoon
-                  icon='right1'
-                  size='.12rem'
-                  color={darkMode ? '#ffffff80' : '#6C86AD'}
+            <div className='flex items-center justify-center text-[14px] md:text-[16px] text-color-text2'>
+              Status
+            </div>
+
+            {selectedTab !== 'Unmatched' && selectedTab !== 'Staked' && (
+              <div className='flex items-right justify-end text-[14px] md:text-[16px] text-color-text2 pr-[.60rem]'>
+                Select Displayed
+                <input
+                  type='checkbox'
+                  className='ml-[.24rem]'
+                  checked={allSelected}
+                  onChange={(e) => handleAllSelected(e)}
                 />
               </div>
-            </div>
-
-            <div className='flex items-center justify-center text-[.16rem] text-color-text2 cursor-pointer'>
-              <Icomoon
-                icon='copy'
-                size='.133rem'
-                color={darkMode ? '#ffffff80' : '#6C86AD'}
-                onClick={() => {
-                  navigator.clipboard
-                    .writeText(metaMaskAccount || '')
-                    .then(() => {
-                      snackbarUtil.success('Copy success');
-                    });
-                }}
-              />
-
-              <a
-                className='flex items-center'
-                href={
-                  getValidatorInfoURL() +
-                  'validator/' +
-                  pubkeyInfo.pubkeyAddress
-                }
-                target='_blank'
-              >
-                <div className='mx-[.06rem]'>
-                  {getShortAddress(metaMaskAccount, 4)}
-                </div>
-
-                <Icomoon
-                  icon='right1'
-                  size='.12rem'
-                  color={darkMode ? '#ffffff80' : '#6C86AD'}
-                />
-              </a>
-            </div>
-
-            <div
-              className={classNames(
-                'flex items-center justify-center text-[.16rem] ',
-                pubkeyInfo.displayStatus === 'Exited'
-                  ? 'text-error'
-                  : pubkeyInfo.displayStatus === 'Active'
-                  ? 'text-color-text1'
-                  : 'text-color-text2'
-              )}
-            >
-              {!pubkeyInfo.canStake && pubkeyInfo.displayStatus === 'Matched'
-                ? 'Unmatch'
-                : pubkeyInfo.displayStatus}
-            </div>
-
-            <div className='flex items-center justify-end pr-[.56rem] text-[.16rem] text-color-text2'>
-              {pubkeyInfo.canStake && isPubkeyStakeable(pubkeyInfo._status) && (
-                <>
-                  <CustomButton
-                    height='.42rem'
-                    className='px-[.5rem]'
-                    onClick={() => {
-                      dispatch(
-                        updateValidatorStakeLoadingParams({
-                          modalVisible: false,
-                        })
-                      );
-                      router.push(
-                        {
-                          pathname: '/tokenStake/stake',
-                          query: {
-                            pubkeyAddressList: [pubkeyInfo.pubkeyAddress],
-                            type: isTrust ? 'trusted' : 'solo',
-                          },
-                        },
-                        '/tokenStake/stake'
-                      );
-                    }}
-                  >
-                    Stake
-                  </CustomButton>
-                  <input
-                    type='checkbox'
-                    key={index}
-                    className='ml-[.24rem]'
-                    checked={checkedItems.includes(pubkeyInfo.pubkeyAddress)}
-                    onChange={handleCheckboxChange(pubkeyInfo.pubkeyAddress)}
-                  />
-                </>
-              )}
-            </div>
+            )}
           </div>
-        ))}
+
+          {showEmptyContent && (
+            <div className='h-[2rem] flex items-center justify-center'>
+              <EmptyContent />
+            </div>
+          )}
+
+          {showLoading && (
+            <div className='h-[2rem] flex items-center justify-center relative'>
+              <LoadingContent />
+            </div>
+          )}
+
+          {paginatedItems.map((pubkeyInfo, index) => (
+            <div
+              key={index}
+              className={classNames(
+                'py-[15px] md:py-[20px] grid items-center font-[500]',
+                index % 2 === 0 ? 'bg-bgPage/50 dark:bg-bgPageDark/50' : ''
+              )}
+              style={{
+                gridTemplateColumns: '20% 20% 20% 40%',
+              }}
+            >
+              <div className='flex items-center justify-center text-[14px] md:text-[16px] text-color-text2 cursor-pointer'>
+                <Icomoon
+                  icon='copy'
+                  size='.133rem'
+                  color={darkMode ? '#ffffff80' : '#6C86AD'}
+                  onClick={() => {
+                    navigator.clipboard
+                      .writeText(pubkeyInfo.pubkeyAddress)
+                      .then(() => {
+                        snackbarUtil.success('Copy success');
+                      });
+                  }}
+                />
+
+                <div
+                  className='flex items-center'
+                  onClick={() => {
+                    router.push(`/pubkey/${pubkeyInfo.pubkeyAddress}`);
+                  }}
+                >
+                  <div className='mx-[.06rem]'>
+                    {getShortAddress(pubkeyInfo.pubkeyAddress, 4)}
+                  </div>
+
+                  <Icomoon
+                    icon='right1'
+                    size='.12rem'
+                    color={darkMode ? '#ffffff80' : '#6C86AD'}
+                  />
+                </div>
+              </div>
+
+              <div className='flex items-center justify-center text-[14px] md:text-[16px] text-color-text2 cursor-pointer'>
+                <Icomoon
+                  icon='copy'
+                  size='.133rem'
+                  color={darkMode ? '#ffffff80' : '#6C86AD'}
+                  onClick={() => {
+                    navigator.clipboard
+                      .writeText(metaMaskAccount || '')
+                      .then(() => {
+                        snackbarUtil.success('Copy success');
+                      });
+                  }}
+                />
+
+                <a
+                  className='flex items-center'
+                  href={
+                    getValidatorInfoURL() +
+                    'validator/' +
+                    pubkeyInfo.pubkeyAddress
+                  }
+                  target='_blank'
+                >
+                  <div className='mx-[.06rem]'>
+                    {getShortAddress(metaMaskAccount, 4)}
+                  </div>
+
+                  <Icomoon
+                    icon='right1'
+                    size='.12rem'
+                    color={darkMode ? '#ffffff80' : '#6C86AD'}
+                  />
+                </a>
+              </div>
+
+              <div
+                className={classNames(
+                  'flex items-center justify-center text-[14px] md:text-[16px] ',
+                  pubkeyInfo.displayStatus === 'Exited'
+                    ? 'text-error'
+                    : pubkeyInfo.displayStatus === 'Active'
+                      ? 'text-color-text1'
+                      : 'text-color-text2'
+                )}
+              >
+                {!pubkeyInfo.canStake && pubkeyInfo.displayStatus === 'Matched'
+                  ? 'Unmatch'
+                  : pubkeyInfo.displayStatus}
+              </div>
+
+              <div className='flex items-center justify-end pr-[.56rem] text-[14px] md:text-[16px] text-color-text2'>
+                {pubkeyInfo.canStake && isPubkeyStakeable(pubkeyInfo._status) && (
+                  <>
+                    <CustomButton
+                      height='35px'
+                      className='px-[.5rem]'
+                      onClick={() => {
+                        dispatch(
+                          updateValidatorStakeLoadingParams({
+                            modalVisible: false,
+                          })
+                        );
+                        router.push(
+                          {
+                            pathname: '/tokenStake/stake',
+                            query: {
+                              pubkeyAddressList: [pubkeyInfo.pubkeyAddress],
+                              type: isTrust ? 'trusted' : 'solo',
+                            },
+                          },
+                          '/tokenStake/stake'
+                        );
+                      }}
+                    >
+                      <div className='text-[14px] md:text-[16px]'>Stake</div>
+                    </CustomButton>
+                    <input
+                      type='checkbox'
+                      key={index}
+                      className='ml-[.24rem]'
+                      checked={checkedItems.includes(pubkeyInfo.pubkeyAddress)}
+                      onChange={handleCheckboxChange(pubkeyInfo.pubkeyAddress)}
+                    />
+                  </>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
+
       <div className='flex items-center justify-center mt-1 md:flex-row flex-col'>
         <div className='flex items-center'>
           <div className='text-[#FE8A3C] text-[14px] mr-[10px]'>
@@ -426,7 +428,7 @@ export const TokenStakeList = () => {
           <select
             value={resultsPerPage}
             onChange={handleChangeResultsPerPage}
-            className='cursor-pointer px-[.16rem] h-[.42rem] inline-flex items-center justify-between rounded-[4px] border-[0.01rem] border-[#6C86AD80] bg-transparent shadow-none outline-none'
+            className='cursor-pointer px-[10px] h-[35px] inline-flex items-center justify-between rounded-[4px] border-[0.01rem] border-[#6C86AD80] bg-transparent shadow-none outline-none text-[14px]'
             style={{ color: '#6C86AD' }}
           >
             <option value={10}>10</option>
@@ -443,7 +445,7 @@ export const TokenStakeList = () => {
           <button
             onClick={handleFirstPage}
             disabled={currentPage === 1}
-            className='cursor-pointer h-[.42rem] w-[40px] rounded-[4px] mx-[3px] border-none flex items-center justify-center bg-gradient-to-r from-[#FE8A3C] via-[#E79D6C] to-[#FE8A3C]'
+            className='cursor-pointer h-[35px] w-[35px] rounded-[4px] mx-[3px] border-none flex items-center justify-center bg-gradient-to-r from-[#FE8A3C] via-[#E79D6C] to-[#FE8A3C]'
           >
             <Image
               src={doubleLeftIcon}
@@ -455,21 +457,21 @@ export const TokenStakeList = () => {
           <button
             onClick={handlePreviousPage}
             disabled={currentPage === 1}
-            className='cursor-pointer h-[.42rem] w-[40px] rounded-[4px] mx-[3px] border-none flex items-center justify-center bg-gradient-to-r from-[#FE8A3C] via-[#E79D6C] to-[#FE8A3C]'
+            className='cursor-pointer h-[35px] w-[35px] rounded-[4px] mx-[3px] border-none flex items-center justify-center bg-gradient-to-r from-[#FE8A3C] via-[#E79D6C] to-[#FE8A3C]'
           >
             <Image src={leftIcon} alt='Previous Page' height={5} width={9} />
           </button>
           <button
             onClick={handleNextPage}
             disabled={currentPage === totalPages}
-            className='cursor-pointer h-[.42rem] w-[40px] rounded-[4px] mx-[3px] border-none flex items-center justify-center bg-gradient-to-r from-[#FE8A3C] via-[#E79D6C] to-[#FE8A3C]'
+            className='cursor-pointer h-[35px] w-[35px] rounded-[4px] mx-[3px] border-none flex items-center justify-center bg-gradient-to-r from-[#FE8A3C] via-[#E79D6C] to-[#FE8A3C]'
           >
             <Image src={rightIcon} alt='Next Page' height={5} width={9} />
           </button>
           <button
             onClick={handleLastPage}
             disabled={currentPage === totalPages}
-            className='cursor-pointer h-[.42rem] w-[40px] rounded-[4px] border-none mx-[3px] flex items-center justify-center bg-gradient-to-r from-[#FE8A3C] via-[#E79D6C] to-[#FE8A3C]'
+            className='cursor-pointer h-[35px] w-[35px] rounded-[4px] border-none mx-[3px] flex items-center justify-center bg-gradient-to-r from-[#FE8A3C] via-[#E79D6C] to-[#FE8A3C]'
           >
             <Image
               src={doubleRightIcon}

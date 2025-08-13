@@ -16,7 +16,7 @@ export const CardContainer = (props: CardContainerProps) => {
     >
       <div
         className={classNames(
-          "rounded-t-[.3rem] h-[.6rem] flex items-center justify-center text-[.24rem] text-color-text1",
+          "rounded-t-[.3rem] h-auto flex items-center justify-center text-[20px] md:text-[24px] text-color-text1 py-[15px] px-[8px] text-center",
           robotoBold.className
         )}
         style={{

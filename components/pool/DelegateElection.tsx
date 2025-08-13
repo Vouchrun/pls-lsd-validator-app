@@ -16,7 +16,7 @@ export const DelegateElection = () => {
 
   return (
     <div>
-      <div className='mt-[.48rem] flex items-center'>
+      <div className='mt-[48px] flex items-center'>
         <div
           className={classNames(
             robotoBold.className,
@@ -42,16 +42,16 @@ export const DelegateElection = () => {
           <div className='ml-[.06rem] flex items-center'>
             <Icomoon
               icon='right'
-              size='.1rem'
+              size='10px'
               color={darkMode ? '#ffffff80' : '#6C86AD'}
             />
           </div>
         </div>
       </div>
 
-      <div className='mt-[.24rem] bg-color-bg2 border-[0.01rem] border-color-border1 rounded-[.3rem]'>
+      <div className='mt-[24px] bg-color-bg2 border-[0.01rem] border-color-border1 rounded-[.3rem]'>
         <div
-          className='h-[.7rem] grid items-center font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F]'
+          className='py-[15px] md:py-[20px] grid items-center font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F]'
           style={{
             gridTemplateColumns: '25% 25% 25% 25%',
           }}
@@ -113,7 +113,7 @@ const NodeElectionItem = (props: NodeElectionItemProps) => {
           <div className='text-color-text1 text-[.16rem]'>0x998C…837G</div>
 
           <div className='ml-[.06rem] rotate-[-90deg]'>
-            <Icomoon icon='arrow-down' size='.1rem' color='#848B97' />
+            <Icomoon icon='arrow-down' size='10px' color='#848B97' />
           </div>
         </div>
       </div>
@@ -136,7 +136,7 @@ const NodeElectionItem = (props: NodeElectionItemProps) => {
 
           <Icomoon
             icon='right1'
-            size='.1rem'
+            size='10px'
             color={darkMode ? '#ffffff80' : '#6C86AD'}
           />
         </div>

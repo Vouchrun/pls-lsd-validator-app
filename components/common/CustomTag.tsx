@@ -11,7 +11,7 @@ export const CustomTag = (props: CustomTagProps) => {
   return (
     <div
       className={classNames(
-        "rounded-[.06rem] px-[.06rem] py-[.04rem] text-[.12rem] flex items-center justify-center",
+        "rounded-[.06rem] px-[.06rem] py-[.04rem] text-[12px] flex items-center justify-center",
         type === "error" ? "text-error" : "text-text1",
         {
           "border-[0.01rem] border-text1/10 dark:border-text1Dark/10":

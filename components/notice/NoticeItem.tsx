@@ -143,7 +143,7 @@ export const NoticeItem = (props: {
     <div className={classNames(darkMode ? "dark" : "")}>
       <div
         className={classNames(
-          "cursor-pointer mt-[.08rem] p-[.16rem] bg-hover rounded-[.12rem]"
+          "cursor-pointer mt-[.08rem] p-[16px] bg-hover rounded-[.12rem]"
         )}
         onClick={() => {
           onClickItem();
@@ -155,13 +155,13 @@ export const NoticeItem = (props: {
               <Image src={getNoticeIcon(notice)} alt="icon" layout="fill" />
             </div>
 
-            <div className="ml-[.12rem] font-[700] text-color-text1 text-[.16rem]">
+            <div className="ml-[12px] font-[700] text-color-text1 text-[16px]">
               {notice.type}
             </div>
 
             <div
               className={classNames(
-                "ml-[.06rem] h-[.2rem] rounded-[.04rem] px-[.04rem] flex items-center text-[.12rem]",
+                "ml-[.06rem] h-[.2rem] rounded-[.04rem] px-[.04rem] flex items-center text-[12px]",
                 notice.status === "Confirmed"
                   ? "bg-bgSuccess text-text1 dark:text-white "
                   : notice.status === "Error"
@@ -173,13 +173,13 @@ export const NoticeItem = (props: {
             </div>
           </div>
 
-          <div className="text-text2 text-[.14rem] opacity-50">
+          <div className="text-text2 text-[14px] opacity-50">
             {formatDate(notice.timestamp || 0, "DD MMM HH:mm")}
           </div>
         </div>
 
         <div className="mt-[.1rem]">
-          <div className="text-text2 text-[.14rem] leading-normal">
+          <div className="text-text2 text-[14px] leading-normal">
             {getNoticeContent(notice)}
           </div>
         </div>

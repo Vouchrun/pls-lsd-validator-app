@@ -67,23 +67,23 @@ const SystemPage = () => {
     <div>
       <PageTitleContainer>
         <div className="h-full flex items-center w-smallContentW xl:w-contentW 2xl:w-largeContentW">
-          <div className="w-[.68rem] h-[.68rem] relative">
+          <div className="w-[48px] h-[48px] md:w-[68px] md:h-[68px] relative">
             <Image src={getLsdTokenIcon()} layout="fill" alt="icon" />
           </div>
 
           <div>
-            <div className="ml-[.12rem] flex items-center">
+            <div className="ml-[12px] flex items-center">
               <div
                 className={classNames(
                   robotoBold.className,
-                  "text-[.34rem] text-color-text1"
+                  "text-[24px] md:text-[34px] text-color-text1"
                 )}
               >
                 {getLsdTokenName()} Pool
               </div>
 
               {apr === 0 ? (
-                <CustomTag type="apr" ml=".12rem">
+                <CustomTag type="apr" ml="12px">
                   <span className="ml-[.06rem]">APR Pending Update</span>
                 </CustomTag>
               ) : (
@@ -103,7 +103,7 @@ const SystemPage = () => {
               )}
             </div>
 
-            <div className="ml-[.12rem] mt-[.12rem] text-[.12rem] text-color-text2 cursor-pointer">
+            <div className="ml-[12px] mt-[.12rem] text-[12px] text-color-text2 cursor-pointer">
               <div className="flex items-center">
                 <div className="mr-[.06rem]">
                   Take part in vPLS programs, earn tokens easily.
@@ -114,11 +114,8 @@ const SystemPage = () => {
         </div>
       </PageTitleContainer>
 
-      <div className="w-smallContentW xl:w-contentW 2xl:w-largeContentW mx-auto mb-[.56rem]">
-        <div className="overflow-x-auto">
-<PoolAssets />
-        </div>
-        
+      <div className="w-smallContentW xl:w-contentW 2xl:w-largeContentW mx-auto mb-[56px]">
+        <PoolAssets />
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-1 mt-1">
           <div>
             <ProtocolStatus />

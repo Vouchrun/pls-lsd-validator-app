@@ -40,10 +40,10 @@ export const MyDataHistory = () => {
 
   return (
     <div>
-      <div className='mt-[.24rem] flex items-center'>
+      <div className='mt-[24px] flex items-center'>
         <div
           className={classNames(
-            'cursor-pointer px-[.16rem] h-[.42rem] inline-flex items-center justify-between rounded-[.3rem] border-[0.01rem]',
+            'cursor-pointer px-[16px] h-[.42rem] inline-flex items-center justify-between rounded-[.3rem] border-[0.01rem]',
             typePopupState.isOpen
               ? 'border-[#ffffff00] bg-color-selected'
               : 'border-[#6C86AD80]'
@@ -52,7 +52,7 @@ export const MyDataHistory = () => {
         >
           <div
             className={classNames(
-              'flex-1 text-[.16rem] w-[0.8rem] flex items-center justify-center',
+              'flex-1 text-[16px] w-[0.8rem] flex items-center justify-center',
               typePopupState.isOpen ? 'text-text1' : 'text-color-text2'
             )}
             style={{
@@ -70,7 +70,7 @@ export const MyDataHistory = () => {
           </div>
 
           <div className='ml-[.2rem]'>
-            <Icomoon icon='arrow-down' size='.1rem' color='#848B97' />
+            <Icomoon icon='arrow-down' size='10px' color='#848B97' />
           </div>
         </div>
 
@@ -83,15 +83,15 @@ export const MyDataHistory = () => {
             }}
           />
 
-          <div className='text-[.16rem] text-color-text1 ml-[.06rem]'>
+          <div className='text-[16px] text-color-text1 ml-[.06rem]'>
             Reward History
           </div>
 
-          <div className='text-[.16rem] text-color-text2 ml-[.06rem] flex items-center'>
+          <div className='text-[16px] text-color-text2 ml-[.06rem] flex items-center'>
             (Updates every
             <div className='mx-[.06rem]'>
               {rewardUpdateHour === undefined ? (
-                <DataLoading height='.16rem' />
+                <DataLoading height='16px' />
               ) : (
                 rewardUpdateHour
               )}
@@ -101,8 +101,8 @@ export const MyDataHistory = () => {
         </div>
       </div>
 
-      <div className='mt-[.24rem] bg-color-bg2 border-[0.01rem] border-color-border1 rounded-[.3rem]'>
-        <div className='mt-[.24rem] h-[.56rem] mx-[.24rem] bg-[#6C86AD14] dark:bg-[#6C86AD50] rounded-[.16rem] flex items-center justify-between pl-[.12rem] pr-[.18rem]'>
+      <div className='mt-[24px] bg-color-bg2 border-[0.01rem] border-color-border1 rounded-[.3rem]'>
+        <div className='mt-[24px] h-[.56rem] mx-[.24rem] bg-[#6C86AD14] dark:bg-[#6C86AD50] rounded-[16px] flex items-center justify-between pl-[12px] pr-[.18rem]'>
           <div className='flex items-center'>
             <Icomoon icon='tip' size='.2rem' />
 
@@ -115,27 +115,27 @@ export const MyDataHistory = () => {
         </div>
 
         <div
-          className='h-[.7rem] grid items-center font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F]'
+          className='py-[15px] md:py-[20px] grid items-center font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F]'
           style={{
             gridTemplateColumns: '20% 16% 16% 16% 16% 16%',
           }}
         >
-          <div className='flex items-center justify-center text-[.16rem] text-color-text2'>
+          <div className='flex items-center justify-center text-[16px] text-color-text2'>
             Token Name
           </div>
-          <div className='flex items-center justify-center text-[.16rem] text-color-text2'>
+          <div className='flex items-center justify-center text-[16px] text-color-text2'>
             Time (UTC)
           </div>
-          <div className='flex items-center justify-center text-[.16rem] text-color-text2'>
+          <div className='flex items-center justify-center text-[16px] text-color-text2'>
             Kind
           </div>
-          <div className='flex items-center justify-center text-[.16rem] text-color-text2'>
+          <div className='flex items-center justify-center text-[16px] text-color-text2'>
             Transaction
           </div>
-          <div className='flex items-center justify-center text-[.16rem] text-color-text2'>
+          <div className='flex items-center justify-center text-[16px] text-color-text2'>
             Balance
           </div>
-          <div className='flex items-center justify-center text-[.16rem] text-color-text2'>
+          <div className='flex items-center justify-center text-[16px] text-color-text2'>
             Rewards
           </div>
         </div>
@@ -176,40 +176,40 @@ const MyDataHistoryItem = (props: MyDataHistoryItemProps) => {
         gridTemplateColumns: '20% 16% 16% 16% 16% 16%',
       }}
     >
-      <div className='flex items-center justify-center text-[.16rem] text-color-text1'>
+      <div className='flex items-center justify-center text-[16px] text-color-text1'>
         <div
           className='cursor-pointer mx-[.24rem] flex-1 h-[.42rem] flex items-center justify-between bg-color-bgPage rounded-[.6rem] border-[0.01rem] border-color-border1'
           onClick={() => {}}
         >
           <div className='flex items-center'>
-            <div className='w-[.34rem] h-[.34rem] min-w-[.34rem] relative ml-[.04rem]'>
+            <div className='w-[34px] h-[34px] min-w-[34px] relative ml-[.04rem]'>
               <Image src={getLsdTokenIcon()} alt='logo' layout='fill' />
             </div>
 
-            <div className='ml-[.08rem] text-[.16rem] text-color-text1'>
+            <div className='ml-[.08rem] text-[16px] text-color-text1'>
               {getLsdTokenName()}
             </div>
           </div>
 
-          <div className='mr-[.16rem] -rotate-90'>
-            <Icomoon icon='arrow-down' size='.1rem' color='#848B97' />
+          <div className='mr-[16px] -rotate-90'>
+            <Icomoon icon='arrow-down' size='10px' color='#848B97' />
           </div>
         </div>
       </div>
 
-      <div className='flex items-center justify-center text-[.16rem] text-color-text1'>
+      <div className='flex items-center justify-center text-[16px] text-color-text1'>
         16 April 23:00
       </div>
-      <div className='flex items-center justify-center text-[.16rem] text-color-text1'>
+      <div className='flex items-center justify-center text-[16px] text-color-text1'>
         Stake
       </div>
-      <div className='flex items-center justify-center text-[.16rem] text-color-text1'>
+      <div className='flex items-center justify-center text-[16px] text-color-text1'>
         <div className='text-link'>+0.2</div>
       </div>
-      <div className='flex items-center justify-center text-[.16rem] text-color-text1'>
+      <div className='flex items-center justify-center text-[16px] text-color-text1'>
         0.8+0.2
       </div>
-      <div className='flex items-center justify-center text-[.16rem] text-color-text1'>
+      <div className='flex items-center justify-center text-[16px] text-color-text1'>
         0.05
       </div>
     </div>
@@ -266,7 +266,7 @@ const ChooseTypePopover = (props: ChooseTypePopoverProps) => {
       }}
     >
       <div
-        className={classNames('p-[.16rem] w-[3.1rem]', darkMode ? 'dark' : '')}
+        className={classNames('p-[16px] w-[280px]', darkMode ? 'dark' : '')}
       >
         <div
           className='cursor-pointer flex items-center justify-between'
@@ -276,21 +276,21 @@ const ChooseTypePopover = (props: ChooseTypePopoverProps) => {
           }}
         >
           <div className='flex items-center'>
-            <div className='ml-[.12rem] text-color-text1 text-[.16rem]'>
+            <div className='ml-[12px] text-color-text1 text-[16px]'>
               All
             </div>
           </div>
 
           {types.length === 0 ? (
-            <div className='w-[.16rem] h-[.16rem] relative'>
+            <div className='w-[16px] h-[16px] relative'>
               <Image src={checkedIcon} alt='checked' layout='fill' />
             </div>
           ) : (
-            <div className='w-[.16rem] h-[.16rem] rounded-[0.03rem] border-solid border-[1px] border-[#6C86AD4D]' />
+            <div className='w-[16px] h-[16px] rounded-[0.03rem] border-solid border-[1px] border-[#6C86AD4D]' />
           )}
         </div>
 
-        <div className='my-[.16rem] h-[0.01rem] bg-color-divider1' />
+        <div className='my-[16px] h-[0.01rem] bg-color-divider1' />
 
         <div
           className='cursor-pointer flex items-center justify-between'
@@ -299,21 +299,21 @@ const ChooseTypePopover = (props: ChooseTypePopoverProps) => {
           }}
         >
           <div className='flex items-center'>
-            <div className='ml-[.12rem] text-color-text1 text-[.16rem]'>
+            <div className='ml-[12px] text-color-text1 text-[16px]'>
               Reward
             </div>
           </div>
 
           {types.indexOf('Reward') >= 0 ? (
-            <div className='w-[.16rem] h-[.16rem] relative'>
+            <div className='w-[16px] h-[16px] relative'>
               <Image src={checkedIcon} alt='checked' layout='fill' />
             </div>
           ) : (
-            <div className='w-[.16rem] h-[.16rem] rounded-[0.03rem] border-solid border-[1px] border-[#6C86AD4D]' />
+            <div className='w-[16px] h-[16px] rounded-[0.03rem] border-solid border-[1px] border-[#6C86AD4D]' />
           )}
         </div>
 
-        <div className='my-[.16rem] h-[0.01rem] bg-color-divider1' />
+        <div className='my-[16px] h-[0.01rem] bg-color-divider1' />
 
         <div
           className='cursor-pointer flex items-center justify-between'
@@ -322,17 +322,17 @@ const ChooseTypePopover = (props: ChooseTypePopoverProps) => {
           }}
         >
           <div className='flex items-center'>
-            <div className='ml-[.12rem] text-color-text1 text-[.16rem]'>
+            <div className='ml-[12px] text-color-text1 text-[16px]'>
               Withdraw
             </div>
           </div>
 
           {types.indexOf('Withdraw') >= 0 ? (
-            <div className='w-[.16rem] h-[.16rem] relative'>
+            <div className='w-[16px] h-[16px] relative'>
               <Image src={checkedIcon} alt='checked' layout='fill' />
             </div>
           ) : (
-            <div className='w-[.16rem] h-[.16rem] rounded-[0.03rem] border-solid border-[1px] border-[#6C86AD4D]' />
+            <div className='w-[16px] h-[16px] rounded-[0.03rem] border-solid border-[1px] border-[#6C86AD4D]' />
           )}
         </div>
       </div>

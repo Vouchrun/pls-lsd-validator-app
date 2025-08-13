@@ -179,12 +179,12 @@ const StakePage = () => {
         }}
       />
 
-      <div className='flex mt-[.24rem] items-start'>
+      <div className='flex mt-[24px] items-start flex-col lg:flex-row'>
         {validatorStakeLoadingParams?.modalVisible ? (
           <ValidatorStakeLoading />
         ) : (
-          <CardContainer width='6.2rem' title='Stake'>
-            <div className='flex flex-col items-center'>
+          <CardContainer width='100%' title='Stake'>
+            <div className='flex flex-col items-center px-[20px]'>
               <div className='mt-[.56rem]'>
                 <ValidatorKeyUpload
                   // disabled={
@@ -195,11 +195,11 @@ const StakePage = () => {
                   onSuccess={handleNewValidaorKeys}
                 >
                   <div className='flex flex-col items-center'>
-                    <div className='w-[.5rem] h-[.6rem] relative'>
+                    <div className='w-[50px] h-[60px] relative'>
                       <Image src={uploadIcon} alt='upload' layout='fill' />
                     </div>
 
-                    <div className='text-color-text2 text-[.14rem] mt-[.15rem]'>
+                    <div className='text-color-text2 text-[14px] mt-[15px] text-center'>
                       Please follow the instruction and upload{' '}
                       {stakePubkeyAddressList.length}{' '}
                       {stakePubkeyAddressList.length <= 1
@@ -231,9 +231,9 @@ const StakePage = () => {
                     <div className='flex items-center'>
                       <CustomButton
                         disabled={editSelectedPubkeys.length === 0}
-                        fontSize='.14rem'
-                        height='.26rem'
-                        className='px-[.12rem]'
+                        fontSize='14px'
+                        height='26px'
+                        className='px-[12px]'
                         onClick={() => {
                           setWaitDeletePubkeys([...editSelectedPubkeys]);
                           setDeleteConfirmModalVisible(true);
@@ -246,24 +246,24 @@ const StakePage = () => {
                       </CustomButton>
 
                       <div
-                        className='ml-[.16rem] px-[.16rem] flex items-center h-[.26rem] rounded-[.2rem] border-[.01rem] border-solid border-[#6C86AD4D]'
+                        className='ml-[16px] px-[16px] flex items-center h-[26px] rounded-[.2rem] border-[.01rem] border-solid border-[#6C86AD4D]'
                         onClick={() => {
                           setEditMode(false);
                         }}
                       >
                         <div className='cursor-pointer' onClick={() => {}}>
                           <Icomoon
-                            size='.15rem'
+                            size='15px'
                             color={darkMode ? '#ffffff80' : '#6C86AD'}
                             icon='edit'
                           />
                         </div>
 
-                        <div className='ml-[.24rem] cursor-pointer'>
+                        <div className='ml-[24px] cursor-pointer'>
                           <Icomoon
                             icon='complete-outline'
                             color={darkMode ? '#ffffff80' : '#6C86AD'}
-                            size='.12rem'
+                            size='12px'
                           />
                         </div>
                       </div>
@@ -280,7 +280,7 @@ const StakePage = () => {
                       >
                         <div className=''>
                           <Icomoon
-                            size='.16rem'
+                            size='16px'
                             color={darkMode ? '#E8EFFD' : '#1B1B1F'}
                             icon='file_add'
                           />
@@ -288,21 +288,21 @@ const StakePage = () => {
                       </ValidatorKeyUpload>
 
                       <div
-                        className='ml-[.16rem] cursor-pointer'
+                        className='ml-[16px] cursor-pointer'
                         onClick={() => {
                           setEditSelectedPubkeys([]);
                           setEditMode(true);
                         }}
                       >
                         <Icomoon
-                          size='.16rem'
+                          size='16px'
                           color={darkMode ? '#E8EFFD' : '#1B1B1F'}
                           icon='edit'
                         />
                       </div>
 
                       <div
-                        className='ml-[.16rem] cursor-pointer'
+                        className='ml-[16px] cursor-pointer'
                         onClick={() => {
                           setWaitDeletePubkeys(
                             validatorKeys.map((item) => item.pubkey)
@@ -311,7 +311,7 @@ const StakePage = () => {
                         }}
                       >
                         <Icomoon
-                          size='.16rem'
+                          size='16px'
                           color={darkMode ? '#E8EFFD' : '#1B1B1F'}
                           icon='delete'
                         />
@@ -320,12 +320,12 @@ const StakePage = () => {
                   )}
                 </div>
 
-                <div className='pt-[.06rem] pb-[.18rem] flex flex-col items-center'>
+                <div className='pt-[.06rem] pb-[18px] flex flex-col items-center'>
                   {validatorKeys.map((item, index) => (
                     <div
                       key={index}
                       className={classNames(
-                        'mt-[.12rem] rounded-[.1rem] h-[.42rem] w-[5.2rem] flex items-center justify-between px-[.16rem]',
+                        'mt-[12px] rounded-[.1rem] h-[42px] w-[5.2rem] flex items-center justify-between px-[16px]',
                         editMode ? 'cursor-pointer' : ''
                       )}
                       style={{
@@ -360,7 +360,7 @@ const StakePage = () => {
                       {editMode && (
                         <div className='mr-[.12rem]'>
                           {editSelectedPubkeys.indexOf(item.pubkey) >= 0 ? (
-                            <div className='w-[.16rem] h-[.16rem] relative'>
+                            <div className='w-[16px] h-[16px] relative'>
                               <Image
                                 src={checkedIcon}
                                 layout='fill'
@@ -368,13 +368,13 @@ const StakePage = () => {
                               />
                             </div>
                           ) : (
-                            <div className='w-[.16rem] h-[.16rem] rounded-full border-solid border-[1px] border-[#9DAFBE]' />
+                            <div className='w-[16px] h-[16px] rounded-full border-solid border-[1px] border-[#9DAFBE]' />
                           )}
                         </div>
                       )}
 
                       <div
-                        className='flex-1 text-color-text2 text-[.12rem] mr-[.4rem] leading-normal'
+                        className='flex-1 text-color-text2 text-[12px] mr-[.4rem] leading-normal'
                         style={{
                           maxLines: 1,
                           overflow: 'hidden',
@@ -390,7 +390,7 @@ const StakePage = () => {
 
                       <div
                         className={classNames(
-                          'cursor-pointer w-[.16rem] min-w-[.16rem]',
+                          'cursor-pointer w-[16px] min-w-[16px]',
                           editMode ? 'hidden' : ''
                         )}
                         onClick={() => {
@@ -400,7 +400,7 @@ const StakePage = () => {
                       >
                         <Icomoon
                           icon='delete'
-                          size='.16rem'
+                          size='16px'
                           color={darkMode ? '#ffffff80' : '#6C86AD'}
                         />
                       </div>
@@ -409,9 +409,9 @@ const StakePage = () => {
                 </div>
               </div>
 
-              <div className='self-stretch mx-[.24rem] mt-[.46rem] mb-[.32rem]'>
+              <div className='self-stretch mx-[24px] mt-[45px] mb-[32px]'>
                 <CustomButton
-                  height='.56rem'
+                  height='48px'
                   loading={ethTxLoading}
                   type={
                     !metaMaskAccount ||
@@ -518,7 +518,7 @@ const StakePage = () => {
           </CardContainer>
         )}
 
-        <div className='ml-[.85rem]'>
+        <div className='w-full lg:pl-[50px] mt-2 lg:mt-0'>
           <StakeGuide />
         </div>
       </div>

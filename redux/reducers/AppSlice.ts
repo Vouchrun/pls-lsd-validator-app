@@ -11,7 +11,6 @@ import {
   saveStorage,
   STORAGE_KEY_DARK_MODE,
   STORAGE_KEY_UNREAD_NOTICE,
-  STORAGE_KEY_CUSTOM_RPC,
 } from 'utils/storageUtils';
 
 export interface DepositLoadingParams {
@@ -50,7 +49,6 @@ export interface AppState {
   withdrawLoadingParams: WithdrawLoadingParams | undefined;
   noticeDrawerOpen: boolean;
   settingsDrawerOpen: boolean;
-  customRpc: string | undefined;
 }
 
 const initialState: AppState = {
@@ -72,7 +70,6 @@ const initialState: AppState = {
   withdrawLoadingParams: undefined,
   noticeDrawerOpen: false,
   settingsDrawerOpen: false,
-  customRpc: undefined,
 };
 
 export const appSlice = createSlice({
@@ -137,17 +134,6 @@ export const appSlice = createSlice({
     ) => {
       state.settingsDrawerOpen = action.payload;
     },
-    setCustomRpc: (
-      state: AppState,
-      action: PayloadAction<string | undefined>
-    ) => {
-      if (action.payload) {
-        saveStorage(STORAGE_KEY_CUSTOM_RPC, action.payload);
-      } else {
-        removeStorage(STORAGE_KEY_CUSTOM_RPC);
-      }
-      state.customRpc = action.payload;
-    },
   },
 });
 
@@ -164,7 +150,6 @@ export const {
   setWithdrawLoadingParams,
   setNoticeDrawerOpen,
   setSettingsDrawerOpen,
-  setCustomRpc,
 } = appSlice.actions;
 
 export default appSlice.reducer;

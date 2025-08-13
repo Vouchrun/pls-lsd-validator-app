@@ -39,10 +39,10 @@ export const MyDataTabs = (props: MyDataTabsProps) => {
   };
 
   return (
-    <div className='h-[.42rem] flex items-stretch p-[.04rem] bg-color-bg2 rounded-[.4rem]'>
+    <div className='h-[42px] flex items-stretch p-[.04rem] bg-color-bg2 rounded-[.4rem]'>
       <div
         className={classNames(
-          'px-[.24rem] flex items-center justify-center relative cursor-pointer',
+          'px-[.24rem] flex items-center justify-center relative cursor-pointer text-[14px] sm:text-[16px]',
           selectedTab === 'assets'
             ? 'bg-color-highlight text-white dark:text-text1 rounded-[.4rem]'
             : 'text-text1 dark:text-white'
@@ -56,7 +56,7 @@ export const MyDataTabs = (props: MyDataTabsProps) => {
 
       <div
         className={classNames(
-          'ml-[.1rem] px-[.16rem] flex items-center justify-center relative cursor-pointer',
+          'ml-[.1rem] px-[.20rem] flex items-center justify-center relative cursor-pointer text-[14px] sm:text-[16px]',
           selectedTab === 'pubkeys'
             ? 'bg-color-highlight text-white dark:text-text1 rounded-[.4rem]'
             : 'text-text1 dark:text-white'
