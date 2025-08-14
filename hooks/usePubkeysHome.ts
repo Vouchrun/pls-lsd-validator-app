@@ -122,6 +122,7 @@ export const usePubkeysHome = (
         } else if (isMatch && selectedPubkeyStatus === PubkeyStatus.Matched) {
           resList.push(newItem);
         } else if (
+          !isMatch &&
           !isUnmatch &&
           !isStaked &&
           selectedPubkeyStatus === PubkeyStatus.Others

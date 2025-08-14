@@ -157,8 +157,18 @@ export const Navbar = () => {
           />
 
           <div
-            className={`w-[280px] sm:w-[420px] xl:w-[580px] h-auto p-[20px] lg:p-[.04rem]  items-stretch bg-[#edece3] dark:bg-[#111111] rounded-[15px] lg:rounded-[.6rem] xl:grid absolute xl:relative top-[40px] xl:top-0 gap-0
-            ${isActive ? "flex flex-col" : "hidden"} `}
+            className={`w-[280px] sm:w-[420px] xl:w-[580px] h-auto p-[20px] lg:p-[.04rem] items-stretch bg-[#edece3] dark:bg-[#111111] rounded-[15px] lg:rounded-[.6rem] xl:grid absolute xl:relative top-[40px] xl:top-0 gap-0
+  ${isActive ? "flex flex-col" : "hidden"} 
+  [&>*:not(:last-child):after]:content-['|'] 
+  [&>*:not(:last-child):after]:absolute 
+  [&>*:not(:last-child):after]:right-[-1px] 
+  [&>*:not(:last-child):after]:top-1/2 
+  [&>*:not(:last-child):after]:-translate-y-1/2 
+  [&>*:not(:last-child):after]:text-color-text1 
+  [&>*:not(:last-child):after]:opacity-30
+  [&>*]:relative
+  [&>*.tab-active:after]:hidden
+  [&>*:has(+_.tab-active):after]:hidden`}
             style={{
               gridTemplateColumns:
                 admin === metaMaskAccount ||
@@ -168,7 +178,12 @@ export const Navbar = () => {
                   : "25% 25% 25% 25%",
             }}
           >
-            <Link href={`/tokenStake/list`}>
+            <Link
+              href={`/tokenStake/list`}
+              className={
+                router.pathname.startsWith("/tokenStake") ? "tab-active" : ""
+              }
+            >
               <div
                 className={classNames(
                   "h-[35px] cursor-pointer flex items-center justify-center text-[16px] rounded-[.6rem]",
@@ -181,7 +196,12 @@ export const Navbar = () => {
               </div>
             </Link>
 
-            <Link href={"/myData"}>
+            <Link
+              href={"/myData"}
+              className={
+                router.pathname.startsWith("/myData") ? "tab-active" : ""
+              }
+            >
               <div
                 className={classNames(
                   "h-[35px] cursor-pointer flex items-center justify-center text-[16px] rounded-[.6rem] ",
@@ -194,7 +214,12 @@ export const Navbar = () => {
               </div>
             </Link>
 
-            <Link href={"/poolData"}>
+            <Link
+              href={"/poolData"}
+              className={
+                router.pathname.startsWith("/poolData") ? "tab-active" : ""
+              }
+            >
               <div
                 className={classNames(
                   "h-[35px] cursor-pointer flex items-center justify-center text-[16px] rounded-[.6rem]",
@@ -206,10 +231,33 @@ export const Navbar = () => {
                 {getLsdTokenName()} Pool
               </div>
             </Link>
+
+            <Link
+              href={"/dashboard"}
+              className={
+                router.pathname.startsWith("/dashboard") ? "tab-active" : ""
+              }
+            >
+              <div
+                className={classNames(
+                  "h-[35px] cursor-pointer flex items-center justify-center text-[16px] rounded-[.6rem]",
+                  router.pathname.startsWith("/dashboard")
+                    ? "bg-color-selected text-text1 font-bold rounded-[.6rem] border-color-divider1 border-solid border-[0.01rem]"
+                    : "text-color-text1"
+                )}
+              >
+                Dashboard
+              </div>
+            </Link>
             {(admin === metaMaskAccount ||
               voters.find((voter: string) => voter === metaMaskAccount) ||
               nodes.find((node: string) => node === metaMaskAccount)) && (
-              <Link href={"/system"}>
+              <Link
+                href={"/system"}
+                className={
+                  router.pathname.startsWith("/system") ? "tab-active" : ""
+                }
+              >
                 <div
                   className={classNames(
                     "h-[35px] cursor-pointer flex items-center justify-center text-[16px] rounded-[.6rem]",
@@ -222,18 +270,6 @@ export const Navbar = () => {
                 </div>
               </Link>
             )}
-            <Link href={"/dashboard"}>
-              <div
-                className={classNames(
-                  "h-[35px] cursor-pointer flex items-center justify-center text-[16px] rounded-[.6rem]",
-                  router.pathname.startsWith("/dashboard")
-                    ? "bg-color-selected text-text1 font-bold rounded-[.6rem] border-color-divider1 border-solid border-[0.01rem]"
-                    : "text-color-text1"
-                )}
-              >
-                Dashboard
-              </div>
-            </Link>
           </div>
 
           {/* <AuditComponent
