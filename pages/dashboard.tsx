@@ -22,11 +22,9 @@ const Dashboard = () => {
         {/* Loading overlay */}
         {!iframeLoaded && !iframeError && (
           <div className="absolute inset-0 flex items-center justify-center bg-color-bgPage z-10">
-            <div className="flex flex-col items-center space-y-4">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-color-highlight"></div>
-              <p className="text-color-text1 text-lg">
-                Loading Vouch Dashboard...
-              </p>
+            <div className="flex flex-col items-center">
+              <img src="/images/loading.gif" className="w-12 h-12" />
+              <p className="text-color-text1 text-[20px]">Loading Dashboard</p>
             </div>
           </div>
         )}
