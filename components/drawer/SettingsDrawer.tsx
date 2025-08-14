@@ -42,7 +42,7 @@ export const SettingsDrawer = (props: Props) => {
       sx={{
         "& .MuiPaper-root": {
           background: darkMode ? "#1a1a1a" : "#f3f3ec",
-          width: "300px",
+          width: "450px",
           paddingTop: "1rem",
         },
       }}
