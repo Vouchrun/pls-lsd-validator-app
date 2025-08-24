@@ -74,7 +74,7 @@ export const ValidatorStakeLoading = () => {
         )}
         <div
           className={classNames(
-            "mx-[.36rem] mt-[.24rem] text-[.24rem] text-color-text1 font-[700] text-center leading-tight"
+            "mx-[.36rem] mt-[24px] text-[.24rem] text-color-text1 font-[700] text-center leading-tight"
           )}
         >
           {title}
@@ -116,7 +116,7 @@ export const ValidatorStakeLoading = () => {
         )}
 
         <a
-          className="my-[.32rem] underline text-color-text2 text-[.12rem]"
+          className="my-[.32rem] underline text-color-text2 text-[12px]"
           href="https://t.me/vouchrun"
           target="_blank"
           rel="noreferrer"

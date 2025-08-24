@@ -73,7 +73,7 @@ export const WithdrawLoadingModal = () => {
           )}
         >
           <div
-            className="self-end mr-[-0.12rem] mt-[.24rem] cursor-pointer"
+            className="self-end mr-[-0.12rem] mt-[24px] cursor-pointer"
             onClick={closeModal}
           >
             <Icomoon
@@ -84,7 +84,7 @@ export const WithdrawLoadingModal = () => {
           </div>
 
           {withdrawLoadingParams?.status === "loading" && (
-            <div className="mt-[.24rem] w-[.8rem] h-[.8rem]">
+            <div className="mt-[24px] w-[.8rem] h-[.8rem]">
               <PrimaryLoading size=".8rem" />
             </div>
           )}
@@ -108,7 +108,7 @@ export const WithdrawLoadingModal = () => {
 
           <div
             className={classNames(
-              "mt-[.24rem] text-[.24rem] text-color-text1 font-[700] text-center leading-tight",
+              "mt-[24px] text-[.24rem] text-color-text1 font-[700] text-center leading-tight",
               robotoBold.className
             )}
           >
@@ -126,7 +126,7 @@ export const WithdrawLoadingModal = () => {
 
           <div
             className={classNames(
-              "mt-[.24rem] text-[.16rem] text-color-text2 text-center leading-tight"
+              "mt-[24px] text-[.16rem] text-color-text2 text-center leading-tight"
             )}
             style={{
               WebkitLineClamp: 3,
@@ -149,7 +149,7 @@ export const WithdrawLoadingModal = () => {
                 })} ${getTokenName()}`}
           </div>
 
-          <div className="mt-[.24rem] flex flex-col items-center">
+          <div className="mt-[24px] flex flex-col items-center">
             {withdrawLoadingParams?.scanUrl && (
               <a
                 className="flex items-center"

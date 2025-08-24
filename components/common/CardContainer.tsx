@@ -16,13 +16,10 @@ export const CardContainer = (props: CardContainerProps) => {
     >
       <div
         className={classNames(
-          "rounded-t-[.3rem] h-[.6rem] flex items-center justify-center text-[.24rem] text-color-text1",
+          "rounded-t-[.3rem] h-auto flex items-center justify-center text-[20px] md:text-[24px] text-color-text1 py-[15px] px-[8px] text-center bg-[#E2E0D0] dark:bg-[#333333]",
           robotoBold.className
         )}
-        style={{
-          background:
-            "linear-gradient(274.08deg, rgba(128, 202, 255, 0.2) 1.81%, rgba(133, 224, 163, 0.2) 96.22%)",
-        }}
+        
       >
         {props.title}
       </div>

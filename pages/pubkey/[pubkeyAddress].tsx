@@ -42,9 +42,9 @@ const PubkeyDetailPage = () => {
           router.back();
         }}
       >
-        <div className='h-full flex items-center justify-between w-smallContentW xl:w-contentW 2xl:w-largeContentW'>
-          <div className='flex items-center'>
-            <div className='w-[.68rem] h-[.68rem] relative'>
+        <div className='h-full flex items-center justify-between w-smallContentW xl:w-contentW 2xl:w-largeContentW flex-col md:flex-row'>
+          <div className='flex items-center w-full'>
+            <div className='w-[48px] h-[48px] md:w-[68px] md:h-[68px] relative'>
               <Image src={getLsdTokenIcon()} layout='fill' alt='icon' />
             </div>
 
@@ -53,7 +53,7 @@ const PubkeyDetailPage = () => {
                 <div
                   className={classNames(
                     robotoBold.className,
-                    'text-[.34rem] ml-[.12rem] text-color-text1'
+                    'text-[20px] md:text-[34px] ml-[12px] text-color-text1'
                   )}
                 >
                   Public Key Detail
@@ -68,15 +68,15 @@ const PubkeyDetailPage = () => {
                         ? 'active'
                         : 'pending'
                     }
-                    ml='.16rem'
+                    ml='16px'
                   >
-                    {pubkeyInfo.displayStatus}
+                    <div className='text-[12px]'>{pubkeyInfo.displayStatus}</div>
                   </CustomTag>
                 )}
               </div>
 
               {pubkeyAddress && (
-                <div className='ml-[.12rem] mt-[.12rem] flex items-center justify-center text-[.12rem] text-color-text2 cursor-pointer'>
+                <div className='ml-[12px] mt-[12px] flex items-center justify-center text-[12px] text-color-text2 cursor-pointer'>
                   <div className='flex items-center'>
                     <div className='mr-[.06rem]'>
                       <span className={robotoBold.className}>Address:</span>{' '}
@@ -91,7 +91,7 @@ const PubkeyDetailPage = () => {
 
                   <Icomoon
                     icon='copy'
-                    size='.12rem'
+                    size='12px'
                     color={darkMode ? '#ffffff80' : '#6C86AD'}
                     onClick={() => {
                       navigator.clipboard.writeText(pubkeyAddress).then(() => {
@@ -104,16 +104,16 @@ const PubkeyDetailPage = () => {
             </div>
           </div>
 
-          <div className='flex flex-col items-end'>
+          <div className='flex flex-col items-end w-full mt-2 md:mt-0'>
             <div className='flex items-center'>
               <div
                 className={classNames(
                   robotoBold.className,
-                  'text-[.34rem] ml-[.12rem] flex items-center text-color-text1'
+                  'text-[24px] md:text-[34px] ml-[12px] flex items-center text-color-text1'
                 )}
               >
                 {pubkeyInfo?.days === undefined ? (
-                  <DataLoading height='.12rem' />
+                  <DataLoading height='12px' />
                 ) : (
                   pubkeyInfo?.days
                 )}
@@ -122,12 +122,12 @@ const PubkeyDetailPage = () => {
               </div>
             </div>
 
-            <div className='mt-[.12rem] flex items-center justify-center text-[.12rem] text-color-text2 cursor-pointer'>
-              <CustomTag type='stroke' ml='.16rem'>
+            <div className='mt-[12px] flex items-center justify-center text-[12px] text-color-text2 cursor-pointer'>
+              <CustomTag type='stroke' ml='16px'>
                 <div className='flex items-center text-color-text1'>
-                  <div className='mr-[.06rem]'>Epoch</div>
+                  <div className='mr-[.06rem] text-[12px]'>Epoch</div>
                   {pubkeyInfo?.eligibilityEpoch === undefined ? (
-                    <DataLoading height='.12rem' />
+                    <DataLoading height='12px' />
                   ) : (
                     pubkeyInfo?.eligibilityEpoch
                   )}

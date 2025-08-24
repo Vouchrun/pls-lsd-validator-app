@@ -23,20 +23,20 @@ export const DepositGuide = () => {
         target='_blank'
         rel='noreferrer'
       >
-        <div className='mr-[.16rem]'>Guide</div>
+        <div className='mr-[.16rem] text-[20px] md:text-[24px]'>Guide</div>
 
         <Icomoon
           icon='right'
           color={darkMode ? '#ffffff80' : '#6C86AD'}
-          size='.11rem'
+          size='11px'
         />
       </a>
 
-      <div className='mt-[.12rem] rounded-[.16rem] w-[4.3rem] bg-[#6C86AD14] p-[.2rem]'>
+      <div className='mt-[12px] rounded-[.16rem] w-full bg-color-bg2 p-[20px]'>
         <div className='flex items-center'>
           <div
             className={classNames(
-              'rounded-full w-[.2rem] h-[.2rem] bg-text1 dark:bg-text1Dark text-white dark:text-text1 text-[.16rem] flex items-center justify-center',
+              'rounded-full w-[20px] h-[20px] bg-text1 dark:bg-text1Dark text-white dark:text-text1 text-[16px] flex items-center justify-center',
               robotoBold.className
             )}
           >
@@ -45,7 +45,7 @@ export const DepositGuide = () => {
 
           <div
             className={classNames(
-              'ml-[.1rem] text-color-text1 text-[.16rem]',
+              'ml-[10px] text-color-text1 text-[16px]',
               robotoBold.className
             )}
           >
@@ -54,7 +54,7 @@ export const DepositGuide = () => {
         </div>
 
         <div
-          className='text-color-text2 text-[.14rem] px-[.2rem] py-[.1rem] mt-[.06rem] ml-[.1rem] leading-normal border-dashed border-l-[1px] border-l-text1 dark:border-l-text1Dark'
+          className='text-color-text2 text-[14px] px-[20px] py-[10px] mt-[.06rem] ml-[10px] leading-normal border-dashed border-l-[1px] border-l-text1 dark:border-l-text1Dark'
           style={{}}
         >
           {soloNodeDepositAmount && Number(soloNodeDepositAmount) > 0 && (
@@ -87,14 +87,14 @@ export const DepositGuide = () => {
           <Icomoon
             icon='arrow-down'
             color={darkMode ? '#E8EFFD' : '#1B1B1F'}
-            size='.12rem'
+            size='12px'
           />
         </div>
 
         <div className='mt-[.06rem] flex items-center'>
           <div
             className={classNames(
-              'opacity-50 rounded-full w-[.2rem] h-[.2rem] bg-text2 dark:bg-text2Dark text-white dark:text-text2 text-[.16rem] flex items-center justify-center',
+              'opacity-50 rounded-full w-[20px] h-[20px] bg-text2 dark:bg-text2Dark text-white dark:text-text2 text-[16px] flex items-center justify-center',
               robotoBold.className
             )}
           >
@@ -103,7 +103,7 @@ export const DepositGuide = () => {
 
           <div
             className={classNames(
-              'ml-[.1rem] text-color-text2 text-[.16rem]',
+              'ml-[10px] text-color-text2 text-[16px]',
               robotoBold.className
             )}
           >
@@ -112,7 +112,7 @@ export const DepositGuide = () => {
         </div>
 
         <div
-          className='text-color-text2 text-[.14rem] px-[.2rem] py-[.1rem] mt-[.06rem] ml-[.1rem] leading-normal border-dashed border-l-[1px] border-l-text2/30 dark:border-l-text2Dark/30'
+          className='text-color-text2 text-[14px] px-[20px] py-[10px] mt-[.06rem] ml-[10px] leading-normal border-dashed border-l-[1px] border-l-text2/30 dark:border-l-text2Dark/30'
           style={{}}
         >
           Once your node balance reaches{' '}
@@ -125,7 +125,7 @@ export const DepositGuide = () => {
           </span>{' '}
           to the <span className={robotoBold.className}>{getTokenName()}</span>{' '}
           deposit contract.
-          <div className='mt-[.1rem]' />
+          <div className='mt-[10px]' />
           Subsequently, you will need to await the validation progress on Pulsechain.
         </div>
 
@@ -133,14 +133,14 @@ export const DepositGuide = () => {
           <Icomoon
             icon='arrow-down'
             color={darkMode ? '#ffffff80' : '#6C86AD'}
-            size='.12rem'
+            size='12px'
           />
         </div>
 
         <div className='mt-[.06rem] flex items-center'>
           <div
             className={classNames(
-              'opacity-50 rounded-full w-[.2rem] h-[.2rem] bg-text2 dark:bg-text2Dark text-white dark:text-text2 text-[.16rem] flex items-center justify-center',
+              'opacity-50 rounded-full w-[20px] h-[20px] bg-text2 dark:bg-text2Dark text-white dark:text-text2 text-[16px] flex items-center justify-center',
               robotoBold.className
             )}
           >
@@ -149,7 +149,7 @@ export const DepositGuide = () => {
 
           <div
             className={classNames(
-              'ml-[.1rem] text-color-text2 text-[.16rem]',
+              'ml-[10px] text-color-text2 text-[16px]',
               robotoBold.className
             )}
           >
@@ -158,7 +158,7 @@ export const DepositGuide = () => {
         </div>
 
         <div
-          className='text-color-text2 text-[.14rem] px-[.2rem] py-[.1rem] mt-[.06rem] ml-[.1rem] leading-normal'
+          className='text-color-text2 text-[14px] px-[20px] py-[10px] mt-[.06rem] ml-[10px] leading-normal'
           style={{}}
         >
           After your stake is in place, our protocol takes over. There's nothing

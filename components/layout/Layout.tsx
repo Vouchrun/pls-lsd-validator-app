@@ -14,6 +14,7 @@ import { getAppTitle } from "utils/configUtils";
 import { DepositLoadingModal } from "components/modal/DepositLoadingModal";
 import { DepositLoadingSidebar } from "components/modal/DepositLoadingSidebar";
 import Footer from "./Footer";
+import { useRouter } from "next/router";
 
 const Navbar = dynamic(() => import("./Navbar"), { ssr: false });
 
@@ -29,8 +30,12 @@ export const Layout = (props: React.PropsWithChildren) => {
   useInit();
 
   const { darkMode } = useAppSlice();
+  const router = useRouter();
 
   const [navigation, setNavigation] = useState<NavigationItem[]>([]);
+
+  // Check if current page is dashboard
+  const isDashboard = router.pathname === "/dashboard";
 
   return (
     <MyLayoutContext.Provider
@@ -60,9 +65,9 @@ export const Layout = (props: React.PropsWithChildren) => {
           </AppBar>
         </HideOnScroll>
 
-        <main className="flex flex-col items-center pt-[1.16rem] h-[100vh]">
+        <main className="flex flex-col items-center pt-[50px] md:pt-[60px] lg:pt-[92px] h-[100vh]">
           <div className="mb-[1rem] w-full">{props.children}</div>
-          <Footer />
+          {!isDashboard && <Footer />}
         </main>
 
         <DepositLoadingModal />

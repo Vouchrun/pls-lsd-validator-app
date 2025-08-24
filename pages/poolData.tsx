@@ -25,34 +25,34 @@ const PoolDataPage = () => {
     <div>
       <PageTitleContainer>
         <div className='h-full flex items-center w-smallContentW xl:w-contentW 2xl:w-largeContentW'>
-          <div className='w-[.68rem] h-[.68rem] relative'>
+          <div className='w-[48px] h-[48px] md:w-[68px] md:h-[68px] relative'>
             <Image src={getLsdTokenIcon()} layout='fill' alt='icon' />
           </div>
 
           <div>
-            <div className='ml-[.12rem] flex items-center'>
+            <div className='ml-[12px] flex items-center'>
               <div
                 className={classNames(
                   robotoBold.className,
-                  'text-[.34rem] text-color-text1'
+                  'text-[24px] md:text-[34px] text-color-text1'
                 )}
               >
                 {getLsdTokenName()} Pool
               </div>
 
               {apr === 0 ? (
-                <CustomTag type='apr' ml='.12rem'>
-                  <span className='ml-[.06rem]'>APR Pending Update</span>
+                <CustomTag type='apr' ml='12px'>
+                  <span className='ml-[.06rem] text-[12px]'>APR Pending Update</span>
                 </CustomTag>
               ) : (
                 <div className='ml-[.06rem]'>
                   <CustomTag type='apr'>
                     <div className='px-1'>
-                      <span className='font-bold mr-1'>Staking APR:</span>
-                      <span className='mr-1'>
+                      <span className='font-bold mr-1 text-[12px]'>Staking APR:</span>
+                      <span className='mr-1 text-[12px]'>
                         7 Days Avg: {formatNumber(apr, { decimals: 2 })}%
                       </span>
-                      <span>
+                      <span className='text-[12px]'>
                         1 Year Avg: {formatNumber(yearlyApr, { decimals: 2 })}%
                       </span>
                     </div>
@@ -61,7 +61,7 @@ const PoolDataPage = () => {
               )}
             </div>
 
-            <div className='ml-[.12rem] mt-[.12rem] text-[.12rem] text-color-text2 cursor-pointer'>
+            <div className='ml-[12px] mt-[.12rem] text-[12px] text-color-text2 cursor-pointer'>
               <div className='flex items-center'>
                 <div className='mr-[.06rem]'>
                   Take part in vPLS programs, earn tokens easily.
@@ -72,7 +72,7 @@ const PoolDataPage = () => {
         </div>
       </PageTitleContainer>
 
-      <div className='w-smallContentW xl:w-contentW 2xl:w-largeContentW mx-auto mb-[.56rem]'>
+      <div className='w-smallContentW xl:w-contentW 2xl:w-largeContentW mx-auto mb-[56px]'>
         <PoolAssets />
 
         <UnstakingPoolStatus />

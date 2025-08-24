@@ -8,15 +8,15 @@ interface Props extends SwitchProps {
 export const IOSSwitch = styled((props: Props) => (
   <Switch focusVisibleClassName=".Mui-focusVisible" disableRipple {...props} />
 ))(({ theme }) => ({
-  width: ".76rem",
-  height: ".38rem",
+  width: "76px",
+  height: "38px",
   padding: 0,
   "& .MuiSwitch-switchBase": {
     padding: 0,
-    margin: ".06rem",
+    margin: "6px",
     transitionDuration: "300ms",
     "&.Mui-checked": {
-      transform: "translateX(0.39rem)",
+      transform: "translateX(39px)",
       color: "#fff",
       "& + .MuiSwitch-track": {
         background:
@@ -54,12 +54,12 @@ export const IOSSwitch = styled((props: Props) => (
   },
   "& .MuiSwitch-thumb": {
     boxSizing: "border-box",
-    width: ".26rem",
-    height: ".26rem",
+    width: "26px",
+    height: "26px",
     backgroundColor: "#E8EFFD",
   },
   "& .MuiSwitch-track": {
-    borderRadius: ".6rem",
+    borderRadius: "60px",
     backgroundColor: theme.palette.mode === "light" ? "#6C86AD80" : "#39393D",
     opacity: 1,
     transition: theme.transitions.create(["background-color"], {

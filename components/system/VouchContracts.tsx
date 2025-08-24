@@ -20,14 +20,13 @@ export default function VouchContracts() {
   const feePoolAddress = getFeePoolContract();
 
   return (
-    <div className='bg-color-bg2 border-[0.01rem] border-color-border1 rounded-[.3rem]'>
-      <div className='h-[.7rem] flex items-center justify-center font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[.16rem] text-color-text2'>
+    <div className='bg-color-bg2 border-[0.01rem] border-color-border1 rounded-[.3rem] overflow-hidden'>
+      <div className='py-[15px] md:py-[20px] flex items-center justify-center font-[500] border-solid border-b-[.01rem] border-color-border1 bg-[#E2E0D0] dark:bg-[#333333] text-[16px] text-color-text2'>
         Vouch Contracts
       </div>
       <div
         className={classNames(
           'font-[500] min-h-[360px] px-[10px] py-[20px]',
-          'bg-bgPage/50 dark:bg-bgPageDark/50'
         )}
       >
         <div className='mb-[20px]'>

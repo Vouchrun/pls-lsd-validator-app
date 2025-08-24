@@ -29,6 +29,12 @@ export function getNetworkName() {
 }
 
 export function getEthereumRpc() {
+  if (typeof window !== 'undefined') {
+    const customRpc = window.localStorage.getItem('eth_lsd_custom_rpc');
+    if (customRpc) {
+      return customRpc;
+    }
+  }
   if (isDev()) {
     return appDevConfig.rpc;
   }

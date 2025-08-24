@@ -35,20 +35,17 @@ const ChooseTypePage = () => {
 
   return (
     <div className='w-smallContentW xl:w-contentW 2xl:w-largeContentW mx-auto'>
-      <div className='flex mt-[.24rem] items-start'>
-        <CardContainer width='6.2rem' title='Choose Validator Type'>
+      <div className='flex mt-[24px] items-start flex-col lg:flex-row'>
+        <CardContainer width='100%' title='Choose Validator Type'>
           <div
-            className='pb-[.52rem] flex justify-center pt-[.52rem] flex-wrap gap-[.12rem]'
-            style={{
-              rowGap: '.32rem',
-              columnGap: '.12rem',
-            }}
+            className='p-[.52rem] grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[20px]'
+            
           >
-            <div className='w-[1.88rem] h-[2.11rem] rounded-[.16rem] bg-color-bgPage flex flex-col items-center justify-between'>
+            <div className='rounded-[.16rem] bg-[#E2E0D0] dark:bg-[#333333] flex flex-col items-center justify-between'>
               <div className='mt-[.32rem] flex flex-col items-center'>
                 <div
                   className={classNames(
-                    'text-[.16rem] text-color-text1',
+                    'text-[16px] text-color-text1',
                     robotoBold.className
                   )}
                 >
@@ -57,31 +54,31 @@ const ChooseTypePage = () => {
 
                 <div
                   className={classNames(
-                    'text-[.14rem] text-color-text2 mt-[.14rem] text-center mx-[.12rem] leading-snug'
+                    'text-[14px] text-color-text2 mt-[.14rem] text-center mx-[.12rem] leading-snug'
                   )}
                 >
                   Deposit {getTokenName()} to be delegated
                 </div>
               </div>
 
-              <div className='self-stretch mb-[.24rem] mx-[.16rem]'>
+              <div className='self-stretch mb-[.24rem] mt-[24px] mx-[.16rem]'>
                 <CustomButton
-                  height='.48rem'
+                  height='42px'
                   disabled={soloDisabled}
                   onClick={() => {
                     router.push('/tokenStake/soloDeposit');
                   }}
                 >
-                  Next
+                  <div className='text-[15px]'>Next</div>
                 </CustomButton>
               </div>
             </div>
 
-            <div className='w-[1.88rem] h-[2.11rem] rounded-[.16rem] bg-color-bgPage flex flex-col items-center justify-between'>
+            <div className=' rounded-[.16rem] bg-[#E2E0D0] dark:bg-[#333333] flex flex-col items-center justify-between'>
               <div className='mt-[.32rem] flex flex-col items-center'>
                 <div
                   className={classNames(
-                    'text-[.16rem] text-color-text1',
+                    'text-[16px] text-color-text1',
                     robotoBold.className
                   )}
                 >
@@ -90,43 +87,45 @@ const ChooseTypePage = () => {
 
                 <div
                   className={classNames(
-                    'text-[.14rem] text-color-text2 mt-[.14rem] mx-[.12rem] leading-snug'
+                    'text-[14px] text-color-text2 mt-[.14rem] mx-[.12rem] leading-snug'
                   )}
                 >
                   Apply to be nominated
                 </div>
               </div>
 
-              <div className='self-stretch mb-[.24rem] mx-[.16rem]'>
+              <div className='self-stretch mb-[.24rem] mt-[24px] mx-[.16rem]'>
                 {!isTrust ? (
                   <CustomButton
-                    height='.48rem'
+                    height='42px'
                     type='stroke'
                     disabled={!trustDepositEnabled}
                     onClick={() => {
                       openLink('https://t.me/vouchrun');
                     }}
                   >
-                    Apply
+                    <div className='text-[15px]'>Apply</div>
+                    
                   </CustomButton>
                 ) : (
                   <CustomButton
-                    height='.48rem'
+                    height='42px'
                     onClick={() => {
                       router.push('/tokenStake/trustDeposit');
                     }}
                   >
-                    Next
+                    
+                    <div className='text-[15px]'>Next</div>
                   </CustomButton>
                 )}
               </div>
             </div>
 
-            <div className='w-[1.88rem] h-[2.11rem] rounded-[.16rem] bg-color-bgPage flex flex-col items-center justify-between'>
+            <div className='rounded-[.16rem] bg-[#E2E0D0] dark:bg-[#333333] flex flex-col items-center justify-between'>
               <div className='mt-[.32rem] flex flex-col items-center mx-[.16rem]'>
                 <div
                   className={classNames(
-                    'text-[.16rem] text-color-text1',
+                    'text-[16px] text-color-text1',
                     robotoBold.className
                   )}
                 >
@@ -135,29 +134,30 @@ const ChooseTypePage = () => {
 
                 <div
                   className={classNames(
-                    'text-[.14rem] text-color-text2 mt-[.14rem] leading-snug text-center mx-[.12rem]'
+                    'text-[14px] text-color-text2 mt-[.14rem] leading-snug text-center mx-[.12rem]'
                   )}
                 >
                   Not Yet Available on Pulsechain
                 </div>
               </div>
 
-              <div className='self-stretch mb-[.24rem] mx-[.16rem]'>
+              <div className='self-stretch mb-[.24rem] mt-[24px] mx-[.16rem]'>
                 <CustomButton
-                  height='.48rem'
+                  height='42px'
                   type='stroke'
                   onClick={() => {
                     openLink('https://ethereum.org/en/staking/dvt/');
                   }}
                 >
-                  Instruction
+                  <div className='text-[15px]'>Instruction</div>
+                  
                 </CustomButton>
               </div>
             </div>
           </div>
         </CardContainer>
 
-        <div className='ml-[.85rem]'>
+        <div className='w-full lg:pl-[50px] mt-2 lg:mt-0'>
           <ChooseTypeGuide />
         </div>
       </div>

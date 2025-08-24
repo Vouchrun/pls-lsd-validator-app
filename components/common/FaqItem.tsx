@@ -29,7 +29,7 @@ export const FaqItem = (props: Props) => {
   }, [collapseOpenId, props.id, dispatch]);
 
   return (
-    <div className="bg-color-bg3 rounded-[.12rem]" id={id}>
+    <div className="bg-color-bg2 rounded-[.12rem] mb-[10px] md:mb-[0]" id={id}>
       <div
         className="py-[.24rem] flex items-start justify-between px-[.24rem] cursor-pointer"
         style={{
@@ -38,7 +38,7 @@ export const FaqItem = (props: Props) => {
         onClick={() => setCollapsed(!collapsed)}
       >
         <div
-          className="text-color-text2 text-[.18rem] font-[1000] flex-1 leading-tight mr-[.12rem]"
+          className="text-color-text2 text-[14px] md:text-[16px] font-[1000] flex-1 leading-tight mr-[.12rem]"
           style={{
             maxLines: 2,
             overflow: "hidden",
@@ -58,7 +58,7 @@ export const FaqItem = (props: Props) => {
             collapsed ? "rotate-90" : ""
           )}
         >
-          <Icomoon icon="right" size=".11rem" color="#6C86AD" />
+          <Icomoon icon="right" size="10px" color="#6C86AD" />
         </div>
       </div>
 

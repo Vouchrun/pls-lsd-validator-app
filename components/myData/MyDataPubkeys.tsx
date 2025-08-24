@@ -99,10 +99,10 @@ export const MyDataPubkeys = () => {
 
   return (
     <div>
-      <div className='mt-[.24rem] flex items-center'>
+      <div className='mt-[24px] flex items-center'>
         <div
           className={classNames(
-            'mr-[.24rem] cursor-pointer px-[.16rem] h-[.42rem] inline-flex items-center justify-between rounded-[.3rem] border-[0.01rem]',
+            'mr-[.24rem] cursor-pointer px-[16px] h-[42px] inline-flex items-center justify-between rounded-[.3rem] border-[0.01rem]',
             typePopupState.isOpen
               ? 'border-[#ffffff00] bg-color-selected'
               : 'border-[#6C86AD80]'
@@ -111,7 +111,7 @@ export const MyDataPubkeys = () => {
         >
           <div
             className={classNames(
-              'flex-1 text-[.16rem] w-[0.8rem] flex items-center justify-center',
+              'flex-1 text-[16px] w-auto flex items-center justify-center',
               typePopupState.isOpen ? 'text-text1' : 'text-color-text2'
             )}
             style={{
@@ -129,13 +129,13 @@ export const MyDataPubkeys = () => {
           </div>
 
           <div className='ml-[.2rem]'>
-            <Icomoon icon='arrow-down' size='.1rem' color='#848B97' />
+            <Icomoon icon='arrow-down' size='10px' color='#848B97' />
           </div>
         </div>
 
         <CustomButton
-          height='.42rem'
-          width='1.43rem'
+          height='42px'
+          width='auto'
           onClick={() => {
             openLink(
               'https://vouch.run/docs/validator_guide/getting_started.html'
@@ -145,41 +145,43 @@ export const MyDataPubkeys = () => {
           Run Nodes
         </CustomButton>
       </div>
+      <div className='overflow-x-auto'>
+        <div className='mt-[24px] bg-color-bg2 border-[0.01rem] border-color-border1 rounded-[.3rem] min-w-[700px] overflow-hidden'>
+          <div
+            className='py-[15px] md:py-[20px] grid items-center font-[500] border-solid border-b-[.01rem] border-color-border1 bg-[#E2E0D0] dark:bg-[#333333]'
+            style={{
+              gridTemplateColumns: '50% 25% 25%',
+            }}
+          >
+            <div className='pl-[.5rem] flex items-center justify-start text-[14px] md:text-[16px] text-color-text2'>
+              Public Key List {!showLoading && `(${displayPubkeyInfos.length})`}
+            </div>
+            <div className='flex items-center justify-center text-[14px] md:text-[16px] text-color-text2'>
+              Validator Health
+            </div>
+            <div className='flex items-center justify-center text-[14px] md:text-[16px] text-color-text2'>
+              Status
+            </div>
+          </div>
 
-      <div className='mt-[.24rem] bg-color-bg2 border-[0.01rem] border-color-border1 rounded-[.3rem]'>
-        <div
-          className='h-[.7rem] grid items-center font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F]'
-          style={{
-            gridTemplateColumns: '50% 25% 25%',
-          }}
-        >
-          <div className='pl-[.5rem] flex items-center justify-start text-[.16rem] text-color-text2'>
-            Public Key List {!showLoading && `(${displayPubkeyInfos.length})`}
-          </div>
-          <div className='flex items-center justify-center text-[.16rem] text-color-text2'>
-            Validator Health
-          </div>
-          <div className='flex items-center justify-center text-[.16rem] text-color-text2'>
-            Status
-          </div>
+          {paginatedItems.map((item, index) => (
+            <MyDataPubkeyItem key={index} index={index} pubkeyInfo={item} />
+          ))}
+
+          {showEmptyContent && (
+            <div className='h-[2rem] flex items-center justify-center'>
+              <EmptyContent />
+            </div>
+          )}
+
+          {showLoading && (
+            <div className='h-[2rem] flex items-center justify-center relative'>
+              <LoadingContent />
+            </div>
+          )}
         </div>
-
-        {paginatedItems.map((item, index) => (
-          <MyDataPubkeyItem key={index} index={index} pubkeyInfo={item} />
-        ))}
-
-        {showEmptyContent && (
-          <div className='h-[2rem] flex items-center justify-center'>
-            <EmptyContent />
-          </div>
-        )}
-
-        {showLoading && (
-          <div className='h-[2rem] flex items-center justify-center relative'>
-            <LoadingContent />
-          </div>
-        )}
       </div>
+
       <div className='flex items-center justify-center mt-1 md:flex-row flex-col'>
         <div className='flex items-center'>
           <div className='text-[#FE8A3C] text-[14px] mr-[10px]'>
@@ -188,8 +190,8 @@ export const MyDataPubkeys = () => {
           <select
             value={resultsPerPage}
             onChange={handleChangeResultsPerPage}
-            className='cursor-pointer px-[.16rem] h-[.42rem] inline-flex items-center justify-between rounded-[4px] border-[0.01rem] border-[#6C86AD80] bg-transparent shadow-none outline-none'
-            style={{ color: '#6C86AD' }}
+            className='cursor-pointer px-[10px] h-[35px] inline-flex items-center justify-between rounded-[4px] border-[0.01rem] bg-transparent shadow-none outline-none text-[14px] text-color-text2 border-color-border1'
+            
           >
             <option value={10}>10</option>
             <option value={20}>20</option>
@@ -205,7 +207,7 @@ export const MyDataPubkeys = () => {
           <button
             onClick={handleFirstPage}
             disabled={currentPage === 1}
-            className='cursor-pointer h-[.42rem] w-[40px] rounded-[4px] mx-[3px] border-none flex items-center justify-center bg-gradient-to-r from-[#FE8A3C] via-[#E79D6C] to-[#FE8A3C]'
+            className='cursor-pointer h-[35px] w-[35px] rounded-[4px] mx-[3px] border-none flex items-center justify-center bg-gradient-to-r from-[#FE8A3C] via-[#E79D6C] to-[#FE8A3C]'
           >
             <Image
               src={doubleLeftIcon}
@@ -217,21 +219,21 @@ export const MyDataPubkeys = () => {
           <button
             onClick={handlePreviousPage}
             disabled={currentPage === 1}
-            className='cursor-pointer h-[.42rem] w-[40px] rounded-[4px] mx-[3px] border-none flex items-center justify-center bg-gradient-to-r from-[#FE8A3C] via-[#E79D6C] to-[#FE8A3C]'
+            className='cursor-pointer h-[35px] w-[35px] rounded-[4px] mx-[3px] border-none flex items-center justify-center bg-gradient-to-r from-[#FE8A3C] via-[#E79D6C] to-[#FE8A3C]'
           >
             <Image src={leftIcon} alt='Previous Page' height={5} width={9} />
           </button>
           <button
             onClick={handleNextPage}
             disabled={currentPage === totalPages}
-            className='cursor-pointer h-[.42rem] w-[40px] rounded-[4px] mx-[3px] border-none flex items-center justify-center bg-gradient-to-r from-[#FE8A3C] via-[#E79D6C] to-[#FE8A3C]'
+            className='cursor-pointer h-[35px] w-[35px] rounded-[4px] mx-[3px] border-none flex items-center justify-center bg-gradient-to-r from-[#FE8A3C] via-[#E79D6C] to-[#FE8A3C]'
           >
             <Image src={rightIcon} alt='Next Page' height={5} width={9} />
           </button>
           <button
             onClick={handleLastPage}
             disabled={currentPage === totalPages}
-            className='cursor-pointer h-[.42rem] w-[40px] rounded-[4px] border-none mx-[3px] flex items-center justify-center bg-gradient-to-r from-[#FE8A3C] via-[#E79D6C] to-[#FE8A3C]'
+            className='cursor-pointer h-[35px] w-[35px] rounded-[4px] border-none mx-[3px] flex items-center justify-center bg-gradient-to-r from-[#FE8A3C] via-[#E79D6C] to-[#FE8A3C]'
           >
             <Image
               src={doubleRightIcon}
@@ -282,7 +284,7 @@ const MyDataPubkeyItem = (props: MyDataPubkeyItemProps) => {
 
       const res = await fetch(
         `${getBeaconHost()}/eth/v1/beacon/states/head/validators?id=` +
-          pubkeyInfo.pubkeyAddress,
+        pubkeyInfo.pubkeyAddress,
         {
           method: 'GET',
           headers: {
@@ -301,14 +303,14 @@ const MyDataPubkeyItem = (props: MyDataPubkeyItemProps) => {
   return (
     <div
       className={classNames(
-        'h-[.74rem] grid items-center font-[500]',
+        'py-[15px] md:py-[20px] grid items-center font-[500]',
         index % 2 === 0 ? 'bg-bgPage/50 dark:bg-bgPageDark/50' : ''
       )}
       style={{
         gridTemplateColumns: '50% 25% 25%',
       }}
     >
-      <div className='pl-[.5rem] flex items-center justify-start text-[.16rem] text-color-text2 cursor-pointer'>
+      <div className='pl-[.5rem] flex items-center justify-start text-[14px] md:text-[16px] text-color-text2 cursor-pointer'>
         <Icomoon
           icon='copy'
           size='.133rem'
@@ -331,13 +333,13 @@ const MyDataPubkeyItem = (props: MyDataPubkeyItemProps) => {
 
           <Icomoon
             icon='right1'
-            size='.12rem'
+            size='12px'
             color={darkMode ? '#ffffff80' : '#6C86AD'}
           />
         </a>
       </div>
 
-      <div className='flex items-center justify-center text-[.16rem] text-color-text1'>
+      <div className='flex items-center justify-center text-[14px] md:text-[16px] text-color-text1'>
         <div className='flex items-center cursor-pointer'>
           <a
             href={
@@ -348,25 +350,25 @@ const MyDataPubkeyItem = (props: MyDataPubkeyItemProps) => {
               pubkeyInfo.displayStatus === 'Exited'
                 ? 'text-error'
                 : pubkeyInfo.displayStatus === 'Active'
-                ? 'text-color-text1'
-                : 'text-color-text2'
+                  ? 'text-color-text1'
+                  : 'text-color-text2'
             }
           >
             {pubkeyInfo.displayStatus === 'Exited' ||
-            pubkeyInfo.displayStatus === 'Withdrawal'
+              pubkeyInfo.displayStatus === 'Withdrawal'
               ? '⚪'
               : !apiData
-              ? '--'
-              : apiData?.validator?.slashed
-              ? '🔴 Slashed'
-              : parseInt(apiData?.balance) / 10 ** 9 < MINIMUM_BALANCE
-              ? '🟡 Low Balance, Leaking'
-              : '🟢 Active, OK'}
+                ? '--'
+                : apiData?.validator?.slashed
+                  ? '🔴 Slashed'
+                  : parseInt(apiData?.balance) / 10 ** 9 < MINIMUM_BALANCE
+                    ? '🟡 Low Balance, Leaking'
+                    : '🟢 Active, OK'}
           </a>
         </div>
       </div>
 
-      <div className='flex items-center justify-center text-[.16rem] text-color-text1'>
+      <div className='flex items-center justify-center text-[14px] md:text-[16px] text-color-text1'>
         <div
           className='flex items-center cursor-pointer'
           onClick={() => {
@@ -379,8 +381,8 @@ const MyDataPubkeyItem = (props: MyDataPubkeyItemProps) => {
               pubkeyInfo.displayStatus === 'Exited'
                 ? 'text-error'
                 : pubkeyInfo.displayStatus === 'Active'
-                ? 'text-color-text1'
-                : 'text-color-text2'
+                  ? 'text-color-text1'
+                  : 'text-color-text2'
             )}
           >
             {pubkeyInfo.displayStatus}
@@ -388,7 +390,7 @@ const MyDataPubkeyItem = (props: MyDataPubkeyItemProps) => {
 
           <Icomoon
             icon='right1'
-            size='.12rem'
+            size='12px'
             color={darkMode ? '#ffffff80' : '#6C86AD'}
           />
         </div>
@@ -464,7 +466,7 @@ const ChooseTypePopover = (props: ChooseTypePopoverProps) => {
       }}
     >
       <div
-        className={classNames('p-[.16rem] w-[3.1rem]', darkMode ? 'dark' : '')}
+        className={classNames('p-[16px] w-[280px]', darkMode ? 'dark' : '')}
       >
         <div
           className='cursor-pointer flex items-center justify-between'
@@ -474,31 +476,31 @@ const ChooseTypePopover = (props: ChooseTypePopoverProps) => {
           }}
         >
           <div className='flex items-center'>
-            <div className='ml-[.12rem] text-color-text1 text-[.16rem]'>
+            <div className='ml-[12px] text-color-text1 text-[16px]'>
               All
             </div>
 
             <div
               className={classNames(
-                'ml-[.03rem] mb-[.1rem] w-[.16rem] h-[.16rem] items-center justify-center rounded-full',
+                'ml-[.03rem] mb-[.1rem] w-[16px] h-[16px] items-center justify-center rounded-full',
                 'bg-[#E8EFFD] text-text2',
                 totalCount === undefined ? 'hidden' : 'flex'
               )}
             >
-              <div className='scale-[.6] origin-center'>{totalCount}</div>
+              <div className='scale-[.6] origin-center text-[16px]'>{totalCount}</div>
             </div>
           </div>
 
           {types.length === 0 ? (
-            <div className='w-[.16rem] h-[.16rem] relative'>
+            <div className='w-[16px] h-[16px] relative'>
               <Image src={checkedIcon} alt='checked' layout='fill' />
             </div>
           ) : (
-            <div className='w-[.16rem] h-[.16rem] rounded-[0.03rem] border-solid border-[1px] border-color-border3' />
+            <div className='w-[16px] h-[16px] rounded-[0.03rem] border-solid border-[1px] border-color-border3' />
           )}
         </div>
 
-        <div className='my-[.16rem] h-[0.01rem] bg-color-divider1' />
+        <div className='my-[16px] h-[0.01rem] bg-color-divider1' />
 
         <div
           className='cursor-pointer flex items-center justify-between'
@@ -507,31 +509,31 @@ const ChooseTypePopover = (props: ChooseTypePopoverProps) => {
           }}
         >
           <div className='flex items-center'>
-            <div className='ml-[.12rem] text-color-text1 text-[.16rem]'>
+            <div className='ml-[12px] text-color-text1 text-[16px]'>
               Active
             </div>
 
             <div
               className={classNames(
-                'ml-[.03rem] mb-[.1rem] w-[.16rem] h-[.16rem] items-center justify-center rounded-full',
+                'ml-[.03rem] mb-[.1rem] w-[16px] h-[16px] items-center justify-center rounded-full',
                 'bg-[#E8EFFD] text-text2',
                 activeCount === undefined ? 'hidden' : 'flex'
               )}
             >
-              <div className='scale-[.6] origin-center'>{activeCount}</div>
+              <div className='scale-[.6] origin-center text-[16px]'>{activeCount}</div>
             </div>
           </div>
 
           {types.indexOf(PubkeyStatusType.Active) >= 0 ? (
-            <div className='w-[.16rem] h-[.16rem] relative'>
+            <div className='w-[16px] h-[16px] relative'>
               <Image src={checkedIcon} alt='checked' layout='fill' />
             </div>
           ) : (
-            <div className='w-[.16rem] h-[.16rem] rounded-[0.03rem] border-solid border-[1px] border-color-border3' />
+            <div className='w-[16px] h-[16px] rounded-[0.03rem] border-solid border-[1px] border-color-border3' />
           )}
         </div>
 
-        <div className='my-[.16rem] h-[0.01rem] bg-color-divider1' />
+        <div className='my-[16px] h-[0.01rem] bg-color-divider1' />
 
         <div
           className='cursor-pointer flex items-center justify-between'
@@ -540,31 +542,31 @@ const ChooseTypePopover = (props: ChooseTypePopoverProps) => {
           }}
         >
           <div className='flex items-center'>
-            <div className='ml-[.12rem] text-color-text1 text-[.16rem]'>
+            <div className='ml-[12px] text-color-text1 text-[16px]'>
               Pending
             </div>
 
             <div
               className={classNames(
-                'ml-[.03rem] mb-[.1rem] w-[.16rem] h-[.16rem] items-center justify-center rounded-full',
+                'ml-[.03rem] mb-[.1rem] w-[16px] h-[16px] items-center justify-center rounded-full',
                 'bg-[#E8EFFD] text-text2',
                 pendingCount === undefined ? 'hidden' : 'flex'
               )}
             >
-              <div className='scale-[.6] origin-center'>{pendingCount}</div>
+              <div className='scale-[.6] origin-center text-[16px]'>{pendingCount}</div>
             </div>
           </div>
 
           {types.indexOf(PubkeyStatusType.Pending) >= 0 ? (
-            <div className='w-[.16rem] h-[.16rem] relative'>
+            <div className='w-[16px] h-[16px] relative'>
               <Image src={checkedIcon} alt='checked' layout='fill' />
             </div>
           ) : (
-            <div className='w-[.16rem] h-[.16rem] rounded-[0.03rem] border-solid border-[1px] border-color-border3' />
+            <div className='w-[16px] h-[16px] rounded-[0.03rem] border-solid border-[1px] border-color-border3' />
           )}
         </div>
 
-        <div className='my-[.16rem] h-[0.01rem] bg-color-divider1' />
+        <div className='my-[16px] h-[0.01rem] bg-color-divider1' />
 
         <div
           className='cursor-pointer flex items-center justify-between'
@@ -573,31 +575,31 @@ const ChooseTypePopover = (props: ChooseTypePopoverProps) => {
           }}
         >
           <div className='flex items-center'>
-            <div className='ml-[.12rem] text-color-text1 text-[.16rem]'>
+            <div className='ml-[12px] text-color-text1 text-[16px]'>
               Exited
             </div>
 
             <div
               className={classNames(
-                'ml-[.03rem] mb-[.1rem] w-[.16rem] h-[.16rem] items-center justify-center rounded-full',
+                'ml-[.03rem] mb-[.1rem] w-[16px] h-[16px] items-center justify-center rounded-full',
                 'bg-[#E8EFFD] text-text2',
                 exitedCount === undefined ? 'hidden' : 'flex'
               )}
             >
-              <div className='scale-[.6] origin-center'>{exitedCount}</div>
+              <div className='scale-[.6] origin-center text-[16px]'>{exitedCount}</div>
             </div>
           </div>
 
           {types.indexOf(PubkeyStatusType.Exited) >= 0 ? (
-            <div className='w-[.16rem] h-[.16rem] relative'>
+            <div className='w-[16px] h-[16px] relative'>
               <Image src={checkedIcon} alt='checked' layout='fill' />
             </div>
           ) : (
-            <div className='w-[.16rem] h-[.16rem] rounded-[0.03rem] border-solid border-[1px] border-color-border3' />
+            <div className='w-[16px] h-[16px] rounded-[0.03rem] border-solid border-[1px] border-color-border3' />
           )}
         </div>
 
-        <div className='my-[.16rem] h-[0.01rem] bg-color-divider1' />
+        <div className='my-[16px] h-[0.01rem] bg-color-divider1' />
 
         <div
           className='cursor-pointer flex items-center justify-between'
@@ -606,31 +608,31 @@ const ChooseTypePopover = (props: ChooseTypePopoverProps) => {
           }}
         >
           <div className='flex items-center'>
-            <div className='ml-[.12rem] text-color-text1 text-[.16rem]'>
+            <div className='ml-[12px] text-color-text1 text-[16px]'>
               Matched
             </div>
 
             <div
               className={classNames(
-                'ml-[.03rem] mb-[.1rem] w-[.16rem] h-[.16rem] items-center justify-center rounded-full',
+                'ml-[.03rem] mb-[.1rem] w-[16px] h-[16px] items-center justify-center rounded-full',
                 'bg-[#E8EFFD] text-text2',
                 matchedCount === undefined ? 'hidden' : 'flex'
               )}
             >
-              <div className='scale-[.6] origin-center'>{matchedCount}</div>
+              <div className='scale-[.6] origin-center text-[16px]'>{matchedCount}</div>
             </div>
           </div>
 
           {types.indexOf(PubkeyStatusType.Matched) >= 0 ? (
-            <div className='w-[.16rem] h-[.16rem] relative'>
+            <div className='w-[16px] h-[16px] relative'>
               <Image src={checkedIcon} alt='checked' layout='fill' />
             </div>
           ) : (
-            <div className='w-[.16rem] h-[.16rem] rounded-[0.03rem] border-solid border-[1px] border-color-border3' />
+            <div className='w-[16px] h-[16px] rounded-[0.03rem] border-solid border-[1px] border-color-border3' />
           )}
         </div>
 
-        <div className='my-[.16rem] h-[0.01rem] bg-color-divider1' />
+        <div className='my-[16px] h-[0.01rem] bg-color-divider1' />
 
         <div
           className='cursor-pointer flex items-center justify-between'
@@ -639,27 +641,27 @@ const ChooseTypePopover = (props: ChooseTypePopoverProps) => {
           }}
         >
           <div className='flex items-center'>
-            <div className='ml-[.12rem] text-color-text1 text-[.16rem]'>
+            <div className='ml-[12px] text-color-text1 text-[16px]'>
               Others
             </div>
 
             <div
               className={classNames(
-                'ml-[.03rem] mb-[.1rem] w-[.16rem] h-[.16rem] items-center justify-center rounded-full',
+                'ml-[.03rem] mb-[.1rem] w-[16px] h-[16px] items-center justify-center rounded-full',
                 'bg-[#E8EFFD] text-text2',
                 othersCount === undefined ? 'hidden' : 'flex'
               )}
             >
-              <div className='scale-[.6] origin-center'>{othersCount}</div>
+              <div className='scale-[.6] origin-center text-[16px]'>{othersCount}</div>
             </div>
           </div>
 
           {types.indexOf(PubkeyStatusType.Others) >= 0 ? (
-            <div className='w-[.16rem] h-[.16rem] relative'>
+            <div className='w-[16px] h-[16px] relative'>
               <Image src={checkedIcon} alt='checked' layout='fill' />
             </div>
           ) : (
-            <div className='w-[.16rem] h-[.16rem] rounded-[0.03rem] border-solid border-[1px] border-color-border3' />
+            <div className='w-[16px] h-[16px] rounded-[0.03rem] border-solid border-[1px] border-color-border3' />
           )}
         </div>
       </div>

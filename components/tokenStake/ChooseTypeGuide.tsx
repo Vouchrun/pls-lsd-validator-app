@@ -13,33 +13,33 @@ export const ChooseTypeGuide = () => {
   const { soloNodeDepositAmount } = useSoloNodeDepositAmount();
 
   return (
-    <div className="">
+    <div className="mb-[80px]">
       <a
         className="text-[.24rem] text-color-text1 inline-flex items-center"
         href="https://vouch.run/docs/validator_guide/getting_started.html"
         target="_blank"
         rel="noreferrer"
       >
-        <div className="mr-[.16rem]">Guide</div>
+        <div className="mr-[16px] text-[20px] md:text-[24px]">Guide</div>
 
         <Icomoon
           icon="right"
           color={darkMode ? "#ffffff80" : "#6C86AD"}
-          size=".11rem"
+          size="11px"
         />
       </a>
 
-      <div className="mt-[.12rem] rounded-[.16rem] w-[4.3rem] bg-[#6C86AD14] p-[.2rem] h-[3.67rem]">
+      <div className="mt-[.12rem] rounded-[.16rem] w-full bg-color-bg2 p-[.2rem] h-[3.67rem]">
         <div
           className={classNames(
-            "text-color-text2 text-[.16rem]",
+            "text-color-text2 text-[16px]",
             robotoBold.className
           )}
         >
           Nodes Comparison
         </div>
 
-        <div className="text-color-text2 text-[.14rem] py-[.1rem] mt-[.16rem] leading-normal">
+        <div className="text-color-text2 text-[14px] py-[.1rem] mt-[.16rem] leading-normal">
           {soloNodeDepositAmount && Number(soloNodeDepositAmount) > 0 && (
             <>
               Deposit{" "}

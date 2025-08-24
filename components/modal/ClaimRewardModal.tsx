@@ -69,7 +69,7 @@ export const ClaimRewardModal = (props: ClaimRewardModalProps) => {
         >
           <div
             className={classNames(
-              'mr-[.24rem] self-end mt-[.24rem] cursor-pointer'
+              'mr-[.24rem] self-end mt-[24px] cursor-pointer'
             )}
             onClick={onClose}
           >
