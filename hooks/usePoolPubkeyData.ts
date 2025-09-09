@@ -155,7 +155,6 @@ export function usePoolPubkeyData() {
         (response) => response.data
       );
 
-      console.log(pubkeyInfos);
       // Calculate matched validators
       const validValidatorCount = pubkeyInfos.filter(
         (item: any, index: number) => {
