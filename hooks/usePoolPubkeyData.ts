@@ -115,36 +115,55 @@ export function usePoolPubkeyData() {
         })
       );
 
-      // Get pubkey info in batches of 50
+      // Process pubkeys in chunks of 100
+      const CHUNK_SIZE = 100;
       const pubkeyInfos: any = [];
-      const batchSize = 50;
+      // console.log("Processing pubkeys in chunks, total:", pubkeyAddressList.length);
 
-      for (let i = 0; i < pubkeyAddressList.length; i += batchSize) {
-        const chunk = pubkeyAddressList.slice(i, i + batchSize);
-
-        const batchPromises = chunk.map(async (pubkeyAddress) => {
-          try {
-            const result = await nodeDepositContract.methods
+      for (let i = 0; i < pubkeyAddressList.length; i += CHUNK_SIZE) {
+        const chunk = pubkeyAddressList.slice(i, i + CHUNK_SIZE);
+        const batch = new web3.BatchRequest();
+        
+        // Create a promise for this batch
+        const batchPromise = new Promise((resolve, reject) => {
+          const results: any[] = [];
+          let completed = 0;
+          
+          chunk.forEach((pubkeyAddress, index) => {
+            const request = nodeDepositContract.methods
               .pubkeyInfoOf(pubkeyAddress)
-              .call();
-            return result;
+              .call.request({}, (error: any, result: any) => {
+                if (error) {
+                  console.error(`Error fetching pubkeyInfo for ${pubkeyAddress}:`, error);
+                  results[index] = null; // Maintain order even with errors
+                } else {
+                  results[index] = result;
+                }
+                
+                completed++;
+                if (completed === chunk.length) {
+                  resolve(results);
+                }
+              });
+            
+            batch.add(request);
+          });
+          
+          // Execute the batch
+          try {
+            batch.execute();
           } catch (error) {
-            console.error(
-              'Error fetching pubkeyInfo for',
-              pubkeyAddress,
-              ':',
-              error
-            );
-            return null;
+            reject(error);
           }
         });
-
-        const batchResults = await Promise.all(batchPromises);
-        pubkeyInfos.push(...batchResults.filter((result) => result !== null));
-
-        // Small delay between batches to avoid overwhelming the RPC
-        if (i + batchSize < pubkeyAddressList.length) {
-          await new Promise((resolve) => setTimeout(resolve, 100));
+        
+        // Wait for this batch to complete
+        try {
+          const batchResults:any = await batchPromise;
+          pubkeyInfos.push(...batchResults.filter((result:any) => result !== null));
+          // console.log(`Processed chunk ${i/CHUNK_SIZE + 1}/${Math.ceil(pubkeyAddressList.length/CHUNK_SIZE)}`);
+        } catch (error) {
+          console.error('Batch execution error:', error);
         }
       }
 
@@ -201,13 +220,29 @@ export function usePoolPubkeyData() {
     }
   }, [nodeDepositContract, matchedValidators, isClient]);
 
+  // Initial load effect
   useEffect(() => {
-    if (isClient) {
+    if (isClient && nodeDepositContract) {
+      console.log('Initial load triggered');
       updateMatchedValidators();
-      const interval = setInterval(updateMatchedValidators, 5 * 60 * 1000);
-      return () => clearInterval(interval);
     }
-  }, [updateMatchedValidators, isClient]);
+  }, [isClient, nodeDepositContract]);
+
+  // Interval effect
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    
+    if (isClient && nodeDepositContract) {
+      // console.log('Setting up interval');
+      interval = setInterval(updateMatchedValidators, 5 * 60 * 1000);
+    }
+    
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [isClient, nodeDepositContract]);
 
   return {
     matchedValidators,
