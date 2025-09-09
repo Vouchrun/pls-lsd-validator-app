@@ -115,28 +115,38 @@ export function usePoolPubkeyData() {
         })
       );
 
-      // Get pubkey info and beacon status in parallel
-      var batch = new web3.BatchRequest();
+      // Get pubkey info in batches of 50
       const pubkeyInfos: any = [];
-      await Promise.all(
-        pubkeyAddressList.map((pubkeyAddress, index) => {
-          const request = nodeDepositContract.methods
-            .pubkeyInfoOf(pubkeyAddress)
-            .call.request({}, (error: any, result: any) => {
-              if (error) {
-                console.error('Error fetching pubkeyInfo:', error);
-              } else {
-                pubkeyInfos.push(result);
-              }
-            });
+      const batchSize = 50;
 
-          batch.add(request);
+      for (let i = 0; i < pubkeyAddressList.length; i += batchSize) {
+        const chunk = pubkeyAddressList.slice(i, i + batchSize);
 
-          if (index == pubkeyAddressList.length - 1) {
-            batch.execute();
+        const batchPromises = chunk.map(async (pubkeyAddress) => {
+          try {
+            const result = await nodeDepositContract.methods
+              .pubkeyInfoOf(pubkeyAddress)
+              .call();
+            return result;
+          } catch (error) {
+            console.error(
+              'Error fetching pubkeyInfo for',
+              pubkeyAddress,
+              ':',
+              error
+            );
+            return null;
           }
-        })
-      );
+        });
+
+        const batchResults = await Promise.all(batchPromises);
+        pubkeyInfos.push(...batchResults.filter((result) => result !== null));
+
+        // Small delay between batches to avoid overwhelming the RPC
+        if (i + batchSize < pubkeyAddressList.length) {
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+      }
 
       const [beaconStatusResponses] = await Promise.all([
         fetchBeaconStatusInChunks(pubkeyAddressList),
@@ -145,6 +155,7 @@ export function usePoolPubkeyData() {
         (response) => response.data
       );
 
+      console.log(pubkeyInfos);
       // Calculate matched validators
       const validValidatorCount = pubkeyInfos.filter(
         (item: any, index: number) => {
