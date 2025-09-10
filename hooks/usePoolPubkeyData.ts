@@ -115,28 +115,57 @@ export function usePoolPubkeyData() {
         })
       );
 
-      // Get pubkey info and beacon status in parallel
-      var batch = new web3.BatchRequest();
+      // Process pubkeys in chunks of 100
+      const CHUNK_SIZE = 100;
       const pubkeyInfos: any = [];
-      await Promise.all(
-        pubkeyAddressList.map((pubkeyAddress, index) => {
-          const request = nodeDepositContract.methods
-            .pubkeyInfoOf(pubkeyAddress)
-            .call.request({}, (error: any, result: any) => {
-              if (error) {
-                console.error('Error fetching pubkeyInfo:', error);
-              } else {
-                pubkeyInfos.push(result);
-              }
-            });
+      // console.log("Processing pubkeys in chunks, total:", pubkeyAddressList.length);
 
-          batch.add(request);
-
-          if (index == pubkeyAddressList.length - 1) {
+      for (let i = 0; i < pubkeyAddressList.length; i += CHUNK_SIZE) {
+        const chunk = pubkeyAddressList.slice(i, i + CHUNK_SIZE);
+        const batch = new web3.BatchRequest();
+        
+        // Create a promise for this batch
+        const batchPromise = new Promise((resolve, reject) => {
+          const results: any[] = [];
+          let completed = 0;
+          
+          chunk.forEach((pubkeyAddress, index) => {
+            const request = nodeDepositContract.methods
+              .pubkeyInfoOf(pubkeyAddress)
+              .call.request({}, (error: any, result: any) => {
+                if (error) {
+                  console.error(`Error fetching pubkeyInfo for ${pubkeyAddress}:`, error);
+                  results[index] = null; // Maintain order even with errors
+                } else {
+                  results[index] = result;
+                }
+                
+                completed++;
+                if (completed === chunk.length) {
+                  resolve(results);
+                }
+              });
+            
+            batch.add(request);
+          });
+          
+          // Execute the batch
+          try {
             batch.execute();
+          } catch (error) {
+            reject(error);
           }
-        })
-      );
+        });
+        
+        // Wait for this batch to complete
+        try {
+          const batchResults:any = await batchPromise;
+          pubkeyInfos.push(...batchResults.filter((result:any) => result !== null));
+          // console.log(`Processed chunk ${i/CHUNK_SIZE + 1}/${Math.ceil(pubkeyAddressList.length/CHUNK_SIZE)}`);
+        } catch (error) {
+          console.error('Batch execution error:', error);
+        }
+      }
 
       const [beaconStatusResponses] = await Promise.all([
         fetchBeaconStatusInChunks(pubkeyAddressList),
@@ -191,13 +220,29 @@ export function usePoolPubkeyData() {
     }
   }, [nodeDepositContract, matchedValidators, isClient]);
 
+  // Initial load effect
   useEffect(() => {
-    if (isClient) {
+    if (isClient && nodeDepositContract) {
+      console.log('Initial load triggered');
       updateMatchedValidators();
-      const interval = setInterval(updateMatchedValidators, 5 * 60 * 1000);
-      return () => clearInterval(interval);
     }
-  }, [updateMatchedValidators, isClient]);
+  }, [isClient, nodeDepositContract]);
+
+  // Interval effect
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    
+    if (isClient && nodeDepositContract) {
+      // console.log('Setting up interval');
+      interval = setInterval(updateMatchedValidators, 5 * 60 * 1000);
+    }
+    
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [isClient, nodeDepositContract]);
 
   return {
     matchedValidators,
