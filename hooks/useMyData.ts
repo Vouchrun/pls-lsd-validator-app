@@ -214,11 +214,11 @@ export function useMyData() {
         );
 
         if (isPubkeyStillValid(matchedBeaconData.status)) {
-          totalNodeDepositAmount += Number(pubkeyInfo._nodeDepositAmount);
+          totalNodeDepositAmount +=
+            Number(pubkeyInfo._nodeDepositAmount) / 1e18;
           myShareAmount += Number(pubkeyInfo._nodeDepositAmount);
         }
       });
-
       myShareAmount = Math.max(
         0,
         myShareAmount -
@@ -244,10 +244,7 @@ export function useMyData() {
           Number(totalManagedToken) +
           ''
       );
-
-      setSelfDepositedToken(
-        Web3.utils.fromWei(formatScientificNumber(selfDepositAmount) + '')
-      );
+      setSelfDepositedToken(formatScientificNumber(selfDepositAmount));
     } catch (err: any) {
       console.log({ err });
     }
