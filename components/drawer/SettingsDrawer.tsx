@@ -4,6 +4,7 @@ import {
   Typography,
   IconButton,
   InputAdornment,
+  CircularProgress,
 } from '@mui/material';
 import classNames from 'classnames';
 import { IOSSwitch } from 'components/common/CustomSwitch';
@@ -14,10 +15,11 @@ import { setDarkMode, setCustomRpc } from 'redux/reducers/AppSlice';
 import { RootState } from 'redux/store';
 import { openLink } from 'utils/commonUtils';
 import { getContactList, getExternalLinkList } from 'utils/configUtils';
-import { getAllRpcUrls, getEthereumRpc } from 'config/env';
+import { getAllRpcUrls, getEthereumRpc, testCustomRpc } from 'config/env';
 import { useAppKitTheme } from '@reown/appkit/react';
 import { useState, useEffect } from 'react';
 import { STORAGE_KEY_CUSTOM_RPC } from 'utils/storageUtils';
+import snackbarUtil from 'utils/snackbarUtils';
 
 interface Props {
   open: boolean;
@@ -36,6 +38,8 @@ export const SettingsDrawer = (props: Props) => {
   });
 
   const [customRpcInput, setCustomRpcInput] = useState(customRpc || '');
+  const [isTestingRpc, setIsTestingRpc] = useState(false);
+  const [rpcTestError, setRpcTestError] = useState<string>('');
   const allRpcUrls = getAllRpcUrls();
   const defaultFallbackRpc = allRpcUrls[0];
 
@@ -53,22 +57,91 @@ export const SettingsDrawer = (props: Props) => {
   // Sync input with Redux state when it changes
   useEffect(() => {
     setCustomRpcInput(customRpc || '');
+    setRpcTestError('');
     console.log('SettingsDrawer - customRpc:', customRpc);
   }, [customRpc]);
 
+  // Listen for custom RPC being cleared automatically due to failures
+  useEffect(() => {
+    const handleCustomRpcCleared = (event: CustomEvent) => {
+      console.log('Custom RPC was automatically cleared:', event.detail);
+      dispatch(setCustomRpc(undefined));
+      setCustomRpcInput('');
+      setRpcTestError('');
+    };
+
+    window.addEventListener(
+      'customRpcCleared',
+      handleCustomRpcCleared as EventListener
+    );
+
+    return () => {
+      window.removeEventListener(
+        'customRpcCleared',
+        handleCustomRpcCleared as EventListener
+      );
+    };
+  }, [dispatch]);
+
   // Get the currently active RPC
   const currentActiveRpc = customRpc || getEthereumRpc();
+
   const handleClearCustomRpc = () => {
     setCustomRpcInput('');
+    setRpcTestError('');
     dispatch(setCustomRpc(undefined));
   };
 
-  console.log(
-    'SettingsDrawer render - customRpc:',
-    customRpc,
-    'currentActiveRpc:',
-    currentActiveRpc
-  );
+  const handleSetCustomRpc = async (value: string) => {
+    const trimmedValue = value.trim();
+
+    // If empty, just clear it
+    if (!trimmedValue) {
+      dispatch(setCustomRpc(undefined));
+      setRpcTestError('');
+      return;
+    }
+
+    // Test the RPC before setting it
+    setIsTestingRpc(true);
+    setRpcTestError('');
+
+    try {
+      const testResult = await testCustomRpc(trimmedValue);
+
+      if (testResult.success) {
+        dispatch(setCustomRpc(trimmedValue));
+        snackbarUtil.success('Custom RPC set successfully!');
+        setRpcTestError('');
+      } else {
+        // Show error but still allow setting (user might want to try anyway)
+        const errorMessage = testResult.error || 'Failed to connect to RPC';
+        setRpcTestError(errorMessage);
+
+        if (testResult.errorType === 'cors') {
+          snackbarUtil.error(
+            'CORS Error: RPC may not work. Will fallback to default if it fails.'
+          );
+        } else {
+          snackbarUtil.error(
+            `RPC test failed: ${errorMessage}. Will fallback to default if it fails.`
+          );
+        }
+
+        // Still set it, but it will be cleared automatically if it fails during actual use
+        dispatch(setCustomRpc(trimmedValue));
+      }
+    } catch (error: any) {
+      console.error('Error testing RPC:', error);
+      setRpcTestError('Failed to test RPC connection');
+      snackbarUtil.error(
+        'Could not test RPC. Setting anyway, will fallback if it fails.'
+      );
+      dispatch(setCustomRpc(trimmedValue));
+    } finally {
+      setIsTestingRpc(false);
+    }
+  };
 
   const getContactIcon = (type: string) => {
     if (darkMode) {
@@ -225,39 +298,53 @@ export const SettingsDrawer = (props: Props) => {
                 fullWidth
                 placeholder='Enter custom RPC URL (e.g., https://...)'
                 value={customRpcInput}
+                disabled={isTestingRpc}
+                error={!!rpcTestError}
+                helperText={rpcTestError}
                 onChange={(e) => {
                   setCustomRpcInput(e.target.value);
+                  setRpcTestError('');
                 }}
                 onBlur={() => {
                   const trimmedValue = customRpcInput.trim();
                   if (trimmedValue !== customRpc) {
-                    dispatch(setCustomRpc(trimmedValue || undefined));
+                    handleSetCustomRpc(trimmedValue);
                   }
                 }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
-                    const trimmedValue = customRpcInput.trim();
-                    dispatch(setCustomRpc(trimmedValue || undefined));
+                    handleSetCustomRpc(customRpcInput.trim());
                   }
                 }}
                 InputProps={{
-                  endAdornment: customRpcInput && (
+                  endAdornment: (
                     <InputAdornment position='end'>
-                      <IconButton
-                        size='small'
-                        onClick={handleClearCustomRpc}
-                        edge='end'
-                        sx={{
-                          color: darkMode ? '#aaa' : '#666',
-                          fontSize: '18px',
-                          fontWeight: 'bold',
-                          '&:hover': {
-                            color: darkMode ? '#ef4444' : '#dc2626',
-                          },
-                        }}
-                      >
-                        ×
-                      </IconButton>
+                      {isTestingRpc && (
+                        <CircularProgress
+                          size={20}
+                          sx={{
+                            color: darkMode ? '#4ade80' : '#16a34a',
+                            marginRight: '.08rem',
+                          }}
+                        />
+                      )}
+                      {customRpcInput && !isTestingRpc && (
+                        <IconButton
+                          size='small'
+                          onClick={handleClearCustomRpc}
+                          edge='end'
+                          sx={{
+                            color: darkMode ? '#aaa' : '#666',
+                            fontSize: '18px',
+                            fontWeight: 'bold',
+                            '&:hover': {
+                              color: darkMode ? '#ef4444' : '#dc2626',
+                            },
+                          }}
+                        >
+                          ×
+                        </IconButton>
+                      )}
                     </InputAdornment>
                   ),
                 }}
@@ -287,7 +374,7 @@ export const SettingsDrawer = (props: Props) => {
                   fontStyle: 'italic',
                 }}
               >
-                Press Enter or click outside to apply. Click × to clear and
+                Press Enter or click outside to apply and test, If it fail then
                 fallback to {defaultFallbackRpc || 'the default RPC'}.
               </Typography>
             </div>

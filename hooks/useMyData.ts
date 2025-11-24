@@ -4,7 +4,7 @@ import {
   getNodeDepositContract,
 } from 'config/contract';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { getEthWeb3 } from 'utils/web3Utils';
+import { getEthWeb3, executeWithRpcFallback } from 'utils/web3Utils';
 import { useWalletAccount } from './useWalletAccount';
 import Web3 from 'web3';
 import {
@@ -66,38 +66,37 @@ export function useMyData() {
     const userAddress = metaMaskAccount;
 
     try {
-      const web3 = getEthWeb3();
-      const networkWithdrawContract = new web3.eth.Contract(
-        getNetworkWithdrawContractAbi(),
-        getNetworkWithdrawContract(),
-        {
-          from: userAddress,
-        }
-      );
+      // Use executeWithRpcFallback for contract calls to ensure automatic RPC fallback
+      const [nodeRewardsFileCid, latestMerkleRootEpoch, totalClaimedRewardOfNode, totalClaimedDepositOfNode] = 
+        await executeWithRpcFallback(async (web3) => {
+          const networkWithdrawContract = new web3.eth.Contract(
+            getNetworkWithdrawContractAbi(),
+            getNetworkWithdrawContract(),
+            {
+              from: userAddress,
+            }
+          );
 
-      const nodeRewardsFileCid = await networkWithdrawContract.methods
-        .nodeRewardsFileCid()
-        .call()
-        .catch((err: any) => {
-          console.log({ err });
-        });
-      const latestMerkleRootEpoch = await networkWithdrawContract.methods
-        .latestMerkleRootEpoch()
-        .call()
-        .catch((err: any) => {
-          console.log({ err });
-        });
-      const totalClaimedRewardOfNode = await networkWithdrawContract.methods
-        .totalClaimedRewardOfNode(userAddress)
-        .call()
-        .catch((err: any) => {
-          console.log({ err });
-        });
-      const totalClaimedDepositOfNode = await networkWithdrawContract.methods
-        .totalClaimedDepositOfNode(userAddress)
-        .call()
-        .catch((err: any) => {
-          console.log({ err });
+          const [cid, epoch, claimedReward, claimedDeposit] = await Promise.all([
+            networkWithdrawContract.methods.nodeRewardsFileCid().call().catch((err: any) => {
+              console.log({ err });
+              return undefined;
+            }),
+            networkWithdrawContract.methods.latestMerkleRootEpoch().call().catch((err: any) => {
+              console.log({ err });
+              return undefined;
+            }),
+            networkWithdrawContract.methods.totalClaimedRewardOfNode(userAddress).call().catch((err: any) => {
+              console.log({ err });
+              return undefined;
+            }),
+            networkWithdrawContract.methods.totalClaimedDepositOfNode(userAddress).call().catch((err: any) => {
+              console.log({ err });
+              return undefined;
+            }),
+          ]);
+
+          return [cid, epoch, claimedReward, claimedDeposit];
         });
 
       const response = await fetch(
@@ -139,20 +138,25 @@ export function useMyData() {
         Web3.utils.fromWei(formatScientificNumber(availableExitDeposit))
       );
 
-      const nodeDepositContract = new web3.eth.Contract(
-        getNodeDepositContractAbi(),
-        getNodeDepositContract(),
-        {
-          from: userAddress,
-        }
-      );
+      // Use executeWithRpcFallback for node deposit contract call
+      const pubkeysOfNode = await executeWithRpcFallback(async (web3) => {
+        const nodeDepositContract = new web3.eth.Contract(
+          getNodeDepositContractAbi(),
+          getNodeDepositContract(),
+          {
+            from: userAddress,
+          }
+        );
 
-      const pubkeysOfNode = await nodeDepositContract.methods
-        .getPubkeysOfNode(userAddress)
-        .call()
-        .catch((err: any) => {
-          console.log({ err });
-        });
+        return await nodeDepositContract.methods
+          .getPubkeysOfNode(userAddress)
+          .call()
+          .catch((err: any) => {
+            console.log({ err });
+            return [];
+          });
+      });
+      
       setPubkeysOfNode(pubkeysOfNode);
 
       const myRewardEth = Web3.utils.fromWei(
@@ -178,26 +182,25 @@ export function useMyData() {
       }
       const userAddress = metaMaskAccount;
 
-      const web3 = getEthWeb3();
-      const nodeDepositContract = new web3.eth.Contract(
-        getNodeDepositContractAbi(),
-        getNodeDepositContract(),
-        {}
-      );
-      const networkWithdrawContract = new web3.eth.Contract(
-        getNetworkWithdrawContractAbi(),
-        getNetworkWithdrawContract(),
-        {}
-      );
+      // Use executeWithRpcFallback for contract calls
+      const [pubkeyInfos, beaconStatusResponses] = await executeWithRpcFallback(async (web3) => {
+        const nodeDepositContract = new web3.eth.Contract(
+          getNodeDepositContractAbi(),
+          getNodeDepositContract(),
+          {}
+        );
 
-      const [pubkeyInfos, beaconStatusResponses] = await Promise.all([
-        Promise.all(
-          pubkeysOfNode.map((pubkeyAddress: string) =>
-            nodeDepositContract.methods.pubkeyInfoOf(pubkeyAddress).call()
-          )
-        ),
-        fetchBeaconStatusInChunks(pubkeysOfNode),
-      ]);
+        const [infos, beaconStatuses] = await Promise.all([
+          Promise.all(
+            pubkeysOfNode.map((pubkeyAddress: string) =>
+              nodeDepositContract.methods.pubkeyInfoOf(pubkeyAddress).call()
+            )
+          ),
+          fetchBeaconStatusInChunks(pubkeysOfNode),
+        ]);
+
+        return [infos, beaconStatuses];
+      });
 
       const beaconStatusResJson = beaconStatusResponses.flatMap(
         (response) => response.data
@@ -225,12 +228,22 @@ export function useMyData() {
           (ipfsMyRewardInfo ? ipfsMyRewardInfo?.totalExitDepositAmount : 0)
       );
 
-      const totalClaimedDepositOfNode = await networkWithdrawContract.methods
-        .totalClaimedDepositOfNode(userAddress)
-        .call()
-        .catch((err: any) => {
-          console.log({ err });
-        });
+      // Use executeWithRpcFallback for network withdraw contract call
+      const totalClaimedDepositOfNode = await executeWithRpcFallback(async (web3) => {
+        const networkWithdrawContract = new web3.eth.Contract(
+          getNetworkWithdrawContractAbi(),
+          getNetworkWithdrawContract(),
+          {}
+        );
+
+        return await networkWithdrawContract.methods
+          .totalClaimedDepositOfNode(userAddress)
+          .call()
+          .catch((err: any) => {
+            console.log({ err });
+            return '0';
+          });
+      });
       // console.log({ totalNodeDepositAmount });
       // console.log({ totalClaimedDepositOfNode });
 
