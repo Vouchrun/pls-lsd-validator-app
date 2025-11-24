@@ -28,17 +28,150 @@ export function getNetworkName() {
   return appProdConfig.chain.networkName;
 }
 
-export function getEthereumRpc() {
+// Cache for working RPC
+let cachedWorkingRpc: string | null = null;
+let lastRpcCheckTime = 0;
+const RPC_CHECK_INTERVAL = 5 * 60 * 1000; // 5 minutes
+
+// Cache for working Beacon RPC
+let cachedWorkingBeaconRpc: string | null = null;
+let lastBeaconRpcCheckTime = 0;
+const BEACON_RPC_CHECK_INTERVAL = 5 * 60 * 1000; // 5 minutes
+
+// Test if RPC is accessible
+async function testRpcHealth(rpcUrl: string): Promise<boolean> {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
+    const response = await fetch(rpcUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        method: 'eth_blockNumber',
+        params: [],
+        id: 1,
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+    return response.ok;
+  } catch (error) {
+    return false;
+  }
+}
+
+// Test if Beacon RPC is accessible
+async function testBeaconRpcHealth(beaconUrl: string): Promise<boolean> {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
+    const response = await fetch(
+      `${beaconUrl}/eth/v1/beacon/states/head/finality_checkpoints`,
+      {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' },
+        signal: controller.signal,
+      }
+    );
+
+    clearTimeout(timeoutId);
+    return response.ok;
+  } catch (error) {
+    return false;
+  }
+}
+
+// Get array of RPC URLs based on environment
+function getRpcList(): string[] {
+  const rpcConfig = isDev() ? appDevConfig.rpc : appProdConfig.rpc;
+  return Array.isArray(rpcConfig) ? rpcConfig : [rpcConfig];
+}
+
+// Get all RPC URLs for wagmi/public use
+export function getAllRpcUrls(): string[] {
+  return getRpcList();
+}
+
+// Find first working RPC from the list
+export async function getWorkingRpc(): Promise<string> {
+  const rpcList = getRpcList();
+
+  // Return cached RPC if still valid
+  const now = Date.now();
+  if (cachedWorkingRpc && now - lastRpcCheckTime < RPC_CHECK_INTERVAL) {
+    return cachedWorkingRpc;
+  }
+
+  // Test RPCs in order
+  for (const rpc of rpcList) {
+    const isHealthy = await testRpcHealth(rpc);
+    if (isHealthy) {
+      cachedWorkingRpc = rpc;
+      lastRpcCheckTime = now;
+      return rpc;
+    }
+  }
+
+  // If all fail, return the first one as fallback
+  console.warn(
+    'All RPC endpoints failed health check, using first RPC as fallback'
+  );
+  return rpcList[0];
+}
+
+// Get array of Beacon RPC URLs based on environment
+function getBeaconRpcList(): string[] {
+  const beaconConfig = isDev() ? appDevConfig.beaconRPC : appProdConfig.beaconRPC;
+  return Array.isArray(beaconConfig) ? beaconConfig : [beaconConfig];
+}
+
+// Get all Beacon RPC URLs for public use
+export function getAllBeaconRpcUrls(): string[] {
+  return getBeaconRpcList();
+}
+
+// Find first working Beacon RPC from the list
+export async function getWorkingBeaconRpc(): Promise<string> {
+  const beaconRpcList = getBeaconRpcList();
+
+  // Return cached Beacon RPC if still valid
+  const now = Date.now();
+  if (cachedWorkingBeaconRpc && now - lastBeaconRpcCheckTime < BEACON_RPC_CHECK_INTERVAL) {
+    return cachedWorkingBeaconRpc;
+  }
+
+  // Test Beacon RPCs in order
+  for (const beaconRpc of beaconRpcList) {
+    const isHealthy = await testBeaconRpcHealth(beaconRpc);
+    if (isHealthy) {
+      cachedWorkingBeaconRpc = beaconRpc;
+      lastBeaconRpcCheckTime = now;
+      return beaconRpc;
+    }
+  }
+
+  // If all fail, return the first one as fallback
+  console.warn(
+    'All Beacon RPC endpoints failed health check, using first Beacon RPC as fallback'
+  );
+  return beaconRpcList[0];
+}
+
+export function getEthereumRpc(): string {
   if (typeof window !== 'undefined') {
     const customRpc = window.localStorage.getItem('eth_lsd_custom_rpc');
     if (customRpc) {
       return customRpc;
     }
   }
-  if (isDev()) {
-    return appDevConfig.rpc;
-  }
-  return appProdConfig.rpc;
+
+  const rpcConfig = isDev() ? appDevConfig.rpc : appProdConfig.rpc;
+  // Return first RPC from array, or the RPC itself if it's a string
+  return Array.isArray(rpcConfig) ? rpcConfig[0] : rpcConfig;
 }
 
 export function getExplorerUrl() {
@@ -56,10 +189,9 @@ export function getValidatorExplorerUrl() {
 }
 
 export function getBeaconHost() {
-  if (isDev()) {
-    return appDevConfig.beaconHost;
-  }
-  return appProdConfig.beaconHost;
+  const beaconConfig = isDev() ? appDevConfig.beaconRPC : appProdConfig.beaconRPC;
+  // Return first Beacon RPC from array, or the Beacon RPC itself if it's a string
+  return Array.isArray(beaconConfig) ? beaconConfig[0] : beaconConfig;
 }
 
 export function getLsdEthMetamaskParam() {
@@ -122,6 +254,8 @@ export function getNetworkBalanceContractDeploymentBlock() {
 }
 
 export function getWagmiChainConfig() {
+  const allRpcUrls = getAllRpcUrls();
+  
   return {
     id: getEthereumChainId(),
     name: getEthereumChainName(),
@@ -133,10 +267,10 @@ export function getWagmiChainConfig() {
     },
     rpcUrls: {
       default: {
-        http: [getEthereumRpc()],
+        http: allRpcUrls,
       },
       public: {
-        http: [getEthereumRpc()],
+        http: allRpcUrls,
       },
     },
     blockExplorers: {

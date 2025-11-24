@@ -1,4 +1,10 @@
-import { Drawer, TextField, Typography } from '@mui/material';
+import {
+  Drawer,
+  TextField,
+  Typography,
+  IconButton,
+  InputAdornment,
+} from '@mui/material';
 import classNames from 'classnames';
 import { IOSSwitch } from 'components/common/CustomSwitch';
 import { MenuItem } from 'components/common/MenuItem';
@@ -8,8 +14,10 @@ import { setDarkMode, setCustomRpc } from 'redux/reducers/AppSlice';
 import { RootState } from 'redux/store';
 import { openLink } from 'utils/commonUtils';
 import { getContactList, getExternalLinkList } from 'utils/configUtils';
-import { getEthereumRpc } from 'config/env';
+import { getAllRpcUrls, getEthereumRpc } from 'config/env';
 import { useAppKitTheme } from '@reown/appkit/react';
+import { useState, useEffect } from 'react';
+import { STORAGE_KEY_CUSTOM_RPC } from 'utils/storageUtils';
 
 interface Props {
   open: boolean;
@@ -26,6 +34,41 @@ export const SettingsDrawer = (props: Props) => {
       customRpc: state.app.customRpc,
     };
   });
+
+  const [customRpcInput, setCustomRpcInput] = useState(customRpc || '');
+  const allRpcUrls = getAllRpcUrls();
+  const defaultFallbackRpc = allRpcUrls[0];
+
+  // Hydrate custom RPC from storage when drawer mounts
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    const storedCustomRpc = window.localStorage.getItem(STORAGE_KEY_CUSTOM_RPC);
+    if (storedCustomRpc && storedCustomRpc !== customRpc) {
+      dispatch(setCustomRpc(storedCustomRpc));
+    }
+  }, [dispatch, customRpc]);
+
+  // Sync input with Redux state when it changes
+  useEffect(() => {
+    setCustomRpcInput(customRpc || '');
+    console.log('SettingsDrawer - customRpc:', customRpc);
+  }, [customRpc]);
+
+  // Get the currently active RPC
+  const currentActiveRpc = customRpc || getEthereumRpc();
+  const handleClearCustomRpc = () => {
+    setCustomRpcInput('');
+    dispatch(setCustomRpc(undefined));
+  };
+
+  console.log(
+    'SettingsDrawer render - customRpc:',
+    customRpc,
+    'currentActiveRpc:',
+    currentActiveRpc
+  );
 
   const getContactIcon = (type: string) => {
     if (darkMode) {
@@ -76,27 +119,147 @@ export const SettingsDrawer = (props: Props) => {
                   color: darkMode ? '#fff' : '#1b1b1f',
                   fontSize: '.16rem',
                   marginBottom: '.16rem',
+                  fontWeight: 600,
                 }}
               >
                 RPC Settings
               </Typography>
+
+              {/* Current Active RPC */}
+              <div
+                style={{
+                  backgroundColor: darkMode ? '#2D2D32' : '#E8EFFD',
+                  padding: '.12rem',
+                  borderRadius: '.08rem',
+                  marginBottom: '.16rem',
+                  position: 'relative',
+                }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                  }}
+                >
+                  <div style={{ flex: 1 }}>
+                    <Typography
+                      style={{
+                        color: darkMode ? '#aaa' : '#666',
+                        fontSize: '.12rem',
+                        marginBottom: '.04rem',
+                      }}
+                    >
+                      Currently Using:
+                    </Typography>
+                    <Typography
+                      style={{
+                        color: darkMode ? '#4ade80' : '#16a34a',
+                        fontSize: '.14rem',
+                        fontWeight: 600,
+                        wordBreak: 'break-all',
+                        paddingRight: customRpc ? '.32rem' : '0',
+                      }}
+                    >
+                      {currentActiveRpc}
+                    </Typography>
+                    {customRpc && (
+                      <Typography
+                        style={{
+                          color: darkMode ? '#fbbf24' : '#d97706',
+                          fontSize: '.11rem',
+                          marginTop: '.04rem',
+                          fontStyle: 'italic',
+                        }}
+                      >
+                        (Custom RPC)
+                      </Typography>
+                    )}
+                  </div>
+                  {customRpc && (
+                    <IconButton
+                      size='small'
+                      onClick={handleClearCustomRpc}
+                      sx={{
+                        color: darkMode ? '#fff' : '#000',
+                        padding: '.08rem',
+                        minWidth: '24px',
+                        minHeight: '24px',
+                        border: darkMode
+                          ? '2px solid #ef4444'
+                          : '2px solid #dc2626',
+                        borderRadius: '.04rem',
+                        fontSize: '20px',
+                        fontWeight: 'bold',
+                        backgroundColor: darkMode
+                          ? 'rgba(239, 68, 68, 0.2)'
+                          : 'rgba(220, 38, 38, 0.2)',
+                        '&:hover': {
+                          color: darkMode ? '#ef4444' : '#dc2626',
+                          backgroundColor: darkMode
+                            ? 'rgba(239, 68, 68, 0.3)'
+                            : 'rgba(220, 38, 38, 0.3)',
+                          borderColor: darkMode ? '#ef4444' : '#dc2626',
+                        },
+                      }}
+                      title='Clear custom RPC and fallback to available RPC'
+                    >
+                      ×
+                    </IconButton>
+                  )}
+                </div>
+              </div>
+
               <Typography
                 style={{
                   color: darkMode ? '#fff' : '#1b1b1f',
-                  fontSize: '.16rem',
-                  marginBottom: '.16rem',
+                  fontSize: '.14rem',
+                  marginTop: '.16rem',
+                  marginBottom: '.08rem',
                 }}
               >
-                Default RPC: {getEthereumRpc()}
+                Custom RPC (optional):
               </Typography>
               <TextField
                 size='small'
                 fullWidth
-                placeholder='Enter custom RPC URL'
-                value={customRpc || ''}
+                placeholder='Enter custom RPC URL (e.g., https://...)'
+                value={customRpcInput}
                 onChange={(e) => {
-                  const value = e.target.value.trim();
-                  dispatch(setCustomRpc(value || undefined));
+                  setCustomRpcInput(e.target.value);
+                }}
+                onBlur={() => {
+                  const trimmedValue = customRpcInput.trim();
+                  if (trimmedValue !== customRpc) {
+                    dispatch(setCustomRpc(trimmedValue || undefined));
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    const trimmedValue = customRpcInput.trim();
+                    dispatch(setCustomRpc(trimmedValue || undefined));
+                  }
+                }}
+                InputProps={{
+                  endAdornment: customRpcInput && (
+                    <InputAdornment position='end'>
+                      <IconButton
+                        size='small'
+                        onClick={handleClearCustomRpc}
+                        edge='end'
+                        sx={{
+                          color: darkMode ? '#aaa' : '#666',
+                          fontSize: '18px',
+                          fontWeight: 'bold',
+                          '&:hover': {
+                            color: darkMode ? '#ef4444' : '#dc2626',
+                          },
+                        }}
+                      >
+                        ×
+                      </IconButton>
+                    </InputAdornment>
+                  ),
                 }}
                 sx={{
                   '& .MuiOutlinedInput-root': {
@@ -104,10 +267,10 @@ export const SettingsDrawer = (props: Props) => {
                       borderColor: darkMode ? '#2D2D32' : '#E8EFFD',
                     },
                     '&:hover fieldset': {
-                      borderColor: darkMode ? '#2D2D32' : '#E8EFFD',
+                      borderColor: darkMode ? '#4ade80' : '#16a34a',
                     },
                     '&.Mui-focused fieldset': {
-                      borderColor: darkMode ? '#2D2D32' : '#E8EFFD',
+                      borderColor: darkMode ? '#4ade80' : '#16a34a',
                     },
                   },
                   '& .MuiInputBase-input': {
@@ -116,6 +279,17 @@ export const SettingsDrawer = (props: Props) => {
                   },
                 }}
               />
+              <Typography
+                style={{
+                  color: darkMode ? '#aaa' : '#666',
+                  fontSize: '.11rem',
+                  marginTop: '.08rem',
+                  fontStyle: 'italic',
+                }}
+              >
+                Press Enter or click outside to apply. Click × to clear and
+                fallback to {defaultFallbackRpc || 'the default RPC'}.
+              </Typography>
             </div>
 
             <div className='mt-[32px] h-[0.01rem] bg-color-divider2' />

@@ -9,8 +9,11 @@
       "decimals": 18
     }
   },
-  "rpc": "https://rpc.v4.testnet.pulsechain.com",
-  "beaconHost": "https://rpc-testnet-pulsechain.g4mm4.io/beacon-api",
+  "rpc": [
+    "https://rpc.v4.testnet.pulsechain.com",
+    "https://rpc-testnet-pulsechain.g4mm4.io"
+  ],
+  "beaconRPC": ["https://rpc-testnet-pulsechain.g4mm4.io/beacon-api"],
   "explorer": "https://scan.v4.testnet.pulsechain.com/#",
   "validatorExplorer": "https://beacon.v4.testnet.pulsechain.com/",
   "blockSeconds": 10,
