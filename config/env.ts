@@ -92,8 +92,20 @@ function getRpcList(): string[] {
 }
 
 // Get all RPC URLs for wagmi/public use
+// Custom RPC has priority and will be tried first if set
 export function getAllRpcUrls(): string[] {
-  return getRpcList();
+  const defaultRpcList = getRpcList();
+  
+  // Check for custom RPC in localStorage
+  if (typeof window !== 'undefined') {
+    const customRpc = window.localStorage.getItem('eth_lsd_custom_rpc');
+    if (customRpc && customRpc.trim()) {
+      // Prepend custom RPC to the list so it's tried first
+      return [customRpc, ...defaultRpcList];
+    }
+  }
+  
+  return defaultRpcList;
 }
 
 // Find first working RPC from the list
