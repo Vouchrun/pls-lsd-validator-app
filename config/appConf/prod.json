@@ -15,8 +15,8 @@
     "https://rpc.pulsechain.com"
   ],
   "beaconRPC": [
-    "https://rpc-pulsechain.g4mm4.io/beacon-api",
-    "https://rpc-beacon.vouch.run"
+    "https://rpc-beacon.vouch.run",
+    "https://rpc-pulsechain.g4mm4.io/beacon-api"
   ],
   "explorer": "https://scan.mypinata.cloud/ipfs/bafybeih3olry3is4e4lzm7rus5l3h6zrphcal5a7ayfkhzm5oivjro2cp4/#",
   "validatorExplorer": "https://beacon.pulsechain.com/",
