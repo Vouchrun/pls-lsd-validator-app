@@ -9,7 +9,6 @@ import { Provider } from "react-redux";
 import { RootState, store } from "redux/store";
 import { theme } from "styles/material-ui-theme";
 import { SnackbarUtilsConfigurator } from "utils/snackbarUtils";
-import { resetRpcState, initializeWeb3 } from "utils/web3Utils";
 import "styles/globals.css";
 
 import { MaterialDesignContent } from "notistack";
@@ -44,9 +43,6 @@ function MyApp({ Component, pageProps }: AppPropsWithLayout) {
   useEffect(() => {
     window.addEventListener("resize", resizeListener);
     resizeListener();
-
-    // Initialize Web3 and test custom RPC on app startup
-    initializeWeb3().catch(console.error);
 
     return () => {
       window.removeEventListener("resize", resizeListener);
@@ -117,11 +113,6 @@ const MyAppWrapper = ({ Component, pageProps }: any) => {
 
   const { darkMode } = useAppSlice();
   const { themeMode, setThemeMode } = useAppKitTheme();
-
-  // Reset RPC state on app mount to ensure clean state after page refresh
-  useEffect(() => {
-    resetRpcState();
-  }, []);
 
   const StyledMaterialDesignContent = useMemo(() => {
     const successBg = darkMode ? "#5A5DE0" : "#E8EFFD";

@@ -9,7 +9,7 @@ import {
 } from 'config/contractAbi';
 import { IpfsRewardItem, RewardJsonResponse } from 'interfaces/common';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { getEthWeb3, executeWithRpcFallback } from 'utils/web3Utils';
+import { getEthWeb3 } from 'utils/web3Utils';
 import Web3 from 'web3';
 import { useAppSlice } from './selector';
 import { usePoolPubkeyData } from './usePoolPubkeyData';
@@ -78,17 +78,15 @@ export function usePoolData() {
 
   const udpatePoolData = useCallback(async () => {
     try {
-      const unmatchedEth = await executeWithRpcFallback(async (web3) => {
-        const userDepositBalance = await web3.eth.getBalance(
-          getEthDepositContract()
-        );
-        return Web3.utils.fromWei(userDepositBalance);
-      });
-      
+      const web3 = getEthWeb3();
+
+      const userDepositBalance = await web3.eth.getBalance(
+        getEthDepositContract()
+      );
+
+      const unmatchedEth = Web3.utils.fromWei(userDepositBalance);
       setUnmatchedEth(unmatchedEth);
-    } catch (err) {
-      console.error('Error updating pool data:', err);
-    }
+    } catch {}
   }, [updateFlag]);
 
   useEffect(() => {
@@ -97,49 +95,48 @@ export function usePoolData() {
 
   const updatePoolTokenData = useCallback(async () => {
     try {
-      const { lsdTotalSupply, lsdRate, nodeRewardsFileCid, latestMerkleRootEpoch } = 
-        await executeWithRpcFallback(async (web3) => {
-          const networkWithdrawContract = new web3.eth.Contract(
-            getNetworkWithdrawContractAbi(),
-            getNetworkWithdrawContract(),
-            {}
-          );
-          const lsdTokenContract = new web3.eth.Contract(
-            getLsdEthTokenContractAbi(),
-            getLsdEthTokenContract(),
-            {}
-          );
+      const web3 = getEthWeb3();
+      const networkWithdrawContract = new web3.eth.Contract(
+        getNetworkWithdrawContractAbi(),
+        getNetworkWithdrawContract(),
+        {}
+      );
+      const lsdTokenContract = new web3.eth.Contract(
+        getLsdEthTokenContractAbi(),
+        getLsdEthTokenContract(),
+        {}
+      );
 
-          const [totalSupply, rate, rewardsCid, merkleEpoch] = await Promise.all([
-            lsdTokenContract.methods.totalSupply().call().catch((err: any) => {
-              console.log({ err });
-              return '0';
-            }),
-            lsdTokenContract.methods.getRate().call().catch((err: any) => {
-              console.log({ err });
-              return '0';
-            }),
-            networkWithdrawContract.methods.nodeRewardsFileCid().call().catch((err: any) => {
-              console.log({ err });
-              return undefined;
-            }),
-            networkWithdrawContract.methods.latestMerkleRootEpoch().call().catch((err: any) => {
-              console.log({ err });
-              return undefined;
-            }),
-          ]);
+      const lsdTotalSupply = await lsdTokenContract.methods
+        .totalSupply()
+        .call()
+        .catch((err: any) => {
+          console.log({ err });
+        });
 
-          return {
-            lsdTotalSupply: totalSupply,
-            lsdRate: rate,
-            nodeRewardsFileCid: rewardsCid,
-            latestMerkleRootEpoch: merkleEpoch,
-          };
+      const lsdRate = await lsdTokenContract.methods
+        .getRate()
+        .call()
+        .catch((err: any) => {
+          console.log({ err });
         });
 
       setLsdTotalSupply(Web3.utils.fromWei(lsdTotalSupply));
       setLsdRate(Web3.utils.fromWei(lsdRate));
       setMintedLsdToken(Web3.utils.fromWei(lsdTotalSupply));
+
+      const nodeRewardsFileCid = await networkWithdrawContract.methods
+        .nodeRewardsFileCid()
+        .call()
+        .catch((err: any) => {
+          console.log({ err });
+        });
+      const latestMerkleRootEpoch = await networkWithdrawContract.methods
+        .latestMerkleRootEpoch()
+        .call()
+        .catch((err: any) => {
+          console.log({ err });
+        });
 
       let poolEth =
         Number(lsdTotalSupply) * Number(Web3.utils.fromWei(lsdRate));
@@ -166,57 +163,40 @@ export function usePoolData() {
         };
       });
 
-      // Process each address with RPC fallback
       const requests = list?.map((data) => {
-        return executeWithRpcFallback(async (web3) => {
-          const networkWithdrawContract = new web3.eth.Contract(
-            getNetworkWithdrawContractAbi(),
-            getNetworkWithdrawContract(),
-            {}
-          );
+        return (async () => {
+          const totalClaimedRewardOfNode = await networkWithdrawContract.methods
+            .totalClaimedRewardOfNode(data.address)
+            .call()
+            .catch((err: any) => {
+              console.log({ err });
+            });
 
-          const [totalClaimedRewardOfNode, totalClaimedDepositOfNode] = await Promise.all([
-            networkWithdrawContract.methods
-              .totalClaimedRewardOfNode(data.address)
-              .call()
-              .catch((err: any) => {
-                console.log({ err });
-                return '0';
-              }),
-            networkWithdrawContract.methods
+          const totalClaimedDepositOfNode =
+            await networkWithdrawContract.methods
               .totalClaimedDepositOfNode(data.address)
               .call()
               .catch((err: any) => {
                 console.log({ err });
-                return '0';
-              }),
-          ]);
+              });
 
-          // Calculate poolEth adjustments
-          let adjustment = 0;
           if (data.totalRewardAmount) {
-            adjustment += Number(data.totalRewardAmount);
+            poolEth = poolEth + Number(data.totalRewardAmount);
           }
           if (data.totalDepositAmount) {
-            adjustment += Number(data.totalDepositAmount);
+            poolEth = poolEth + Number(data.totalDepositAmount);
           }
+
           if (totalClaimedRewardOfNode) {
-            adjustment -= Number(totalClaimedRewardOfNode);
+            poolEth = poolEth - Number(totalClaimedRewardOfNode);
           }
           if (totalClaimedDepositOfNode) {
-            adjustment -= Number(totalClaimedDepositOfNode);
+            poolEth = poolEth - Number(totalClaimedDepositOfNode);
           }
-
-          return adjustment;
-        });
+        })();
       });
 
-      const adjustments = await Promise.all(requests);
-      
-      // Apply all adjustments to poolEth
-      adjustments.forEach((adjustment) => {
-        poolEth += adjustment;
-      });
+      await Promise.all(requests);
 
       // console.log({ poolEth });
 

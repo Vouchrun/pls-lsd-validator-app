@@ -9,6 +9,7 @@
       "decimals": 18
     }
   },
+<<<<<<< HEAD
   "rpc": [
     "https://rpc.vouch.run",
     "https://rpc-pulsechain.g4mm4.io",
@@ -18,6 +19,10 @@
     "https://rpc-beacon.vouch.run",
     "https://rpc-pulsechain.g4mm4.io/beacon-api"
   ],
+=======
+  "rpc": ["https://rpc.vouch.run", "https://rpc-pulsechain.g4mm4.io", "https://rpc.pulsechain.com"],
+  "beaconRPC": ["https://rpc-beacon.vouch.run", "https://rpc-pulsechain.g4mm4.io/beacon-api"],
+>>>>>>> parent of dc26fab (feat: enhance SettingsDrawer with custom RPC testing, error handling, and loading indicators; update RPC utility functions for improved reliability)
   "explorer": "https://scan.mypinata.cloud/ipfs/bafybeih3olry3is4e4lzm7rus5l3h6zrphcal5a7ayfkhzm5oivjro2cp4/#",
   "validatorExplorer": "https://beacon.pulsechain.com/",
   "blockSeconds": 10,

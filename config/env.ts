@@ -63,77 +63,6 @@ async function testRpcHealth(rpcUrl: string): Promise<boolean> {
   }
 }
 
-// Test custom RPC and return detailed error info
-export async function testCustomRpc(rpcUrl: string): Promise<{
-  success: boolean;
-  error?: string;
-  errorType?: 'cors' | 'timeout' | 'network' | 'invalid' | 'unknown';
-}> {
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout for custom RPC
-
-    const response = await fetch(rpcUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        method: 'eth_blockNumber',
-        params: [],
-        id: 1,
-      }),
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      return {
-        success: false,
-        error: `HTTP ${response.status}: ${response.statusText}`,
-        errorType: 'network',
-      };
-    }
-
-    // Try to parse the response to ensure it's a valid JSON-RPC response
-    const data = await response.json();
-    if (!data.result && !data.error) {
-      return {
-        success: false,
-        error: 'Invalid JSON-RPC response',
-        errorType: 'invalid',
-      };
-    }
-
-    return { success: true };
-  } catch (error: any) {
-    // Detect CORS errors
-    if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
-      return {
-        success: false,
-        error: 'CORS error: The RPC endpoint does not allow requests from this origin',
-        errorType: 'cors',
-      };
-    }
-
-    // Detect timeout errors
-    if (error.name === 'AbortError') {
-      return {
-        success: false,
-        error: 'Request timeout: The RPC endpoint took too long to respond',
-        errorType: 'timeout',
-      };
-    }
-
-    // Other network errors
-    return {
-      success: false,
-      error: error.message || 'Unknown error occurred',
-      errorType: 'unknown',
-    };
-  }
-}
-
 // Test if Beacon RPC is accessible
 async function testBeaconRpcHealth(beaconUrl: string): Promise<boolean> {
   try {
@@ -167,17 +96,12 @@ function getRpcList(): string[] {
 export function getAllRpcUrls(): string[] {
   const defaultRpcList = getRpcList();
   
-  // Check for custom RPC in localStorage (only on client-side)
-  if (typeof window !== 'undefined' && typeof window.localStorage !== 'undefined') {
-    try {
-      const customRpc = window.localStorage.getItem('eth_lsd_custom_rpc');
-      if (customRpc && customRpc.trim() && (customRpc.startsWith('http://') || customRpc.startsWith('https://') || customRpc.startsWith('wss://'))) {
-        // Prepend custom RPC to the list so it's tried first
-        return [customRpc, ...defaultRpcList];
-      }
-    } catch (e) {
-      // Handle localStorage access errors (e.g., in SSR or private browsing)
-      console.warn('Failed to access localStorage for custom RPC:', e);
+  // Check for custom RPC in localStorage
+  if (typeof window !== 'undefined') {
+    const customRpc = window.localStorage.getItem('eth_lsd_custom_rpc');
+    if (customRpc && customRpc.trim()) {
+      // Prepend custom RPC to the list so it's tried first
+      return [customRpc, ...defaultRpcList];
     }
   }
   
@@ -250,16 +174,10 @@ export async function getWorkingBeaconRpc(): Promise<string> {
 }
 
 export function getEthereumRpc(): string {
-  // Check for custom RPC in localStorage (only on client-side)
-  if (typeof window !== 'undefined' && typeof window.localStorage !== 'undefined') {
-    try {
-      const customRpc = window.localStorage.getItem('eth_lsd_custom_rpc');
-      if (customRpc && customRpc.trim() && (customRpc.startsWith('http://') || customRpc.startsWith('https://') || customRpc.startsWith('wss://'))) {
-        return customRpc;
-      }
-    } catch (e) {
-      // Handle localStorage access errors (e.g., in SSR or private browsing)
-      console.warn('Failed to access localStorage for custom RPC:', e);
+  if (typeof window !== 'undefined') {
+    const customRpc = window.localStorage.getItem('eth_lsd_custom_rpc');
+    if (customRpc) {
+      return customRpc;
     }
   }
 
