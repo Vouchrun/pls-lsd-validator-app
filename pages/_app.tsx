@@ -9,7 +9,6 @@ import { Provider } from "react-redux";
 import { RootState, store } from "redux/store";
 import { theme } from "styles/material-ui-theme";
 import { SnackbarUtilsConfigurator } from "utils/snackbarUtils";
-import ErrorBoundary from "components/common/ErrorBoundary";
 import "utils/rpcInitCheck"; // Initialize RPC validation early
 import "styles/globals.css";
 
@@ -52,11 +51,9 @@ function MyApp({ Component, pageProps }: AppPropsWithLayout) {
   }, []);
 
   return (
-    <ErrorBoundary>
-      <Provider store={store}>
-        <MyAppWrapper Component={Component} pageProps={pageProps} />
-      </Provider>
-    </ErrorBoundary>
+    <Provider store={store}>
+      <MyAppWrapper Component={Component} pageProps={pageProps} />
+    </Provider>
   );
 }
 
@@ -144,30 +141,28 @@ const MyAppWrapper = ({ Component, pageProps }: any) => {
   }, [darkMode]);
 
   return (
-    <ErrorBoundary>
-      <ThemeProvider theme={theme}>
-        <SnackbarProvider
-          maxSnack={1}
-          autoHideDuration={3000}
-          anchorOrigin={{
-            vertical: "top",
-            horizontal: "center",
-          }}
-          TransitionComponent={Fade as React.ComponentType}
-          Components={{
-            success: StyledMaterialDesignContent,
-            error: StyledMaterialDesignContent,
-            warning: StyledMaterialDesignContent,
-          }}
-        >
-          <WagmiProvider config={wagmiAdapter.wagmiConfig}>
-            <QueryClientProvider client={queryClient}>
-              <SnackbarUtilsConfigurator />
-              <Layout>{getLayout(<Component {...pageProps} />)}</Layout>
-            </QueryClientProvider>
-          </WagmiProvider>
-        </SnackbarProvider>
-      </ThemeProvider>
-    </ErrorBoundary>
+    <ThemeProvider theme={theme}>
+      <SnackbarProvider
+        maxSnack={1}
+        autoHideDuration={3000}
+        anchorOrigin={{
+          vertical: "top",
+          horizontal: "center",
+        }}
+        TransitionComponent={Fade as React.ComponentType}
+        Components={{
+          success: StyledMaterialDesignContent,
+          error: StyledMaterialDesignContent,
+          warning: StyledMaterialDesignContent,
+        }}
+      >
+        <WagmiProvider config={wagmiAdapter.wagmiConfig}>
+          <QueryClientProvider client={queryClient}>
+            <SnackbarUtilsConfigurator />
+            <Layout>{getLayout(<Component {...pageProps} />)}</Layout>
+          </QueryClientProvider>
+        </WagmiProvider>
+      </SnackbarProvider>
+    </ThemeProvider>
   );
 };
