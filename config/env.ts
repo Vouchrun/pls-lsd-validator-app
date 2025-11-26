@@ -91,6 +91,16 @@ function getRpcList(): string[] {
   return Array.isArray(rpcConfig) ? rpcConfig : [rpcConfig];
 }
 
+// Validate if custom RPC is potentially valid (basic URL check)
+function isValidRpcUrl(url: string): boolean {
+  try {
+    const parsedUrl = new URL(url);
+    return parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:' || parsedUrl.protocol === 'wss:' || parsedUrl.protocol === 'ws:';
+  } catch {
+    return false;
+  }
+}
+
 // Get all RPC URLs for wagmi/public use
 // Custom RPC has priority and will be tried first if set
 export function getAllRpcUrls(): string[] {
@@ -100,8 +110,15 @@ export function getAllRpcUrls(): string[] {
   if (typeof window !== 'undefined') {
     const customRpc = window.localStorage.getItem('eth_lsd_custom_rpc');
     if (customRpc && customRpc.trim()) {
-      // Prepend custom RPC to the list so it's tried first
-      return [customRpc, ...defaultRpcList];
+      // Validate custom RPC format before using
+      if (isValidRpcUrl(customRpc.trim())) {
+        // Prepend custom RPC to the list so it's tried first
+        return [customRpc.trim(), ...defaultRpcList];
+      } else {
+        // Invalid RPC format - remove from storage and fallback to defaults
+        console.warn('Invalid custom RPC format detected, removing:', customRpc);
+        window.localStorage.removeItem('eth_lsd_custom_rpc');
+      }
     }
   }
   
@@ -176,14 +193,32 @@ export async function getWorkingBeaconRpc(): Promise<string> {
 export function getEthereumRpc(): string {
   if (typeof window !== 'undefined') {
     const customRpc = window.localStorage.getItem('eth_lsd_custom_rpc');
-    if (customRpc) {
-      return customRpc;
+    if (customRpc && customRpc.trim()) {
+      // Validate custom RPC format before using
+      if (isValidRpcUrl(customRpc.trim())) {
+        return customRpc.trim();
+      } else {
+        // Invalid RPC format - remove from storage
+        console.warn('Invalid custom RPC format detected, removing:', customRpc);
+        window.localStorage.removeItem('eth_lsd_custom_rpc');
+      }
     }
   }
 
   const rpcConfig = isDev() ? appDevConfig.rpc : appProdConfig.rpc;
   // Return first RPC from array, or the RPC itself if it's a string
   return Array.isArray(rpcConfig) ? rpcConfig[0] : rpcConfig;
+}
+
+// Test if custom RPC is accessible
+export async function validateCustomRpc(rpcUrl: string): Promise<boolean> {
+  // First check format
+  if (!isValidRpcUrl(rpcUrl)) {
+    return false;
+  }
+
+  // Then test health
+  return await testRpcHealth(rpcUrl);
 }
 
 export function getExplorerUrl() {

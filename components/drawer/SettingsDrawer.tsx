@@ -4,6 +4,7 @@ import {
   Typography,
   IconButton,
   InputAdornment,
+  CircularProgress,
 } from '@mui/material';
 import classNames from 'classnames';
 import { IOSSwitch } from 'components/common/CustomSwitch';
@@ -14,10 +15,11 @@ import { setDarkMode, setCustomRpc } from 'redux/reducers/AppSlice';
 import { RootState } from 'redux/store';
 import { openLink } from 'utils/commonUtils';
 import { getContactList, getExternalLinkList } from 'utils/configUtils';
-import { getAllRpcUrls, getEthereumRpc } from 'config/env';
+import { getAllRpcUrls, getEthereumRpc, validateCustomRpc } from 'config/env';
 import { useAppKitTheme } from '@reown/appkit/react';
 import { useState, useEffect } from 'react';
 import { STORAGE_KEY_CUSTOM_RPC } from 'utils/storageUtils';
+import snackbarUtil from 'utils/snackbarUtils';
 
 interface Props {
   open: boolean;
@@ -36,8 +38,10 @@ export const SettingsDrawer = (props: Props) => {
   });
 
   const [customRpcInput, setCustomRpcInput] = useState(customRpc || '');
+  const [isValidating, setIsValidating] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
   const allRpcUrls = getAllRpcUrls();
-  const defaultFallbackRpc = allRpcUrls[0];
+  const defaultFallbackRpc = allRpcUrls[allRpcUrls.length > 1 ? 1 : 0]; // Get first non-custom RPC
 
   // Hydrate custom RPC from storage when drawer mounts
   useEffect(() => {
@@ -58,9 +62,56 @@ export const SettingsDrawer = (props: Props) => {
 
   // Get the currently active RPC
   const currentActiveRpc = customRpc || getEthereumRpc();
+  
   const handleClearCustomRpc = () => {
     setCustomRpcInput('');
+    setValidationError(null);
     dispatch(setCustomRpc(undefined));
+    snackbarUtil.success('Custom RPC cleared, using default RPC');
+  };
+
+  const handleApplyCustomRpc = async (rpcUrl: string) => {
+    const trimmedValue = rpcUrl.trim();
+    
+    if (!trimmedValue) {
+      handleClearCustomRpc();
+      return;
+    }
+
+    // Basic URL validation
+    try {
+      new URL(trimmedValue);
+    } catch {
+      setValidationError('Invalid URL format');
+      snackbarUtil.error('Invalid RPC URL format');
+      return;
+    }
+
+    // Validate RPC connectivity
+    setIsValidating(true);
+    setValidationError(null);
+    
+    try {
+      const isValid = await validateCustomRpc(trimmedValue);
+      
+      if (isValid) {
+        dispatch(setCustomRpc(trimmedValue));
+        setValidationError(null);
+        snackbarUtil.success('Custom RPC validated and applied successfully');
+      } else {
+        setValidationError('Unable to connect to RPC');
+        snackbarUtil.error('Failed to connect to custom RPC. Using default RPC.');
+        // Don't save invalid RPC
+        handleClearCustomRpc();
+      }
+    } catch (error: any) {
+      console.error('RPC validation error:', error);
+      setValidationError('Connection test failed');
+      snackbarUtil.error('Custom RPC validation failed. Using default RPC.');
+      handleClearCustomRpc();
+    } finally {
+      setIsValidating(false);
+    }
   };
 
   console.log(
@@ -225,57 +276,92 @@ export const SettingsDrawer = (props: Props) => {
                 fullWidth
                 placeholder='Enter custom RPC URL (e.g., https://...)'
                 value={customRpcInput}
+                disabled={isValidating}
+                error={!!validationError}
+                helperText={validationError}
                 onChange={(e) => {
                   setCustomRpcInput(e.target.value);
+                  setValidationError(null);
                 }}
                 onBlur={() => {
                   const trimmedValue = customRpcInput.trim();
-                  if (trimmedValue !== customRpc) {
-                    dispatch(setCustomRpc(trimmedValue || undefined));
+                  if (trimmedValue && trimmedValue !== customRpc) {
+                    handleApplyCustomRpc(trimmedValue);
                   }
                 }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     const trimmedValue = customRpcInput.trim();
-                    dispatch(setCustomRpc(trimmedValue || undefined));
+                    handleApplyCustomRpc(trimmedValue);
                   }
                 }}
                 InputProps={{
-                  endAdornment: customRpcInput && (
+                  endAdornment: (
                     <InputAdornment position='end'>
-                      <IconButton
-                        size='small'
-                        onClick={handleClearCustomRpc}
-                        edge='end'
-                        sx={{
-                          color: darkMode ? '#aaa' : '#666',
-                          fontSize: '18px',
-                          fontWeight: 'bold',
-                          '&:hover': {
-                            color: darkMode ? '#ef4444' : '#dc2626',
-                          },
-                        }}
-                      >
-                        ×
-                      </IconButton>
+                      {isValidating ? (
+                        <CircularProgress
+                          size={20}
+                          sx={{ color: darkMode ? '#4ade80' : '#16a34a' }}
+                        />
+                      ) : (
+                        customRpcInput && (
+                          <IconButton
+                            size='small'
+                            onClick={handleClearCustomRpc}
+                            edge='end'
+                            sx={{
+                              color: darkMode ? '#aaa' : '#666',
+                              fontSize: '18px',
+                              fontWeight: 'bold',
+                              '&:hover': {
+                                color: darkMode ? '#ef4444' : '#dc2626',
+                              },
+                            }}
+                          >
+                            ×
+                          </IconButton>
+                        )
+                      )}
                     </InputAdornment>
                   ),
                 }}
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     '& fieldset': {
-                      borderColor: darkMode ? '#2D2D32' : '#E8EFFD',
+                      borderColor: validationError
+                        ? darkMode
+                          ? '#ef4444'
+                          : '#dc2626'
+                        : darkMode
+                        ? '#2D2D32'
+                        : '#E8EFFD',
                     },
                     '&:hover fieldset': {
-                      borderColor: darkMode ? '#4ade80' : '#16a34a',
+                      borderColor: validationError
+                        ? darkMode
+                          ? '#ef4444'
+                          : '#dc2626'
+                        : darkMode
+                        ? '#4ade80'
+                        : '#16a34a',
                     },
                     '&.Mui-focused fieldset': {
-                      borderColor: darkMode ? '#4ade80' : '#16a34a',
+                      borderColor: validationError
+                        ? darkMode
+                          ? '#ef4444'
+                          : '#dc2626'
+                        : darkMode
+                        ? '#4ade80'
+                        : '#16a34a',
                     },
                   },
                   '& .MuiInputBase-input': {
                     color: darkMode ? '#fff' : '#000',
                     fontSize: '.14rem',
+                  },
+                  '& .MuiFormHelperText-root': {
+                    color: darkMode ? '#ef4444' : '#dc2626',
+                    fontSize: '.11rem',
                   },
                 }}
               />
@@ -287,9 +373,22 @@ export const SettingsDrawer = (props: Props) => {
                   fontStyle: 'italic',
                 }}
               >
-                Press Enter or click outside to apply. Click × to clear and
-                fallback to {defaultFallbackRpc || 'the default RPC'}.
+                Press Enter or click outside to validate and apply. The RPC will
+                be tested before being used. Click × to clear and fallback to{' '}
+                {defaultFallbackRpc || 'the default RPC'}.
               </Typography>
+              {isValidating && (
+                <Typography
+                  style={{
+                    color: darkMode ? '#4ade80' : '#16a34a',
+                    fontSize: '.11rem',
+                    marginTop: '.08rem',
+                    fontWeight: 600,
+                  }}
+                >
+                  Validating RPC connection...
+                </Typography>
+              )}
             </div>
 
             <div className='mt-[32px] h-[0.01rem] bg-color-divider2' />

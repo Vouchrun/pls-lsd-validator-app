@@ -15,13 +15,39 @@ let lastRpcFailureTime = 0;
 const RPC_FAILURE_COOLDOWN = 30000; // 30 seconds before trying failed RPC again
 
 /**
- * Create Web3 provider with current RPC
+ * Create Web3 provider with current RPC with error handling
  */
 function createWeb3Provider(rpcUrl: string) {
-  const useWebsocket = rpcUrl.startsWith('wss');
-  return useWebsocket
-    ? new Web3.providers.WebsocketProvider(rpcUrl)
-    : new Web3.providers.HttpProvider(rpcUrl);
+  try {
+    const useWebsocket = rpcUrl.startsWith('wss');
+    const provider = useWebsocket
+      ? new Web3.providers.WebsocketProvider(rpcUrl, {
+          timeout: 10000,
+          clientConfig: {
+            keepalive: true,
+            keepaliveInterval: 60000,
+          },
+          reconnect: {
+            auto: false, // Disable auto-reconnect to fail fast
+            delay: 5000,
+            maxAttempts: 1,
+          },
+        })
+      : new Web3.providers.HttpProvider(rpcUrl, {
+          timeout: 10000,
+          keepAlive: false,
+        });
+    
+    return provider;
+  } catch (error) {
+    console.error('Failed to create Web3 provider for RPC:', rpcUrl, error);
+    // Fallback to default RPC
+    const defaultRpc = getAllRpcUrls()[1] || getEthereumRpc(); // Get second RPC (first default after custom)
+    return new Web3.providers.HttpProvider(defaultRpc, {
+      timeout: 10000,
+      keepAlive: false,
+    });
+  }
 }
 
 /**
@@ -32,7 +58,19 @@ export function getEthWeb3() {
   const rpcLink = rpcList[currentRpcIndex] || getEthereumRpc();
   
   if (!ethWeb3) {
-    ethWeb3 = createWeb3(createWeb3Provider(rpcLink));
+    try {
+      ethWeb3 = createWeb3(createWeb3Provider(rpcLink));
+    } catch (error) {
+      console.error('Failed to create Web3 instance, falling back to default RPC:', error);
+      // Clear invalid custom RPC if exists
+      if (typeof window !== 'undefined') {
+        window.localStorage.removeItem('eth_lsd_custom_rpc');
+      }
+      // Force use default RPC
+      currentRpcIndex = 1; // Skip custom RPC
+      const defaultRpc = rpcList[currentRpcIndex] || rpcList[0];
+      ethWeb3 = createWeb3(createWeb3Provider(defaultRpc));
+    }
   }
   return ethWeb3;
 }
