@@ -9,8 +9,24 @@ export function createWeb3(provider?: any) {
   return new Web3(provider || (window.ethereum as any) || Web3.givenProvider);
 }
 
+const STORAGE_KEY_WORKING_RPC_INDEX = 'working_rpc_index';
+
 let ethWeb3: Web3 | undefined = undefined;
 let currentRpcIndex = 0;
+
+// Initialize from localStorage if available
+if (typeof window !== 'undefined') {
+  const savedIndex = window.localStorage.getItem(STORAGE_KEY_WORKING_RPC_INDEX);
+  if (savedIndex) {
+    currentRpcIndex = parseInt(savedIndex, 10);
+    // Validate index
+    const rpcList = getAllRpcUrls();
+    if (currentRpcIndex >= rpcList.length || currentRpcIndex < 0) {
+      currentRpcIndex = 0;
+    }
+  }
+}
+
 let lastRpcFailureTime = 0;
 const RPC_FAILURE_COOLDOWN = 30000; // 30 seconds before trying failed RPC again
 
@@ -18,36 +34,26 @@ const RPC_FAILURE_COOLDOWN = 30000; // 30 seconds before trying failed RPC again
  * Create Web3 provider with current RPC with error handling
  */
 function createWeb3Provider(rpcUrl: string) {
-  try {
-    const useWebsocket = rpcUrl.startsWith('wss');
-    const provider = useWebsocket
-      ? new Web3.providers.WebsocketProvider(rpcUrl, {
-          timeout: 10000,
-          clientConfig: {
-            keepalive: true,
-            keepaliveInterval: 60000,
-          },
-          reconnect: {
-            auto: false, // Disable auto-reconnect to fail fast
-            delay: 5000,
-            maxAttempts: 1,
-          },
-        })
-      : new Web3.providers.HttpProvider(rpcUrl, {
-          timeout: 10000,
-          keepAlive: false,
-        });
-    
-    return provider;
-  } catch (error) {
-    console.error('Failed to create Web3 provider for RPC:', rpcUrl, error);
-    // Fallback to default RPC
-    const defaultRpc = getAllRpcUrls()[1] || getEthereumRpc(); // Get second RPC (first default after custom)
-    return new Web3.providers.HttpProvider(defaultRpc, {
-      timeout: 10000,
-      keepAlive: false,
-    });
-  }
+  const useWebsocket = rpcUrl.startsWith('wss');
+  const provider = useWebsocket
+    ? new Web3.providers.WebsocketProvider(rpcUrl, {
+        timeout: 5000, // Reduced to 5s
+        clientConfig: {
+          keepalive: true,
+          keepaliveInterval: 60000,
+        },
+        reconnect: {
+          auto: false, // Disable auto-reconnect to fail fast
+          delay: 5000,
+          maxAttempts: 1,
+        },
+      })
+    : new Web3.providers.HttpProvider(rpcUrl, {
+        timeout: 5000, // Reduced to 5s
+        keepAlive: false,
+      });
+  
+  return provider;
 }
 
 /**
@@ -55,21 +61,37 @@ function createWeb3Provider(rpcUrl: string) {
  */
 export function getEthWeb3() {
   const rpcList = getAllRpcUrls();
-  const rpcLink = rpcList[currentRpcIndex] || getEthereumRpc();
   
   if (!ethWeb3) {
-    try {
-      ethWeb3 = createWeb3(createWeb3Provider(rpcLink));
-    } catch (error) {
-      console.error('Failed to create Web3 instance, falling back to default RPC:', error);
-      // Clear invalid custom RPC if exists
-      if (typeof window !== 'undefined') {
-        window.localStorage.removeItem('eth_lsd_custom_rpc');
+    // Try to create Web3 with current RPC, if fails, try next ones
+    let attempts = 0;
+    while (attempts < rpcList.length) {
+      try {
+        const rpcLink = rpcList[currentRpcIndex];
+        ethWeb3 = createWeb3(createWeb3Provider(rpcLink));
+        break; // Success
+      } catch (error) {
+        console.warn(`Failed to create Web3 instance with RPC ${rpcList[currentRpcIndex]}:`, error);
+        
+        // If custom RPC failed (index 0 and custom RPC exists), remove it
+        if (currentRpcIndex === 0 && typeof window !== 'undefined' && window.localStorage.getItem('eth_lsd_custom_rpc')) {
+           window.localStorage.removeItem('eth_lsd_custom_rpc');
+        }
+
+        // Try next RPC
+        currentRpcIndex = (currentRpcIndex + 1) % rpcList.length;
+        // Save new index
+        if (typeof window !== 'undefined') {
+          window.localStorage.setItem(STORAGE_KEY_WORKING_RPC_INDEX, currentRpcIndex.toString());
+        }
+        attempts++;
       }
-      // Force use default RPC
-      currentRpcIndex = 1; // Skip custom RPC
-      const defaultRpc = rpcList[currentRpcIndex] || rpcList[0];
-      ethWeb3 = createWeb3(createWeb3Provider(defaultRpc));
+    }
+
+    // If all failed, just try to create with the current one (will likely fail again but we need an instance)
+    if (!ethWeb3) {
+       const rpcLink = rpcList[currentRpcIndex] || getEthereumRpc();
+       ethWeb3 = createWeb3(createWeb3Provider(rpcLink));
     }
   }
   return ethWeb3;
@@ -78,23 +100,44 @@ export function getEthWeb3() {
 /**
  * Switch to next RPC in the list and recreate Web3 instance
  */
-export function switchToNextRpc(): boolean {
+export function switchToNextRpc(force: boolean = false): boolean {
   const rpcList = getAllRpcUrls();
   const now = Date.now();
   
-  // Don't switch too frequently
-  if (now - lastRpcFailureTime < RPC_FAILURE_COOLDOWN) {
+  // Don't switch too frequently unless forced
+  if (!force && now - lastRpcFailureTime < RPC_FAILURE_COOLDOWN) {
     return false;
   }
   
   lastRpcFailureTime = now;
   currentRpcIndex = (currentRpcIndex + 1) % rpcList.length;
+  
+  // Save new index
+  if (typeof window !== 'undefined') {
+    window.localStorage.setItem(STORAGE_KEY_WORKING_RPC_INDEX, currentRpcIndex.toString());
+    
+    // Auto-reload on first failure to ensure clean state (prevents "stuck screen")
+    const reloadLock = window.sessionStorage.getItem('rpc_reload_lock');
+    if (!reloadLock) {
+      console.warn('First RPC failure detected. Reloading to ensure clean state with new RPC...');
+      window.sessionStorage.setItem('rpc_reload_lock', 'true');
+      window.location.reload();
+      return true;
+    }
+  }
+
   const newRpc = rpcList[currentRpcIndex];
   
   console.warn(`Switching to RPC: ${newRpc}`);
   
   // Recreate Web3 instance with new RPC
-  ethWeb3 = createWeb3(createWeb3Provider(newRpc));
+  try {
+      ethWeb3 = createWeb3(createWeb3Provider(newRpc));
+  } catch (e) {
+      console.error("Failed to switch RPC provider", e);
+      // If immediate creation fails, try next one recursively (prevent infinite loop with max depth?)
+      // For now, just let the next call handle it
+  }
   
   return true;
 }
@@ -116,11 +159,11 @@ export async function executeWithRpcFallback<T>(
       return await operation(web3);
     } catch (error: any) {
       lastError = error;
-      console.error(`RPC call failed (attempt ${i + 1}/${attempts}):`, error.message);
+      console.warn(`RPC call failed (attempt ${i + 1}/${attempts}):`, error.message);
       
       // Try next RPC if available and not last attempt
       if (i < attempts - 1 && rpcList.length > 1) {
-        switchToNextRpc();
+        switchToNextRpc(true);
       }
     }
   }

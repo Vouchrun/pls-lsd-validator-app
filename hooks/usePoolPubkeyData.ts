@@ -3,7 +3,7 @@ import { getNodeDepositContractAbi } from 'config/contractAbi';
 import { ChainPubkeyStatus } from 'interfaces/common';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { fetchBeaconStatusInChunks } from 'utils/apiUtils';
-import { getEthWeb3 } from 'utils/web3Utils';
+import { getEthWeb3, executeWithRpcFallback } from 'utils/web3Utils';
 
 const CACHE_KEY = 'matchedValidatorsData';
 
@@ -45,30 +45,12 @@ export function usePoolPubkeyData() {
   const [isLoading, setIsLoading] = useState(true);
   const [isClient, setIsClient] = useState(false);
 
-  const web3 = getEthWeb3();
-
-  const nodeDepositContract = useMemo(
-    () =>
-      new web3.eth.Contract(
-        getNodeDepositContractAbi(),
-        getNodeDepositContract(),
-        {}
-      ),
-    [web3]
-  );
-
   // Set isClient to true when component mounts on client side
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  let isSettingNodes = false;
-
   const updateMatchedValidators = useCallback(async () => {
-    if (!nodeDepositContract) {
-      return 0;
-    }
-
     try {
       setIsLoading(true);
 
@@ -94,146 +76,153 @@ export function usePoolPubkeyData() {
         }
       }
 
-      // If cache is invalid or expired, fetch fresh data
-      const [nodesLength, trustNodeLimit] = await Promise.all([
-        nodeDepositContract.methods.getNodesLength().call(),
-        nodeDepositContract.methods.trustNodePubkeyNumberLimit().call(),
-      ]);
+      // Use executeWithRpcFallback for robust RPC calls
+      await executeWithRpcFallback(async (web3) => {
+          const nodeDepositContract = new web3.eth.Contract(
+            getNodeDepositContractAbi(),
+            getNodeDepositContract(),
+            {}
+          );
 
-      const nodesValue = await nodeDepositContract.methods
-        .getNodes(0, nodesLength)
-        .call();
+          // If cache is invalid or expired, fetch fresh data
+          const [nodesLength, trustNodeLimit] = await Promise.all([
+            nodeDepositContract.methods.getNodesLength().call(),
+            nodeDepositContract.methods.trustNodePubkeyNumberLimit().call(),
+          ]);
 
-      // Get pubkeys for all nodes
-      const pubkeyAddressList: string[] = [];
-      await Promise.all(
-        nodesValue.map(async (nodeAddress: string) => {
-          const pubkeys = await nodeDepositContract.methods
-            .getPubkeysOfNode(nodeAddress)
+          const nodesValue = await nodeDepositContract.methods
+            .getNodes(0, nodesLength)
             .call();
-          pubkeyAddressList.push(...pubkeys);
-        })
-      );
 
-      // Process pubkeys in chunks of 100
-      const CHUNK_SIZE = 100;
-      const pubkeyInfos: any = [];
-      // console.log("Processing pubkeys in chunks, total:", pubkeyAddressList.length);
+          // Get pubkeys for all nodes
+          const pubkeyAddressList: string[] = [];
+          await Promise.all(
+            nodesValue.map(async (nodeAddress: string) => {
+              const pubkeys = await nodeDepositContract.methods
+                .getPubkeysOfNode(nodeAddress)
+                .call();
+              pubkeyAddressList.push(...pubkeys);
+            })
+          );
 
-      for (let i = 0; i < pubkeyAddressList.length; i += CHUNK_SIZE) {
-        const chunk = pubkeyAddressList.slice(i, i + CHUNK_SIZE);
-        const batch = new web3.BatchRequest();
-        
-        // Create a promise for this batch
-        const batchPromise = new Promise((resolve, reject) => {
-          const results: any[] = [];
-          let completed = 0;
+          // Process pubkeys in chunks of 100
+          const CHUNK_SIZE = 100;
+          const pubkeyInfos: any = [];
           
-          chunk.forEach((pubkeyAddress, index) => {
-            const request = nodeDepositContract.methods
-              .pubkeyInfoOf(pubkeyAddress)
-              .call.request({}, (error: any, result: any) => {
-                if (error) {
-                  console.error(`Error fetching pubkeyInfo for ${pubkeyAddress}:`, error);
-                  results[index] = null; // Maintain order even with errors
-                } else {
-                  results[index] = result;
-                }
-                
-                completed++;
-                if (completed === chunk.length) {
-                  resolve(results);
-                }
-              });
+          for (let i = 0; i < pubkeyAddressList.length; i += CHUNK_SIZE) {
+            const chunk = pubkeyAddressList.slice(i, i + CHUNK_SIZE);
+            const batch = new web3.BatchRequest();
             
-            batch.add(request);
-          });
-          
-          // Execute the batch
-          try {
-            batch.execute();
-          } catch (error) {
-            reject(error);
+            // Create a promise for this batch
+            const batchPromise = new Promise((resolve, reject) => {
+              const results: any[] = [];
+              let completed = 0;
+              
+              chunk.forEach((pubkeyAddress, index) => {
+                const request = nodeDepositContract.methods
+                  .pubkeyInfoOf(pubkeyAddress)
+                  .call.request({}, (error: any, result: any) => {
+                    if (error) {
+                      console.error(`Error fetching pubkeyInfo for ${pubkeyAddress}:`, error);
+                      results[index] = null; // Maintain order even with errors
+                    } else {
+                      results[index] = result;
+                    }
+                    
+                    completed++;
+                    if (completed === chunk.length) {
+                      resolve(results);
+                    }
+                  });
+                
+                batch.add(request);
+              });
+              
+              // Execute the batch
+              try {
+                batch.execute();
+              } catch (error) {
+                reject(error);
+              }
+            });
+            
+            // Wait for this batch to complete
+            try {
+              const batchResults:any = await batchPromise;
+              pubkeyInfos.push(...batchResults.filter((result:any) => result !== null));
+            } catch (error) {
+              console.error('Batch execution error:', error);
+            }
           }
-        });
-        
-        // Wait for this batch to complete
-        try {
-          const batchResults:any = await batchPromise;
-          pubkeyInfos.push(...batchResults.filter((result:any) => result !== null));
-          // console.log(`Processed chunk ${i/CHUNK_SIZE + 1}/${Math.ceil(pubkeyAddressList.length/CHUNK_SIZE)}`);
-        } catch (error) {
-          console.error('Batch execution error:', error);
-        }
-      }
 
-      const [beaconStatusResponses] = await Promise.all([
-        fetchBeaconStatusInChunks(pubkeyAddressList),
-      ]);
-      const beaconStatusData = beaconStatusResponses.flatMap(
-        (response) => response.data
-      );
+          const [beaconStatusResponses] = await Promise.all([
+            fetchBeaconStatusInChunks(pubkeyAddressList),
+          ]);
+          const beaconStatusData = beaconStatusResponses.flatMap(
+            (response) => response.data
+          );
 
-      // Calculate matched validators
-      const validValidatorCount = pubkeyInfos.filter(
-        (item: any, index: number) => {
-          const beaconStatus = beaconStatusData
-            .find(
-              (statusItem: any) =>
-                statusItem.validator?.pubkey === pubkeyAddressList[index]
-            )
-            ?.status?.toUpperCase();
+          // Calculate matched validators
+          const validValidatorCount = pubkeyInfos.filter(
+            (item: any, index: number) => {
+              const beaconStatus = beaconStatusData
+                .find(
+                  (statusItem: any) =>
+                    statusItem.validator?.pubkey === pubkeyAddressList[index]
+                )
+                ?.status?.toUpperCase();
 
-          const isActive = [
-            'ACTIVE_ONGOING',
-            'ACTIVE_EXITING',
-            'ACTIVE_SLASHABLE',
-            'PENDING_QUEUED',
-          ].includes(beaconStatus ?? '');
+              const isActive = [
+                'ACTIVE_ONGOING',
+                'ACTIVE_EXITING',
+                'ACTIVE_SLASHABLE',
+                'PENDING_QUEUED',
+              ].includes(beaconStatus ?? '');
 
-          return item?._status === ChainPubkeyStatus.Staked && isActive;
-        }
-      ).length;
+              return item?._status === ChainPubkeyStatus.Staked && isActive;
+            }
+          ).length;
 
-      // Cache the new data only on client side
-      if (isClient) {
-        const cacheData: CachedValidatorData = {
-          matchedValidators: validValidatorCount.toString(),
-          nodes: nodesValue,
-          trustNodePubkeyNumberLimit: trustNodeLimit,
-          timestamp: Date.now(),
-        };
-        storage.set(CACHE_KEY, JSON.stringify(cacheData));
-      }
+          // Cache the new data only on client side
+          if (isClient) {
+            const cacheData: CachedValidatorData = {
+              matchedValidators: validValidatorCount.toString(),
+              nodes: nodesValue,
+              trustNodePubkeyNumberLimit: trustNodeLimit,
+              timestamp: Date.now(),
+            };
+            storage.set(CACHE_KEY, JSON.stringify(cacheData));
+          }
 
-      // Update state
-      setMatchedValidators(validValidatorCount.toString());
-      setNodes(nodesValue);
-      setTrustNodePubkeyNumberLimit(trustNodeLimit);
+          // Update state
+          setMatchedValidators(validValidatorCount.toString());
+          setNodes(nodesValue);
+          setTrustNodePubkeyNumberLimit(trustNodeLimit);
 
-      return validValidatorCount;
+          return validValidatorCount;
+      });
+
     } catch (err: any) {
       console.error('Error in updateMatchedValidators:', err);
       return parseInt(matchedValidators) || 0;
     } finally {
       setIsLoading(false);
     }
-  }, [nodeDepositContract, matchedValidators, isClient]);
+  }, [matchedValidators, isClient]);
 
   // Initial load effect
   useEffect(() => {
-    if (isClient && nodeDepositContract) {
+    if (isClient) {
       console.log('Initial load triggered');
       updateMatchedValidators();
     }
-  }, [isClient, nodeDepositContract]);
+  }, [isClient, updateMatchedValidators]);
 
   // Interval effect
   useEffect(() => {
     let interval: NodeJS.Timeout;
     
-    if (isClient && nodeDepositContract) {
-      // console.log('Setting up interval');
+    if (isClient) {
       interval = setInterval(updateMatchedValidators, 5 * 60 * 1000);
     }
     
@@ -242,7 +231,7 @@ export function usePoolPubkeyData() {
         clearInterval(interval);
       }
     };
-  }, [isClient, nodeDepositContract]);
+  }, [isClient, updateMatchedValidators]);
 
   return {
     matchedValidators,

@@ -4,6 +4,7 @@ import {
   decodeBalancesUpdatedLog,
   getErc20AssetBalance,
   getEthWeb3,
+  executeWithRpcFallback,
 } from 'utils/web3Utils';
 import {
   getLsdEthTokenContract,
@@ -96,17 +97,17 @@ export const updateLsdEthBalance =
  */
 export const updateLsdEthRate = (): AppThunk => async (dispatch, getState) => {
   try {
-    let newRate = '--';
+    await executeWithRpcFallback(async (web3) => {
+      let newRate = '--';
+      let contract = new web3.eth.Contract(
+        getLsdEthTokenContractAbi(),
+        getLsdEthTokenContract()
+      );
+      const result = await contract.methods.getRate().call();
+      newRate = web3.utils.fromWei(result + '', 'ether');
 
-    const web3 = getEthWeb3();
-    let contract = new web3.eth.Contract(
-      getLsdEthTokenContractAbi(),
-      getLsdEthTokenContract()
-    );
-    const result = await contract.methods.getRate().call();
-    newRate = web3.utils.fromWei(result + '', 'ether');
-
-    dispatch(setRate(newRate));
+      dispatch(setRate(newRate));
+    });
   } catch (err: unknown) {}
 };
 
@@ -117,47 +118,48 @@ export const updateApr = (): AppThunk => async (dispatch, getState) => {
   let apr = getDefaultApr();
   try {
     console.log('updateApr');
-    const web3 = getEthWeb3();
-    const currentBlock = await web3.eth.getBlockNumber();
-    const contract = new web3.eth.Contract(
-      getNetworkBalanceContractAbi(),
-      getNetworkBalanceContract()
-    );
-    const topics = web3.utils.sha3(
-      'BalancesUpdated(uint256,uint256,uint256,uint256)'
-    );
-    const events = await contract.getPastEvents('allEvents', {
-      fromBlock:
-        currentBlock - Math.floor((1 / getBlockSeconds()) * 60 * 60 * 24 * 7),
-      toBlock: currentBlock,
-    });
-    let apr = getDefaultApr();
-    const balancesUpdatedEvents = events
-      .filter((e) => e.raw.topics.length === 1 && e.raw.topics[0] === topics)
-      .sort((a, b) => a.blockNumber - b.blockNumber);
-    if (balancesUpdatedEvents.length > 1) {
-      const beginEvent = balancesUpdatedEvents[0];
-      const endEvent = balancesUpdatedEvents[balancesUpdatedEvents.length - 1];
-      const beginValues: any = decodeBalancesUpdatedLog(
-        beginEvent.raw.data,
-        beginEvent.raw.topics
+    await executeWithRpcFallback(async (web3) => {
+      const currentBlock = await web3.eth.getBlockNumber();
+      const contract = new web3.eth.Contract(
+        getNetworkBalanceContractAbi(),
+        getNetworkBalanceContract()
       );
-      const endValues: any = decodeBalancesUpdatedLog(
-        endEvent.raw.data,
-        endEvent.raw.topics
+      const topics = web3.utils.sha3(
+        'BalancesUpdated(uint256,uint256,uint256,uint256)'
       );
-      const beginRate = beginValues.totalEth / beginValues.lsdTokenSupply;
-      const endRate = endValues.totalEth / endValues.lsdTokenSupply;
-      if (
-        !isNaN(beginRate) &&
-        !isNaN(endRate) &&
-        endRate !== 1 &&
-        beginRate !== 1
-      ) {
-        apr = ((endRate - beginRate) / 7) * 365.25 * 100;
+      const events = await contract.getPastEvents('allEvents', {
+        fromBlock:
+          currentBlock - Math.floor((1 / getBlockSeconds()) * 60 * 60 * 24 * 7),
+        toBlock: currentBlock,
+      });
+      let apr = getDefaultApr();
+      const balancesUpdatedEvents = events
+        .filter((e) => e.raw.topics.length === 1 && e.raw.topics[0] === topics)
+        .sort((a, b) => a.blockNumber - b.blockNumber);
+      if (balancesUpdatedEvents.length > 1) {
+        const beginEvent = balancesUpdatedEvents[0];
+        const endEvent = balancesUpdatedEvents[balancesUpdatedEvents.length - 1];
+        const beginValues: any = decodeBalancesUpdatedLog(
+          beginEvent.raw.data,
+          beginEvent.raw.topics
+        );
+        const endValues: any = decodeBalancesUpdatedLog(
+          endEvent.raw.data,
+          endEvent.raw.topics
+        );
+        const beginRate = beginValues.totalEth / beginValues.lsdTokenSupply;
+        const endRate = endValues.totalEth / endValues.lsdTokenSupply;
+        if (
+          !isNaN(beginRate) &&
+          !isNaN(endRate) &&
+          endRate !== 1 &&
+          beginRate !== 1
+        ) {
+          apr = ((endRate - beginRate) / 7) * 365.25 * 100;
+        }
       }
-    }
-    dispatch(setApr(apr));
+      dispatch(setApr(apr));
+    });
   } catch (err: any) {
     dispatch(setApr(apr));
   }
@@ -166,70 +168,71 @@ export const updateApr = (): AppThunk => async (dispatch, getState) => {
 export const updateYearlyApr = (): AppThunk => async (dispatch, getState) => {
   let apr = getDefaultApr();
   try {
-    const web3 = getEthWeb3();
-    const currentBlock = await web3.eth.getBlockNumber();
-    const contract = new web3.eth.Contract(
-      getNetworkBalanceContractAbi(),
-      getNetworkBalanceContract()
-    );
-
-    // Calculate blocks for 365 days
-    const blocksFor365Days = Math.floor(
-      (1 / getBlockSeconds()) * 60 * 60 * 24 * 365
-    );
-
-    // Get deployment block
-    const deploymentBlock = getNetworkBalanceContractDeploymentBlock();
-
-    // Determine start block based on deployment time
-    const startBlock =
-      currentBlock - deploymentBlock < blocksFor365Days
-        ? deploymentBlock
-        : currentBlock - blocksFor365Days;
-
-    const topics = web3.utils.sha3(
-      'BalancesUpdated(uint256,uint256,uint256,uint256)'
-    );
-
-    const events = await contract.getPastEvents('allEvents', {
-      fromBlock: startBlock,
-      toBlock: currentBlock,
-    });
-
-    const balancesUpdatedEvents = events
-      .filter((e) => e.raw.topics.length === 1 && e.raw.topics[0] === topics)
-      .sort((a, b) => a.blockNumber - b.blockNumber);
-
-    if (balancesUpdatedEvents.length > 1) {
-      const beginEvent = balancesUpdatedEvents[0];
-      const endEvent = balancesUpdatedEvents[balancesUpdatedEvents.length - 1];
-
-      // Get block timestamps to calculate actual days
-      const beginBlock = await web3.eth.getBlock(beginEvent.blockNumber);
-      const endBlock = await web3.eth.getBlock(endEvent.blockNumber);
-      const daysBetweenBlocks =
-        (Number(endBlock.timestamp) - Number(beginBlock.timestamp)) /
-        (60 * 60 * 24);
-
-      const beginValues: any = decodeBalancesUpdatedLog(
-        beginEvent.raw.data,
-        beginEvent.raw.topics
-      );
-      const endValues: any = decodeBalancesUpdatedLog(
-        endEvent.raw.data,
-        endEvent.raw.topics
+    await executeWithRpcFallback(async (web3) => {
+      const currentBlock = await web3.eth.getBlockNumber();
+      const contract = new web3.eth.Contract(
+        getNetworkBalanceContractAbi(),
+        getNetworkBalanceContract()
       );
 
-      const beginRate = beginValues.totalEth / beginValues.lsdTokenSupply;
-      const endRate = endValues.totalEth / endValues.lsdTokenSupply;
+      // Calculate blocks for 365 days
+      const blocksFor365Days = Math.floor(
+        (1 / getBlockSeconds()) * 60 * 60 * 24 * 365
+      );
 
-      if (!isNaN(beginRate) && !isNaN(endRate) && endRate !== 1) {
-        // Calculate APR using actual days between blocks
-        apr =
-          ((endRate - beginRate) / Math.floor(daysBetweenBlocks)) * 365 * 100;
+      // Get deployment block
+      const deploymentBlock = getNetworkBalanceContractDeploymentBlock();
+
+      // Determine start block based on deployment time
+      const startBlock =
+        currentBlock - deploymentBlock < blocksFor365Days
+          ? deploymentBlock
+          : currentBlock - blocksFor365Days;
+
+      const topics = web3.utils.sha3(
+        'BalancesUpdated(uint256,uint256,uint256,uint256)'
+      );
+
+      const events = await contract.getPastEvents('allEvents', {
+        fromBlock: startBlock,
+        toBlock: currentBlock,
+      });
+
+      const balancesUpdatedEvents = events
+        .filter((e) => e.raw.topics.length === 1 && e.raw.topics[0] === topics)
+        .sort((a, b) => a.blockNumber - b.blockNumber);
+
+      if (balancesUpdatedEvents.length > 1) {
+        const beginEvent = balancesUpdatedEvents[0];
+        const endEvent = balancesUpdatedEvents[balancesUpdatedEvents.length - 1];
+
+        // Get block timestamps to calculate actual days
+        const beginBlock = await web3.eth.getBlock(beginEvent.blockNumber);
+        const endBlock = await web3.eth.getBlock(endEvent.blockNumber);
+        const daysBetweenBlocks =
+          (Number(endBlock.timestamp) - Number(beginBlock.timestamp)) /
+          (60 * 60 * 24);
+
+        const beginValues: any = decodeBalancesUpdatedLog(
+          beginEvent.raw.data,
+          beginEvent.raw.topics
+        );
+        const endValues: any = decodeBalancesUpdatedLog(
+          endEvent.raw.data,
+          endEvent.raw.topics
+        );
+
+        const beginRate = beginValues.totalEth / beginValues.lsdTokenSupply;
+        const endRate = endValues.totalEth / endValues.lsdTokenSupply;
+
+        if (!isNaN(beginRate) && !isNaN(endRate) && endRate !== 1) {
+          // Calculate APR using actual days between blocks
+          apr =
+            ((endRate - beginRate) / Math.floor(daysBetweenBlocks)) * 365 * 100;
+        }
       }
-    }
-    dispatch(setYearlyApr(apr));
+      dispatch(setYearlyApr(apr));
+    });
   } catch (err: any) {
     dispatch(setYearlyApr(apr));
   }

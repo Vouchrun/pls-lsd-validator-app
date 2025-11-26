@@ -172,8 +172,8 @@ export const Navbar = () => {
             style={{
               gridTemplateColumns:
                 admin === metaMaskAccount ||
-                voters.find((voter: string) => voter === metaMaskAccount) ||
-                nodes.find((node: string) => node === metaMaskAccount)
+                voters?.find((voter: string) => voter === metaMaskAccount) ||
+                nodes?.find((node: string) => node === metaMaskAccount)
                   ? "20% 20% 20% 20% 20%"
                   : "25% 25% 25% 25%",
             }}
@@ -250,8 +250,8 @@ export const Navbar = () => {
               </div>
             </Link>
             {(admin === metaMaskAccount ||
-              voters.find((voter: string) => voter === metaMaskAccount) ||
-              nodes.find((node: string) => node === metaMaskAccount)) && (
+              voters?.find((voter: string) => voter === metaMaskAccount) ||
+              nodes?.find((node: string) => node === metaMaskAccount)) && (
               <Link
                 href={"/system"}
                 className={
