@@ -9,7 +9,7 @@ import {
 } from 'config/contractAbi';
 import { IpfsRewardItem, RewardJsonResponse } from 'interfaces/common';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { getEthWeb3 } from 'utils/web3Utils';
+import { getEthWeb3, executeWithRpcFallback } from 'utils/web3Utils';
 import Web3 from 'web3';
 import { useAppSlice } from './selector';
 import { usePoolPubkeyData } from './usePoolPubkeyData';
@@ -78,14 +78,14 @@ export function usePoolData() {
 
   const udpatePoolData = useCallback(async () => {
     try {
-      const web3 = getEthWeb3();
+      await executeWithRpcFallback(async (web3) => {
+        const userDepositBalance = await web3.eth.getBalance(
+          getEthDepositContract()
+        );
 
-      const userDepositBalance = await web3.eth.getBalance(
-        getEthDepositContract()
-      );
-
-      const unmatchedEth = Web3.utils.fromWei(userDepositBalance);
-      setUnmatchedEth(unmatchedEth);
+        const unmatchedEth = Web3.utils.fromWei(userDepositBalance);
+        setUnmatchedEth(unmatchedEth);
+      });
     } catch {}
   }, [updateFlag]);
 
@@ -95,112 +95,95 @@ export function usePoolData() {
 
   const updatePoolTokenData = useCallback(async () => {
     try {
-      const web3 = getEthWeb3();
-      const networkWithdrawContract = new web3.eth.Contract(
-        getNetworkWithdrawContractAbi(),
-        getNetworkWithdrawContract(),
-        {}
-      );
-      const lsdTokenContract = new web3.eth.Contract(
-        getLsdEthTokenContractAbi(),
-        getLsdEthTokenContract(),
-        {}
-      );
+      await executeWithRpcFallback(async (web3) => {
+        const networkWithdrawContract = new web3.eth.Contract(
+          getNetworkWithdrawContractAbi(),
+          getNetworkWithdrawContract(),
+          {}
+        );
+        const lsdTokenContract = new web3.eth.Contract(
+          getLsdEthTokenContractAbi(),
+          getLsdEthTokenContract(),
+          {}
+        );
 
-      const lsdTotalSupply = await lsdTokenContract.methods
-        .totalSupply()
-        .call()
-        .catch((err: any) => {
-          console.log({ err });
+        const lsdTotalSupply = await lsdTokenContract.methods
+          .totalSupply()
+          .call();
+
+        const lsdRate = await lsdTokenContract.methods
+          .getRate()
+          .call();
+
+        setLsdTotalSupply(Web3.utils.fromWei(lsdTotalSupply));
+        setLsdRate(Web3.utils.fromWei(lsdRate));
+        setMintedLsdToken(Web3.utils.fromWei(lsdTotalSupply));
+
+        const nodeRewardsFileCid = await networkWithdrawContract.methods
+          .nodeRewardsFileCid()
+          .call();
+        const latestMerkleRootEpoch = await networkWithdrawContract.methods
+          .latestMerkleRootEpoch()
+          .call();
+
+        let poolEth =
+          Number(lsdTotalSupply) * Number(Web3.utils.fromWei(lsdRate));
+
+        const response = await fetch(
+          `https://${nodeRewardsFileCid}.ipfs.dweb.link/${getLsdEthTokenContract().toLowerCase()}-rewards-${getEthereumChainId()}-${latestMerkleRootEpoch}.json`,
+          {
+            method: 'GET',
+            headers: {},
+          }
+        );
+
+        // const resJson: RewardJsonResponse = await response.json();
+        // const resJson = { List: [] };
+        const resText = await response.text();
+        var JSONbig = require('json-bigint');
+        const resTextJson = JSONbig.parse(resText);
+
+        const list: IpfsRewardItem[] = resTextJson.List?.map((item: any) => {
+          return {
+            ...item,
+            totalRewardAmount: removeDecimals(item.totalRewardAmount.toFixed()),
+            totalDepositAmount: removeDecimals(item.totalDepositAmount.toFixed()),
+          };
         });
 
-      const lsdRate = await lsdTokenContract.methods
-        .getRate()
-        .call()
-        .catch((err: any) => {
-          console.log({ err });
+        const requests = list?.map((data) => {
+          return (async () => {
+            const totalClaimedRewardOfNode = await networkWithdrawContract.methods
+              .totalClaimedRewardOfNode(data.address)
+              .call();
+
+            const totalClaimedDepositOfNode =
+              await networkWithdrawContract.methods
+                .totalClaimedDepositOfNode(data.address)
+                .call();
+
+            if (data.totalRewardAmount) {
+              poolEth = poolEth + Number(data.totalRewardAmount);
+            }
+            if (data.totalDepositAmount) {
+              poolEth = poolEth + Number(data.totalDepositAmount);
+            }
+
+            if (totalClaimedRewardOfNode) {
+              poolEth = poolEth - Number(totalClaimedRewardOfNode);
+            }
+            if (totalClaimedDepositOfNode) {
+              poolEth = poolEth - Number(totalClaimedDepositOfNode);
+            }
+          })();
         });
 
-      setLsdTotalSupply(Web3.utils.fromWei(lsdTotalSupply));
-      setLsdRate(Web3.utils.fromWei(lsdRate));
-      setMintedLsdToken(Web3.utils.fromWei(lsdTotalSupply));
+        await Promise.all(requests);
 
-      const nodeRewardsFileCid = await networkWithdrawContract.methods
-        .nodeRewardsFileCid()
-        .call()
-        .catch((err: any) => {
-          console.log({ err });
-        });
-      const latestMerkleRootEpoch = await networkWithdrawContract.methods
-        .latestMerkleRootEpoch()
-        .call()
-        .catch((err: any) => {
-          console.log({ err });
-        });
+        // console.log({ poolEth });
 
-      let poolEth =
-        Number(lsdTotalSupply) * Number(Web3.utils.fromWei(lsdRate));
-
-      const response = await fetch(
-        `https://${nodeRewardsFileCid}.ipfs.dweb.link/${getLsdEthTokenContract().toLowerCase()}-rewards-${getEthereumChainId()}-${latestMerkleRootEpoch}.json`,
-        {
-          method: 'GET',
-          headers: {},
-        }
-      );
-
-      // const resJson: RewardJsonResponse = await response.json();
-      // const resJson = { List: [] };
-      const resText = await response.text();
-      var JSONbig = require('json-bigint');
-      const resTextJson = JSONbig.parse(resText);
-
-      const list: IpfsRewardItem[] = resTextJson.List?.map((item: any) => {
-        return {
-          ...item,
-          totalRewardAmount: removeDecimals(item.totalRewardAmount.toFixed()),
-          totalDepositAmount: removeDecimals(item.totalDepositAmount.toFixed()),
-        };
+        setPoolEth(Web3.utils.fromWei(formatScientificNumber(poolEth) + ''));
       });
-
-      const requests = list?.map((data) => {
-        return (async () => {
-          const totalClaimedRewardOfNode = await networkWithdrawContract.methods
-            .totalClaimedRewardOfNode(data.address)
-            .call()
-            .catch((err: any) => {
-              console.log({ err });
-            });
-
-          const totalClaimedDepositOfNode =
-            await networkWithdrawContract.methods
-              .totalClaimedDepositOfNode(data.address)
-              .call()
-              .catch((err: any) => {
-                console.log({ err });
-              });
-
-          if (data.totalRewardAmount) {
-            poolEth = poolEth + Number(data.totalRewardAmount);
-          }
-          if (data.totalDepositAmount) {
-            poolEth = poolEth + Number(data.totalDepositAmount);
-          }
-
-          if (totalClaimedRewardOfNode) {
-            poolEth = poolEth - Number(totalClaimedRewardOfNode);
-          }
-          if (totalClaimedDepositOfNode) {
-            poolEth = poolEth - Number(totalClaimedDepositOfNode);
-          }
-        })();
-      });
-
-      await Promise.all(requests);
-
-      // console.log({ poolEth });
-
-      setPoolEth(Web3.utils.fromWei(formatScientificNumber(poolEth) + ''));
     } catch {
       setPoolEth('--');
     }

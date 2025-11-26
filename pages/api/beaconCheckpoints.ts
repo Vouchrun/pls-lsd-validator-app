@@ -1,4 +1,4 @@
-import { getBeaconHost } from "config/env";
+import { fetchWithBeaconFallback } from "utils/beaconUtils";
 import type { NextApiRequest, NextApiResponse } from "next";
 
 type ResponseData = {
@@ -31,13 +31,12 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<ResponseData>
 ) {
-  const response = await fetch(
-    `${getBeaconHost()}/eth/v1/beacon/states/head/finality_checkpoints`,
+  const resJson = await fetchWithBeaconFallback(
+    `/eth/v1/beacon/states/head/finality_checkpoints`,
     {
       method: "GET",
     }
   );
-  const resJson = await response.json();
 
   res.status(200).json(resJson);
 }

@@ -2,7 +2,8 @@ import classNames from 'classnames';
 import { CustomButton } from 'components/common/CustomButton';
 import { DataLoading } from 'components/common/DataLoading';
 import { Icomoon } from 'components/icon/Icomoon';
-import { getBeaconHost, getValidatorInfoURL, getLsdAppUrl } from 'config/env';
+import { getValidatorInfoURL, getLsdAppUrl } from 'config/env';
+import { fetchWithBeaconFallback } from 'utils/beaconUtils';
 import { usePubkeyDetail } from 'hooks/usePubkeyDetail';
 import { NodePubkeyInfo } from 'interfaces/common';
 import Image from 'next/image';
@@ -27,9 +28,8 @@ export const PubkeyDetailAsset = (props: {
         return;
       }
 
-      const res = await fetch(
-        `${getBeaconHost()}/eth/v1/beacon/states/head/validators?id=` +
-        pubkeyAddress,
+      const apires = await fetchWithBeaconFallback(
+        `/eth/v1/beacon/states/head/validators?id=${pubkeyAddress}`,
         {
           method: 'GET',
           headers: {
@@ -37,7 +37,6 @@ export const PubkeyDetailAsset = (props: {
           },
         }
       );
-      const apires = await res.json();
 
       setApiData(apires.data[0]);
     };

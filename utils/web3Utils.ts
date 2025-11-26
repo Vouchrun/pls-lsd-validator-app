@@ -97,6 +97,32 @@ export function getEthWeb3() {
   return ethWeb3;
 }
 
+// Event listeners for RPC changes
+type RpcChangeListener = (rpc: string) => void;
+const rpcChangeListeners: RpcChangeListener[] = [];
+
+export function onRpcChange(listener: RpcChangeListener) {
+  rpcChangeListeners.push(listener);
+  return () => {
+    const index = rpcChangeListeners.indexOf(listener);
+    if (index > -1) {
+      rpcChangeListeners.splice(index, 1);
+    }
+  };
+}
+
+function notifyRpcChange(newRpc: string) {
+  rpcChangeListeners.forEach(listener => listener(newRpc));
+}
+
+/**
+ * Get the currently active working RPC URL
+ */
+export function getCurrentWorkingRpc(): string {
+  const rpcList = getAllRpcUrls();
+  return rpcList[currentRpcIndex] || rpcList[0];
+}
+
 /**
  * Switch to next RPC in the list and recreate Web3 instance
  */
@@ -129,6 +155,7 @@ export function switchToNextRpc(force: boolean = false): boolean {
   const newRpc = rpcList[currentRpcIndex];
   
   console.warn(`Switching to RPC: ${newRpc}`);
+  notifyRpcChange(newRpc);
   
   // Recreate Web3 instance with new RPC
   try {
@@ -156,7 +183,14 @@ export async function executeWithRpcFallback<T>(
   for (let i = 0; i < attempts; i++) {
     try {
       const web3 = getEthWeb3();
-      return await operation(web3);
+      const result = await operation(web3);
+      
+      // If successful, clear the reload lock so we can reload again if needed in future
+      if (typeof window !== 'undefined') {
+        window.sessionStorage.removeItem('rpc_reload_lock');
+      }
+      
+      return result;
     } catch (error: any) {
       lastError = error;
       console.warn(`RPC call failed (attempt ${i + 1}/${attempts}):`, error.message);

@@ -8,8 +8,9 @@ import {
   getNetworkWithdrawContractAbi,
   getNodeDepositContractAbi,
 } from 'config/contractAbi';
-import { getWithdrawContractDeploymentBlock, getBeaconHost } from 'config/env';
-import { getEthWeb3 } from 'utils/web3Utils';
+import { getWithdrawContractDeploymentBlock } from 'config/env';
+import { getEthWeb3, executeWithRpcFallback } from 'utils/web3Utils';
+import { fetchWithBeaconFallback } from 'utils/beaconUtils';
 
 const findStatus = (status: string) => {
   if (
@@ -63,27 +64,8 @@ export const useValidatorEjectionData = (
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const isMounted = useRef(true);
 
-  const web3 = useMemo(() => getEthWeb3(), []);
-
-  const networkWithdrawContract = useMemo(
-    () =>
-      new web3.eth.Contract(
-        getNetworkWithdrawContractAbi(),
-        getNetworkWithdrawContract(),
-        {}
-      ),
-    [web3]
-  );
-
-  const networkDepositContract = useMemo(
-    () =>
-      new web3.eth.Contract(
-        getNodeDepositContractAbi(),
-        getNodeDepositContract(),
-        {}
-      ),
-    [web3]
-  );
+  // Remove memoized web3 and contracts to ensure fresh instance on fallback
+  // const web3 = useMemo(() => getEthWeb3(), []);
 
   // Function to check if cache is still valid (e.g., within 5 minutes)
   const isCacheValid = () => {
@@ -94,17 +76,20 @@ export const useValidatorEjectionData = (
     );
   };
 
-  const processValidator = async (validatorId: string, timeStamp: number) => {
+  const processValidator = async (
+    validatorId: string, 
+    timeStamp: number,
+    networkDepositContract: any
+  ) => {
     try {
-      const response = await fetch(
-        `${getBeaconHost()}/eth/v1/beacon/states/head/validators?id=${validatorId}`,
+      const res = await fetchWithBeaconFallback(
+        `/eth/v1/beacon/states/head/validators?id=${validatorId}`,
         {
           method: 'GET',
           headers: {},
         }
       );
 
-      const res = await response.json();
       const status = findStatus(res?.data[0]?.status);
       const statusSymbol = findStatusSymbol(res?.data[0]?.status);
       const poolAddress = res?.data[0]?.validator?.pubkey;
@@ -162,78 +147,94 @@ export const useValidatorEjectionData = (
     try {
       dataCache.isFetching = true;
       setIsLoading(true);
-      const currentBlock = await web3.eth.getBlockNumber();
-      const events = await networkWithdrawContract.getPastEvents(
-        'NotifyValidatorExit',
-        {
-          fromBlock: getWithdrawContractDeploymentBlock(),
-          toBlock: currentBlock,
-        }
-      );
 
-      let allData: any[] = [];
+      await executeWithRpcFallback(async (web3) => {
+        const networkWithdrawContract = new web3.eth.Contract(
+          getNetworkWithdrawContractAbi(),
+          getNetworkWithdrawContract(),
+          {}
+        );
+        
+        const networkDepositContract = new web3.eth.Contract(
+          getNodeDepositContractAbi(),
+          getNodeDepositContract(),
+          {}
+        );
 
-      // Process events sequentially
-      for (const event of events) {
-        const block = await web3.eth.getBlock(event.blockNumber);
-        const timeStamp = Number(block.timestamp);
-        const validators = event?.returnValues?.ejectedValidators || [];
-
-        // For first event, process first 10 validators immediately
-        if (allData.length === 0 && validators.length > 0) {
-          const firstBatch = validators.slice(0, 10);
-          const remainingBatch = validators.slice(10);
-
-          // Process first batch
-          const firstBatchResults = await Promise.all(
-            firstBatch.map((vid: string) => processValidator(vid, timeStamp))
-          );
-
-          const validResults = firstBatchResults.filter(
-            (item) => item !== null
-          );
-          if (validResults.length > 0) {
-            allData = [...allData, ...validResults];
-            allData.sort((a, b) => b.timeStamp - a.timeStamp);
-            setAllValidatorData(allData);
-            setIsLoading(false);
+        const currentBlock = await web3.eth.getBlockNumber();
+        const events = await networkWithdrawContract.getPastEvents(
+          'NotifyValidatorExit',
+          {
+            fromBlock: getWithdrawContractDeploymentBlock(),
+            toBlock: currentBlock,
           }
+        );
 
-          // Process remaining validators if any
-          if (remainingBatch.length > 0) {
-            setIsLoadingMore(true);
-            const remainingResults = await Promise.all(
-              remainingBatch.map((vid: string) =>
-                processValidator(vid, timeStamp)
-              )
+        let allData: any[] = [];
+
+        // Process events sequentially
+        for (const event of events) {
+          const block = await web3.eth.getBlock(event.blockNumber);
+          const timeStamp = Number(block.timestamp);
+          const validators = event?.returnValues?.ejectedValidators || [];
+
+          // For first event, process first 10 validators immediately
+          if (allData.length === 0 && validators.length > 0) {
+            const firstBatch = validators.slice(0, 10);
+            const remainingBatch = validators.slice(10);
+
+            // Process first batch
+            const firstBatchResults = await Promise.all(
+              firstBatch.map((vid: string) => processValidator(vid, timeStamp, networkDepositContract))
             );
-            const validRemainingResults = remainingResults.filter(
+
+            const validResults = firstBatchResults.filter(
               (item) => item !== null
             );
-            if (validRemainingResults.length > 0) {
-              allData = [...allData, ...validRemainingResults];
+            if (validResults.length > 0) {
+              allData = [...allData, ...validResults];
+              allData.sort((a, b) => b.timeStamp - a.timeStamp);
+              setAllValidatorData(allData);
+              setIsLoading(false);
+            }
+
+            // Process remaining validators if any
+            if (remainingBatch.length > 0) {
+              setIsLoadingMore(true);
+              const remainingResults = await Promise.all(
+                remainingBatch.map((vid: string) =>
+                  processValidator(vid, timeStamp, networkDepositContract)
+                )
+              );
+              const validRemainingResults = remainingResults.filter(
+                (item) => item !== null
+              );
+              if (validRemainingResults.length > 0) {
+                allData = [...allData, ...validRemainingResults];
+                allData.sort((a, b) => b.timeStamp - a.timeStamp);
+                setAllValidatorData(allData);
+              }
+            }
+          } else {
+            // Process subsequent events
+            setIsLoadingMore(true);
+            const results = await Promise.all(
+              validators.map((vid: string) => processValidator(vid, timeStamp, networkDepositContract))
+            );
+            const validResults = results.filter((item) => item !== null);
+            if (validResults.length > 0) {
+              allData = [...allData, ...validResults];
               allData.sort((a, b) => b.timeStamp - a.timeStamp);
               setAllValidatorData(allData);
             }
           }
-        } else {
-          // Process subsequent events
-          setIsLoadingMore(true);
-          const results = await Promise.all(
-            validators.map((vid: string) => processValidator(vid, timeStamp))
-          );
-          const validResults = results.filter((item) => item !== null);
-          if (validResults.length > 0) {
-            allData = [...allData, ...validResults];
-            allData.sort((a, b) => b.timeStamp - a.timeStamp);
-            setAllValidatorData(allData);
-          }
         }
-      }
 
-      // Update cache
-      dataCache.data = allData;
-      dataCache.lastFetchTimestamp = Date.now();
+        // Update cache
+        dataCache.data = allData;
+        dataCache.lastFetchTimestamp = Date.now();
+      });
+
     } catch (error) {
       console.error('Error fetching validator data:', error);
     } finally {
@@ -254,7 +255,7 @@ export const useValidatorEjectionData = (
   useEffect(() => {
     isMounted.current = true;
     getData();
-  }, [nodeEjectionAddress, networkWithdrawContract, networkDepositContract]);
+  }, [nodeEjectionAddress]);
 
   // Filter data based on status filters
   const filteredData = useMemo(() => {

@@ -20,6 +20,7 @@ import { useAppKitTheme } from '@reown/appkit/react';
 import { useState, useEffect } from 'react';
 import { STORAGE_KEY_CUSTOM_RPC } from 'utils/storageUtils';
 import snackbarUtil from 'utils/snackbarUtils';
+import { getCurrentWorkingRpc, onRpcChange } from 'utils/web3Utils';
 
 interface Props {
   open: boolean;
@@ -60,8 +61,35 @@ export const SettingsDrawer = (props: Props) => {
     console.log('SettingsDrawer - customRpc:', customRpc);
   }, [customRpc]);
 
+// ... existing imports
+
+// inside component
+  const [activeRpc, setActiveRpc] = useState(getCurrentWorkingRpc());
+
+  // Subscribe to RPC changes
+  useEffect(() => {
+    const unsubscribe = onRpcChange((newRpc) => {
+      setActiveRpc(newRpc);
+    });
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+  // Sync active RPC when custom RPC changes (in case it was manually set)
+  useEffect(() => {
+    if (customRpc) {
+       // If custom RPC is set, it might be the active one (or not if it failed, but usually setting it makes it active)
+       // We'll let the web3Utils subscription handle the update if it switches, 
+       // but we should also update if the user *just* set it.
+       // Actually, web3Utils logic is separate. 
+       // Let's rely on getCurrentWorkingRpc() which should be accurate.
+       setActiveRpc(getCurrentWorkingRpc());
+    }
+  }, [customRpc]);
+
   // Get the currently active RPC
-  const currentActiveRpc = customRpc || getEthereumRpc();
+  const currentActiveRpc = activeRpc;
   
   const handleClearCustomRpc = () => {
     setCustomRpcInput('');

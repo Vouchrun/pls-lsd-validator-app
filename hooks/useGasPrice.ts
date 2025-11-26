@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { getEthWeb3 } from "utils/web3Utils";
+import { getEthWeb3, executeWithRpcFallback } from "utils/web3Utils";
 import { useAppSlice } from "./selector";
 
 export function useGasPrice() {
@@ -9,12 +9,12 @@ export function useGasPrice() {
 
   const fetchGasPrice = useCallback(async () => {
     try {
-      const web3 = getEthWeb3();
-
-      const gasPrice = await web3.eth.getGasPrice();
-
-      console.log({ gasPrice });
-      setGasPrice(gasPrice);
+    try {
+      await executeWithRpcFallback(async (web3) => {
+        const gasPrice = await web3.eth.getGasPrice();
+        console.log({ gasPrice });
+        setGasPrice(gasPrice);
+      });
     } catch (err: any) {}
   }, []);
 

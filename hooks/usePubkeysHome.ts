@@ -11,7 +11,7 @@ import {
 } from 'interfaces/common';
 import { useEffect, useMemo, useState } from 'react';
 import { getPubkeyDisplayStatus } from 'utils/commonUtils';
-import { getEthWeb3 } from 'utils/web3Utils';
+import { getEthWeb3, executeWithRpcFallback } from 'utils/web3Utils';
 import { formatEther } from 'viem';
 import { useAppSlice } from './selector';
 import { useIsTrustedValidator } from './useIsTrustedValidator';
@@ -48,96 +48,97 @@ export const usePubkeysHome = (
         return;
       }
 
-      const web3 = getEthWeb3();
-      let nodeDepositContract = new web3.eth.Contract(
-        getNodeDepositContractAbi(),
-        getNodeDepositContract(),
-        {}
-      );
-
-      const res = await nodeDepositContract.methods
-        .soloNodeDepositAmount()
-        .call();
-      const soloDepositAmount = formatEther(res);
-
-      const minimalMatchAmount = isTrust
-        ? getValidatorTotalDepositAmount() - getTrustValidatorDepositAmount()
-        : getValidatorTotalDepositAmount() - Number(soloDepositAmount);
-
-      let remainingTokenAmount =
-        !unmatchedEth || isNaN(Number(unmatchedEth)) ? 0 : Number(unmatchedEth);
-
-      let unmatchedCount = 0;
-      let stakedCount = 0;
-      let matchedCout = 0;
-      let othersCount = 0;
-
-      const resList: NodePubkeyInfo[] = [];
-
-      nodePubkeys.forEach((item) => {
-        const displayStatus = getPubkeyDisplayStatus(
-          item,
-          remainingTokenAmount
+      await executeWithRpcFallback(async (web3) => {
+        let nodeDepositContract = new web3.eth.Contract(
+          getNodeDepositContractAbi(),
+          getNodeDepositContract(),
+          {}
         );
-        // console.log({ remainingTokenAmount });
-        // console.log({ minimalMatchAmount });
-        let canStake = false;
-        if (
-          item._status === ChainPubkeyStatus.Match &&
-          remainingTokenAmount >= minimalMatchAmount
-        ) {
-          remainingTokenAmount -= minimalMatchAmount;
-          canStake = true;
-        }
 
-        const isUnmatch =
-          displayStatus === 'Unmatched' ||
-          (!canStake && displayStatus === 'Matched');
-        const isMatch = displayStatus === 'Matched';
-        const isStaked =
-          item._status === ChainPubkeyStatus.Staked &&
-          item.beaconApiStatus !== 'EXITED_UNSLASHED' &&
-          item.beaconApiStatus !== 'EXITED_SLASHED' &&
-          item.beaconApiStatus !== 'WITHDRAWAL_POSSIBLE' &&
-          item.beaconApiStatus !== 'WITHDRAWAL_DONE' &&
-          item.beaconApiStatus !== 'EXITED' &&
-          item.beaconApiStatus !== 'WITHDRAWAL';
+        const res = await nodeDepositContract.methods
+          .soloNodeDepositAmount()
+          .call();
+        const soloDepositAmount = formatEther(res);
 
-        if (isUnmatch) {
-          unmatchedCount++;
-        } else if (isStaked) {
-          stakedCount++;
-        } else if (isMatch) {
-          matchedCout++;
-        } else {
-          othersCount++;
-        }
+        const minimalMatchAmount = isTrust
+          ? getValidatorTotalDepositAmount() - getTrustValidatorDepositAmount()
+          : getValidatorTotalDepositAmount() - Number(soloDepositAmount);
 
-        const newItem = { ...item, displayStatus, canStake };
+        let remainingTokenAmount =
+          !unmatchedEth || isNaN(Number(unmatchedEth)) ? 0 : Number(unmatchedEth);
 
-        if (isUnmatch && selectedPubkeyStatus === PubkeyStatus.Unmatched) {
-          resList.push(newItem);
-        } else if (isStaked && selectedPubkeyStatus === PubkeyStatus.Staked) {
-          resList.push(newItem);
-        } else if (isMatch && selectedPubkeyStatus === PubkeyStatus.Matched) {
-          resList.push(newItem);
-        } else if (
-          !isMatch &&
-          !isUnmatch &&
-          !isStaked &&
-          selectedPubkeyStatus === PubkeyStatus.Others
-        ) {
-          resList.push(newItem);
-        } else if (!selectedPubkeyStatus) {
-          resList.push(newItem);
-        }
+        let unmatchedCount = 0;
+        let stakedCount = 0;
+        let matchedCout = 0;
+        let othersCount = 0;
+
+        const resList: NodePubkeyInfo[] = [];
+
+        nodePubkeys.forEach((item) => {
+          const displayStatus = getPubkeyDisplayStatus(
+            item,
+            remainingTokenAmount
+          );
+          // console.log({ remainingTokenAmount });
+          // console.log({ minimalMatchAmount });
+          let canStake = false;
+          if (
+            item._status === ChainPubkeyStatus.Match &&
+            remainingTokenAmount >= minimalMatchAmount
+          ) {
+            remainingTokenAmount -= minimalMatchAmount;
+            canStake = true;
+          }
+
+          const isUnmatch =
+            displayStatus === 'Unmatched' ||
+            (!canStake && displayStatus === 'Matched');
+          const isMatch = displayStatus === 'Matched';
+          const isStaked =
+            item._status === ChainPubkeyStatus.Staked &&
+            item.beaconApiStatus !== 'EXITED_UNSLASHED' &&
+            item.beaconApiStatus !== 'EXITED_SLASHED' &&
+            item.beaconApiStatus !== 'WITHDRAWAL_POSSIBLE' &&
+            item.beaconApiStatus !== 'WITHDRAWAL_DONE' &&
+            item.beaconApiStatus !== 'EXITED' &&
+            item.beaconApiStatus !== 'WITHDRAWAL';
+
+          if (isUnmatch) {
+            unmatchedCount++;
+          } else if (isStaked) {
+            stakedCount++;
+          } else if (isMatch) {
+            matchedCout++;
+          } else {
+            othersCount++;
+          }
+
+          const newItem = { ...item, displayStatus, canStake };
+
+          if (isUnmatch && selectedPubkeyStatus === PubkeyStatus.Unmatched) {
+            resList.push(newItem);
+          } else if (isStaked && selectedPubkeyStatus === PubkeyStatus.Staked) {
+            resList.push(newItem);
+          } else if (isMatch && selectedPubkeyStatus === PubkeyStatus.Matched) {
+            resList.push(newItem);
+          } else if (
+            !isMatch &&
+            !isUnmatch &&
+            !isStaked &&
+            selectedPubkeyStatus === PubkeyStatus.Others
+          ) {
+            resList.push(newItem);
+          } else if (!selectedPubkeyStatus) {
+            resList.push(newItem);
+          }
+        });
+
+        setDisplayPubkeyInfos(resList);
+        setUnmatchedCount(unmatchedCount);
+        setStakedCount(stakedCount);
+        setMatchedCount(matchedCout);
+        setOthersCount(othersCount);
       });
-
-      setDisplayPubkeyInfos(resList);
-      setUnmatchedCount(unmatchedCount);
-      setStakedCount(stakedCount);
-      setMatchedCount(matchedCout);
-      setOthersCount(othersCount);
     })();
   }, [
     nodePubkeys,

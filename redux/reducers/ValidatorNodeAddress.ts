@@ -2,8 +2,8 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { AppThunk } from 'redux/store';
 import { getNodeDepositContract } from 'config/contract';
 import { getNodeDepositContractAbi } from 'config/contractAbi';
-import { getEthWeb3 } from 'utils/web3Utils';
-import { getBeaconHost } from 'config/env';
+import { getEthWeb3, executeWithRpcFallback } from 'utils/web3Utils';
+import { fetchWithBeaconFallback } from 'utils/beaconUtils';
 
 interface ValidatorNodeAddressData {
   address: string;
@@ -69,106 +69,94 @@ export const fetchValidatorData =
   async (dispatch) => {
     dispatch(setValidatorData([]));
     dispatch(setLoading(true));
-    const web3 = getEthWeb3();
-    const nodeDepositContract = new web3.eth.Contract(
-      getNodeDepositContractAbi(),
-      getNodeDepositContract()
-    );
 
     try {
-      const CHUNK_SIZE = 100;
-      const MINIMUM_BALANCE = 32000000;
+      await executeWithRpcFallback(async (web3) => {
+        const nodeDepositContract = new web3.eth.Contract(
+          getNodeDepositContractAbi(),
+          getNodeDepositContract()
+        );
 
-      const fetchNodePubkeys = async (nodeAddress: string) => {
-        try {
-          const pubkeys = await nodeDepositContract.methods
-            .getPubkeysOfNode(nodeAddress)
-            .call()
-            .catch((error: any) => {
-              console.log('error', error);
-            });
-          return pubkeys;
-        } catch (error) {
-          console.error('Error fetching pubkeys:', error);
-          return [];
-        }
-      };
+        const CHUNK_SIZE = 100;
+        const MINIMUM_BALANCE = 32000000;
 
-      const setNodesWithCheck = async (nodeAddress: any) => {
-        const isTrusted = await nodeDepositContract.methods
-          .nodeInfoOf(nodeAddress)
-          .call()
-          .catch((err: any) => {
-            console.log({ err });
-          });
-
-        if (isTrusted[0] == 2) {
-          return true;
-        }
-        return false;
-      };
-
-      const fetchValidatorData = async (pubkeys: string[]) => {
-        const chunks = [];
-        for (let i = 0; i < pubkeys.length; i += CHUNK_SIZE) {
-          chunks.push(pubkeys.slice(i, i + CHUNK_SIZE));
-        }
-
-        const results = [];
-        for (const chunk of chunks) {
-          const pubkeysString = chunk.join(',');
+        const fetchNodePubkeys = async (nodeAddress: string) => {
           try {
-            const response = await fetch(
-              `${getBeaconHost()}/eth/v1/beacon/states/head/validators?id=` +
-                pubkeysString
-            );
-            const data = await response.json();
-            results.push(...data.data);
+            const pubkeys = await nodeDepositContract.methods
+              .getPubkeysOfNode(nodeAddress)
+              .call()
+              .catch((error: any) => {
+                console.log('error', error);
+              });
+            return pubkeys;
           } catch (error) {
-            console.error('Error fetching validator data:', error);
+            console.error('Error fetching pubkeys:', error);
+            return [];
           }
-        }
-        return results;
-      };
+        };
 
-      const validatorInfo: ValidatorNodeAddressData[] = [];
-      const trustedvalidatorInfo: ValidatorNodeAddressData[] = [];
+        const setNodesWithCheck = async (nodeAddress: any) => {
+          const isTrusted = await nodeDepositContract.methods
+            .nodeInfoOf(nodeAddress)
+            .call()
+            .catch((err: any) => {
+              console.log({ err });
+            });
 
-      for (const node of nodes) {
-        const pubkeys = await fetchNodePubkeys(node);
-        const validatorDetails = await fetchValidatorData(pubkeys);
-        const isTrusted = await setNodesWithCheck(node);
-        const activeValidators = validatorDetails.filter(
-          (validator: any) => validator.status === 'active_ongoing'
-        );
+          if (isTrusted[0] == 2) {
+            return true;
+          }
+          return false;
+        };
 
-        const totalBalance = activeValidators.reduce(
-          (sum: number, validator: any) => sum + parseInt(validator.balance),
-          0
-        );
+        const fetchValidatorData = async (pubkeys: string[]) => {
+          const chunks = [];
+          for (let i = 0; i < pubkeys.length; i += CHUNK_SIZE) {
+            chunks.push(pubkeys.slice(i, i + CHUNK_SIZE));
+          }
 
-        // Check if any validator has balance below minimum
-        const hasInsufficientBalance = activeValidators.some(
-          (validator: any) =>
-            parseInt(validator.balance) / 10 ** 9 < MINIMUM_BALANCE
-        );
+          const results = [];
+          for (const chunk of chunks) {
+            const pubkeysString = chunk.join(',');
+            try {
+              const data = await fetchWithBeaconFallback(
+                `/eth/v1/beacon/states/head/validators?id=${pubkeysString}`
+              );
+              results.push(...data.data);
+            } catch (error) {
+              console.error('Error fetching validator data:', error);
+            }
+          }
+          return results;
+        };
 
-        const isSlashed = activeValidators.some(
-          (validator: any) => validator.slashed
-        );
+        const validatorInfo: ValidatorNodeAddressData[] = [];
+        const trustedvalidatorInfo: ValidatorNodeAddressData[] = [];
 
-        validatorInfo.push({
-          address: node,
-          balance: totalBalance,
-          activeCount: activeValidators.length,
-          status: isSlashed
-            ? 'slashed'
-            : !hasInsufficientBalance
-            ? 'active'
-            : 'inactive',
-        });
-        if (isTrusted) {
-          trustedvalidatorInfo.push({
+        for (const node of nodes) {
+          const pubkeys = await fetchNodePubkeys(node);
+          const validatorDetails = await fetchValidatorData(pubkeys);
+          const isTrusted = await setNodesWithCheck(node);
+          const activeValidators = validatorDetails.filter(
+            (validator: any) => validator.status === 'active_ongoing'
+          );
+
+          const totalBalance = activeValidators.reduce(
+            (sum: number, validator: any) => sum + parseInt(validator.balance),
+            0
+          );
+
+          // Check if any validator has balance below minimum
+          const hasInsufficientBalance = activeValidators.some(
+            (validator: any) =>
+              parseInt(validator.balance) / 10 ** 9 < MINIMUM_BALANCE
+          );
+
+          const isSlashed = activeValidators.some(
+            (validator: any) => validator.slashed
+          );
+
+          validatorInfo.push({
             address: node,
             balance: totalBalance,
             activeCount: activeValidators.length,
@@ -178,11 +166,23 @@ export const fetchValidatorData =
               ? 'active'
               : 'inactive',
           });
+          if (isTrusted) {
+            trustedvalidatorInfo.push({
+              address: node,
+              balance: totalBalance,
+              activeCount: activeValidators.length,
+              status: isSlashed
+                ? 'slashed'
+                : !hasInsufficientBalance
+                ? 'active'
+                : 'inactive',
+            });
+          }
         }
-      }
 
-      dispatch(setValidatorData(validatorInfo));
-      dispatch(setTrustedValidatorData(trustedvalidatorInfo));
+        dispatch(setValidatorData(validatorInfo));
+        dispatch(setTrustedValidatorData(trustedvalidatorInfo));
+      });
     } catch (error) {
       dispatch(
         setError(error instanceof Error ? error.message : 'An error occurred')
