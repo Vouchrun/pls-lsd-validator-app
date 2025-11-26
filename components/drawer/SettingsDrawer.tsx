@@ -102,7 +102,9 @@ export const SettingsDrawer = (props: Props) => {
         setValidationError('Unable to connect to RPC');
         snackbarUtil.error('Failed to connect to custom RPC. Using default RPC.');
         // Don't save invalid RPC
-        handleClearCustomRpc();
+        setTimeout(() => {
+          handleClearCustomRpc();
+        }, 1000);
       }
     } catch (error: any) {
       console.error('RPC validation error:', error);
