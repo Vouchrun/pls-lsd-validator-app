@@ -9,7 +9,6 @@ export function useGasPrice() {
 
   const fetchGasPrice = useCallback(async () => {
     try {
-    try {
       await executeWithRpcFallback(async (web3) => {
         const gasPrice = await web3.eth.getGasPrice();
         console.log({ gasPrice });

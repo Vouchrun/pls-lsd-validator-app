@@ -8,7 +8,6 @@ export function useSoloDepositEnabled() {
 
   const updateStatus = useCallback(async () => {
     try {
-    try {
       await executeWithRpcFallback(async (web3) => {
         let nodeDepositContract = new web3.eth.Contract(
           getNodeDepositContractAbi(),

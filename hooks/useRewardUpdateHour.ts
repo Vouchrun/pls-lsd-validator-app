@@ -11,7 +11,6 @@ export function useRewardUpdateHour() {
 
   const updateData = useCallback(async () => {
     try {
-    try {
       await executeWithRpcFallback(async (web3) => {
         const networkBalanceContract = new web3.eth.Contract(
           getNetworkBalanceContractAbi(),
