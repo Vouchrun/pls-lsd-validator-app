@@ -19,6 +19,19 @@ import {
   getNetworkBalanceContractDeploymentBlock,
 } from 'config/env';
 
+/**
+ * High-precision division for 18-decimal token amounts.
+ * Avoids JavaScript floating-point loss when dividing large BigInt numerators
+ * by large BigInt denominators (e.g. totalEth / lsdTokenSupply).
+ * Matches the pls-lsd-app implementation exactly.
+ */
+export function bigIntDivide(numerator: string, denominator: string): number {
+  if (!denominator || denominator === '0') return NaN;
+  const PRECISION = 10n ** 18n;
+  const scaled = (BigInt(numerator) * PRECISION) / BigInt(denominator);
+  return Number(scaled) / 1e18;
+}
+
 export interface LsdEthState {
   balance: string | undefined; // balance of lsdETH
   rate: string | undefined; // rate of lsdETH to ETH
@@ -111,7 +124,9 @@ export const updateLsdEthRate = (): AppThunk => async (dispatch, getState) => {
 };
 
 /**
- * query apr of lsd ETH
+ * query apr of lsd ETH (7-day annualized, using actual timestamps)
+ * Matches the pls-lsd-app calculation: bigIntDivide for precision,
+ * event timestamps for elapsed days (not hardcoded /7).
  */
 export const updateApr = (): AppThunk => async (dispatch, getState) => {
   let apr = getDefaultApr();
@@ -146,15 +161,20 @@ export const updateApr = (): AppThunk => async (dispatch, getState) => {
         endEvent.raw.data,
         endEvent.raw.topics
       );
-      const beginRate = beginValues.totalEth / beginValues.lsdTokenSupply;
-      const endRate = endValues.totalEth / endValues.lsdTokenSupply;
+      const beginRate = bigIntDivide(beginValues.totalEth, beginValues.lsdTokenSupply);
+      const endRate = bigIntDivide(endValues.totalEth, endValues.lsdTokenSupply);
+      // Use actual event timestamps instead of hardcoded /7
+      const beginTimestamp = Number(beginValues.time);
+      const endTimestamp = Number(endValues.time);
+      const daysBetween = (endTimestamp - beginTimestamp) / (60 * 60 * 24);
       if (
         !isNaN(beginRate) &&
         !isNaN(endRate) &&
         endRate !== 1 &&
-        beginRate !== 1
+        beginRate !== 1 &&
+        daysBetween > 0
       ) {
-        apr = ((endRate - beginRate) / 7) * 365.25 * 100;
+        apr = ((endRate - beginRate) / daysBetween) * 365.25 * 100;
       }
     }
     dispatch(setApr(apr));
@@ -173,7 +193,7 @@ export const updateYearlyApr = (): AppThunk => async (dispatch, getState) => {
       getNetworkBalanceContract()
     );
 
-    // Calculate blocks for 365 days
+    // Calculate blocks for 365 days (Pulsechain: 10-second slots)
     const blocksFor365Days = Math.floor(
       (1 / getBlockSeconds()) * 60 * 60 * 24 * 365
     );
@@ -204,13 +224,6 @@ export const updateYearlyApr = (): AppThunk => async (dispatch, getState) => {
       const beginEvent = balancesUpdatedEvents[0];
       const endEvent = balancesUpdatedEvents[balancesUpdatedEvents.length - 1];
 
-      // Get block timestamps to calculate actual days
-      const beginBlock = await web3.eth.getBlock(beginEvent.blockNumber);
-      const endBlock = await web3.eth.getBlock(endEvent.blockNumber);
-      const daysBetweenBlocks =
-        (Number(endBlock.timestamp) - Number(beginBlock.timestamp)) /
-        (60 * 60 * 24);
-
       const beginValues: any = decodeBalancesUpdatedLog(
         beginEvent.raw.data,
         beginEvent.raw.topics
@@ -220,13 +233,24 @@ export const updateYearlyApr = (): AppThunk => async (dispatch, getState) => {
         endEvent.raw.topics
       );
 
-      const beginRate = beginValues.totalEth / beginValues.lsdTokenSupply;
-      const endRate = endValues.totalEth / endValues.lsdTokenSupply;
+      const beginRate = bigIntDivide(beginValues.totalEth, beginValues.lsdTokenSupply);
+      const endRate = bigIntDivide(endValues.totalEth, endValues.lsdTokenSupply);
 
-      if (!isNaN(beginRate) && !isNaN(endRate) && endRate !== 1) {
-        // Calculate APR using actual days between blocks
+      // Use actual event timestamps instead of fetching block headers
+      const beginTimestamp = Number(beginValues.time);
+      const endTimestamp = Number(endValues.time);
+      const daysBetween = (endTimestamp - beginTimestamp) / (60 * 60 * 24);
+
+      if (
+        !isNaN(beginRate) &&
+        !isNaN(endRate) &&
+        endRate !== 1 &&
+        beginRate !== 1 &&
+        daysBetween > 0
+      ) {
+        // Use 365.25 for leap-year accuracy (matches pls-lsd-app)
         apr =
-          ((endRate - beginRate) / Math.floor(daysBetweenBlocks)) * 365 * 100;
+          ((endRate - beginRate) / daysBetween) * 365.25 * 100;
       }
     }
     dispatch(setYearlyApr(apr));
