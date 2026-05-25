@@ -10,8 +10,8 @@
     }
   },
   "rpc": [
-    "https://rpc.vouch.run",
     "https://rpc-pulsechain.g4mm4.io",
+    "https://rpc.vouch.run",
     "https://rpc.pulsechain.com"
   ],
   "beaconRPC": [
