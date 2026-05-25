@@ -59,7 +59,8 @@ export const useNodeUnclaimedRewards = (nodeAddress: string) => {
 
         // Fetch rewards data from IPFS
         const response = await fetch(
-          `https://${nodeRewardsFileCid}.ipfs.dweb.link/${getLsdEthTokenContract().toLowerCase()}-rewards-${getEthereumChainId()}-${latestMerkleRootEpoch}.json`
+          `https://${nodeRewardsFileCid}.dweb.link/${getLsdEthTokenContract().toLowerCase()}-rewards-${getEthereumChainId()}-${latestMerkleRootEpoch}.json`
+          // `https://fuchsia-adjacent-spoonbill-601.mypinata.cloud/ipfs/${nodeRewardsFileCid}/${getLsdEthTokenContract().toLowerCase()}-rewards-${getEthereumChainId()}-${latestMerkleRootEpoch}.json`,
         );
         
         const resText = await response.text();
