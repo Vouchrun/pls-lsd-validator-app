@@ -130,7 +130,8 @@ export function usePoolData() {
           Number(lsdTotalSupply) * Number(Web3.utils.fromWei(lsdRate));
 
         const response = await fetch(
-          `https://${nodeRewardsFileCid}.ipfs.dweb.link/${getLsdEthTokenContract().toLowerCase()}-rewards-${getEthereumChainId()}-${latestMerkleRootEpoch}.json`,
+          // `https://${nodeRewardsFileCid}.ipfs.dweb.link/${getLsdEthTokenContract().toLowerCase()}-rewards-${getEthereumChainId()}-${latestMerkleRootEpoch}.json`,
+          `https://fuchsia-adjacent-spoonbill-601.mypinata.cloud/ipfs/${nodeRewardsFileCid}/${getLsdEthTokenContract().toLowerCase()}-rewards-${getEthereumChainId()}-${latestMerkleRootEpoch}.json`,
           {
             method: 'GET',
             headers: {},
