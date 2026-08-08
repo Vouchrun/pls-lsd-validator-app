@@ -21,16 +21,30 @@ export async function fetchBeaconCheckpoints() {
 }
 
 export const fetchBeaconStatusInChunks = async (
-  pubkeyAddressList: string[]
+  pubkeyAddressList: string[],
+  concurrency = 8
 ) => {
   const chunkSize = 100;
-  const beaconStatusResponses = [];
-
+  const chunks: string[][] = [];
   for (let i = 0; i < pubkeyAddressList.length; i += chunkSize) {
-    const chunk = pubkeyAddressList.slice(i, i + chunkSize);
-    const response = await fetchPubkeyStatus(chunk.join(','));
-    beaconStatusResponses.push(response);
+    chunks.push(pubkeyAddressList.slice(i, i + chunkSize));
   }
+
+  // Fetch chunks concurrently (order-preserving) to bound total latency
+  const beaconStatusResponses: any[] = new Array(chunks.length);
+  let next = 0;
+  const workers = Array.from(
+    { length: Math.min(concurrency, chunks.length) },
+    async () => {
+      while (next < chunks.length) {
+        const index = next++;
+        beaconStatusResponses[index] = await fetchPubkeyStatus(
+          chunks[index].join(',')
+        );
+      }
+    }
+  );
+  await Promise.all(workers);
 
   return beaconStatusResponses;
 };

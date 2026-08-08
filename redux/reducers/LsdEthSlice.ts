@@ -124,18 +124,15 @@ export const updateApr = (): AppThunk => async (dispatch, getState) => {
         getNetworkBalanceContractAbi(),
         getNetworkBalanceContract()
       );
-      const topics = web3.utils.sha3(
-        'BalancesUpdated(uint256,uint256,uint256,uint256)'
-      );
-      const events = await contract.getPastEvents('allEvents', {
+      const events = await contract.getPastEvents('BalancesUpdated', {
         fromBlock:
           currentBlock - Math.floor((1 / getBlockSeconds()) * 60 * 60 * 24 * 7),
         toBlock: currentBlock,
       });
       let apr = getDefaultApr();
-      const balancesUpdatedEvents = events
-        .filter((e) => e.raw.topics.length === 1 && e.raw.topics[0] === topics)
-        .sort((a, b) => a.blockNumber - b.blockNumber);
+      const balancesUpdatedEvents = events.sort(
+        (a, b) => a.blockNumber - b.blockNumber
+      );
       if (balancesUpdatedEvents.length > 1) {
         const beginEvent = balancesUpdatedEvents[0];
         const endEvent = balancesUpdatedEvents[balancesUpdatedEvents.length - 1];
@@ -189,17 +186,39 @@ export const updateYearlyApr = (): AppThunk => async (dispatch, getState) => {
           ? deploymentBlock
           : currentBlock - blocksFor365Days;
 
-      const topics = web3.utils.sha3(
-        'BalancesUpdated(uint256,uint256,uint256,uint256)'
+      // Chunk the range into parallel sub-queries to stay under Geth's
+      // hardcoded ~30s eth_getLogs timeout for large spans
+      const CHUNK_BLOCKS = 600000;
+      const ranges: { fromBlock: number; toBlock: number }[] = [];
+      for (let from = startBlock; from <= currentBlock; from += CHUNK_BLOCKS) {
+        ranges.push({
+          fromBlock: from,
+          toBlock: Math.min(from + CHUNK_BLOCKS - 1, currentBlock),
+        });
+      }
+
+      // Run chunks with bounded concurrency so lightweight queries (balances,
+      // unstaked-today, etc.) aren't starved of browser connections while the
+      // large scans are in flight
+      const CHUNK_CONCURRENCY = 4;
+      const chunkResults: any[][] = new Array(ranges.length);
+      let rangeIndex = 0;
+      const chunkWorkers = Array.from(
+        { length: Math.min(CHUNK_CONCURRENCY, ranges.length) },
+        async () => {
+          while (rangeIndex < ranges.length) {
+            const i = rangeIndex++;
+            chunkResults[i] = await contract.getPastEvents('BalancesUpdated', {
+              fromBlock: ranges[i].fromBlock,
+              toBlock: ranges[i].toBlock,
+            });
+          }
+        }
       );
+      await Promise.all(chunkWorkers);
 
-      const events = await contract.getPastEvents('allEvents', {
-        fromBlock: startBlock,
-        toBlock: currentBlock,
-      });
-
-      const balancesUpdatedEvents = events
-        .filter((e) => e.raw.topics.length === 1 && e.raw.topics[0] === topics)
+      const balancesUpdatedEvents = chunkResults
+        .flat()
         .sort((a, b) => a.blockNumber - b.blockNumber);
 
       if (balancesUpdatedEvents.length > 1) {

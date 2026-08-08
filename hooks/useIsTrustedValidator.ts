@@ -1,6 +1,6 @@
 import { getNodeDepositContract } from "config/contract";
 import { useCallback, useEffect, useState } from "react";
-import { createWeb3 } from "utils/web3Utils";
+import { getEthWeb3 } from "utils/web3Utils";
 import { useWalletAccount } from "./useWalletAccount";
 import { ValidatorNodeType } from "interfaces/common";
 import { getNodeDepositContractAbi } from "config/contractAbi";
@@ -15,7 +15,7 @@ export function useIsTrustedValidator() {
       return;
     }
     try {
-      const web3 = createWeb3();
+      const web3 = getEthWeb3();
       let nodeDepositContract = new web3.eth.Contract(
         getNodeDepositContractAbi(),
         getNodeDepositContract()

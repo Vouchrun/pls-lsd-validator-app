@@ -105,82 +105,96 @@ export function usePoolPubkeyData() {
             })
           );
 
-          // Process pubkeys in chunks of 100
-          const CHUNK_SIZE = 100;
-          const pubkeyInfos: any = [];
-          
-          for (let i = 0; i < pubkeyAddressList.length; i += CHUNK_SIZE) {
-            const chunk = pubkeyAddressList.slice(i, i + CHUNK_SIZE);
-            const batch = new web3.BatchRequest();
-            
-            // Create a promise for this batch
-            const batchPromise = new Promise((resolve, reject) => {
-              const results: any[] = [];
-              let completed = 0;
-              
-              chunk.forEach((pubkeyAddress, index) => {
-                const request = nodeDepositContract.methods
-                  .pubkeyInfoOf(pubkeyAddress)
-                  .call.request({}, (error: any, result: any) => {
-                    if (error) {
-                      console.error(`Error fetching pubkeyInfo for ${pubkeyAddress}:`, error);
-                      results[index] = null; // Maintain order even with errors
-                    } else {
-                      results[index] = result;
-                    }
-                    
-                    completed++;
-                    if (completed === chunk.length) {
-                      resolve(results);
-                    }
-                  });
-                
-                batch.add(request);
-              });
-              
-              // Execute the batch
-              try {
-                batch.execute();
-              } catch (error) {
-                reject(error);
-              }
-            });
-            
-            // Wait for this batch to complete
-            try {
-              const batchResults:any = await batchPromise;
-              pubkeyInfos.push(...batchResults.filter((result:any) => result !== null));
-            } catch (error) {
-              console.error('Batch execution error:', error);
-            }
-          }
+          // Fetch beacon statuses and on-chain pubkey infos concurrently.
+          // Beacon statuses resolve first and give a fast-path count so the
+          // "Staked PLS"/active-validator metric paints quickly; the on-chain
+          // _status check then refines it.
+          const beaconPromise = fetchBeaconStatusInChunks(
+            pubkeyAddressList
+          ).then((responses) => responses.flatMap((r) => r.data));
 
-          const [beaconStatusResponses] = await Promise.all([
-            fetchBeaconStatusInChunks(pubkeyAddressList),
-          ]);
-          const beaconStatusData = beaconStatusResponses.flatMap(
-            (response) => response.data
+          // Process pubkeyInfoOf in batches of 100, with bounded concurrency,
+          // keeping results aligned to pubkeyAddressList indexes
+          const CHUNK_SIZE = 100;
+          const batches: string[][] = [];
+          for (let i = 0; i < pubkeyAddressList.length; i += CHUNK_SIZE) {
+            batches.push(pubkeyAddressList.slice(i, i + CHUNK_SIZE));
+          }
+          const batchResults: any[][] = new Array(batches.length);
+          let nextBatch = 0;
+          const rpcWorkers = Array.from(
+            { length: Math.min(8, batches.length) },
+            async () => {
+              while (nextBatch < batches.length) {
+                const batchIndex = nextBatch++;
+                const chunk = batches[batchIndex];
+                const batch = new web3.BatchRequest();
+
+                batchResults[batchIndex] = await new Promise((resolve) => {
+                  const results: any[] = [];
+                  let completed = 0;
+                  chunk.forEach((pubkeyAddress, index) => {
+                    const request = nodeDepositContract.methods
+                      .pubkeyInfoOf(pubkeyAddress)
+                      .call.request({}, (error: any, result: any) => {
+                        if (error) {
+                          console.error(
+                            `Error fetching pubkeyInfo for ${pubkeyAddress}:`,
+                            error
+                          );
+                          results[index] = null;
+                        } else {
+                          results[index] = result;
+                        }
+                        completed++;
+                        if (completed === chunk.length) {
+                          resolve(results);
+                        }
+                      });
+                    batch.add(request);
+                  });
+                  try {
+                    batch.execute();
+                  } catch (error) {
+                    console.error('Batch execution error:', error);
+                    resolve(results);
+                  }
+                });
+              }
+            }
           );
 
-          // Calculate matched validators
+          const beaconStatusData = await beaconPromise;
+
+          const isBeaconActive = (pubkeyAddress: string) => {
+            const beaconStatus = beaconStatusData
+              .find(
+                (statusItem: any) =>
+                  statusItem.validator?.pubkey === pubkeyAddress
+              )
+              ?.status?.toUpperCase();
+            return [
+              'ACTIVE_ONGOING',
+              'ACTIVE_EXITING',
+              'ACTIVE_SLASHABLE',
+              'PENDING_QUEUED',
+            ].includes(beaconStatus ?? '');
+          };
+
+          // Fast path: every contract pubkey active on the beacon is a
+          // matched (staked) validator, so count from beacon data alone
+          const fastValidatorCount = pubkeyAddressList.filter((pubkeyAddress) =>
+            isBeaconActive(pubkeyAddress)
+          ).length;
+          setMatchedValidators(fastValidatorCount.toString());
+
+          // Refined count once on-chain statuses arrive
+          await Promise.all(rpcWorkers);
+          const pubkeyInfos = batchResults.flat();
           const validValidatorCount = pubkeyInfos.filter(
-            (item: any, index: number) => {
-              const beaconStatus = beaconStatusData
-                .find(
-                  (statusItem: any) =>
-                    statusItem.validator?.pubkey === pubkeyAddressList[index]
-                )
-                ?.status?.toUpperCase();
-
-              const isActive = [
-                'ACTIVE_ONGOING',
-                'ACTIVE_EXITING',
-                'ACTIVE_SLASHABLE',
-                'PENDING_QUEUED',
-              ].includes(beaconStatus ?? '');
-
-              return item?._status === ChainPubkeyStatus.Staked && isActive;
-            }
+            (item: any, index: number) =>
+              item?._status === ChainPubkeyStatus.Staked &&
+              isBeaconActive(pubkeyAddressList[index])
           ).length;
 
           // Cache the new data only on client side

@@ -162,13 +162,43 @@ export const useValidatorEjectionData = (
         );
 
         const currentBlock = await web3.eth.getBlockNumber();
-        const events = await networkWithdrawContract.getPastEvents(
-          'NotifyValidatorExit',
-          {
-            fromBlock: getWithdrawContractDeploymentBlock(),
-            toBlock: currentBlock,
+        // Chunk the range into parallel sub-queries to stay under Geth's
+        // hardcoded ~30s eth_getLogs timeout for large spans
+        const CHUNK_BLOCKS = 600000;
+        const fromBlock = Math.max(
+          getWithdrawContractDeploymentBlock(),
+          currentBlock - 1555200 // 180 days at 10s per block
+        );
+        const ranges: { fromBlock: number; toBlock: number }[] = [];
+        for (let from = fromBlock; from <= currentBlock; from += CHUNK_BLOCKS) {
+          ranges.push({
+            fromBlock: from,
+            toBlock: Math.min(from + CHUNK_BLOCKS - 1, currentBlock),
+          });
+        }
+        // Run chunks with bounded concurrency so lightweight queries aren't
+        // starved of browser connections while the large scans are in flight
+        const CHUNK_CONCURRENCY = 4;
+        const chunkResults: any[][] = new Array(ranges.length);
+        let rangeIndex = 0;
+        const chunkWorkers = Array.from(
+          { length: Math.min(CHUNK_CONCURRENCY, ranges.length) },
+          async () => {
+            while (rangeIndex < ranges.length) {
+              const i = rangeIndex++;
+              chunkResults[i] =
+                await networkWithdrawContract.getPastEvents(
+                  'NotifyValidatorExit',
+                  {
+                    fromBlock: ranges[i].fromBlock,
+                    toBlock: ranges[i].toBlock,
+                  }
+                );
+            }
           }
         );
+        await Promise.all(chunkWorkers);
+        const events = chunkResults.flat();
 
         let allData: any[] = [];
 
