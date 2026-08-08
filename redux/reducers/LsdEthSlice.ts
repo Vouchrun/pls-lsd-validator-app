@@ -186,14 +186,29 @@ export const updateYearlyApr = (): AppThunk => async (dispatch, getState) => {
           ? deploymentBlock
           : currentBlock - blocksFor365Days;
 
-      const events = await contract.getPastEvents('BalancesUpdated', {
-        fromBlock: startBlock,
-        toBlock: currentBlock,
-      });
+      // Chunk the range into parallel sub-queries to stay under Geth's
+      // hardcoded ~30s eth_getLogs timeout for large spans
+      const CHUNK_BLOCKS = 600000;
+      const ranges: { fromBlock: number; toBlock: number }[] = [];
+      for (let from = startBlock; from <= currentBlock; from += CHUNK_BLOCKS) {
+        ranges.push({
+          fromBlock: from,
+          toBlock: Math.min(from + CHUNK_BLOCKS - 1, currentBlock),
+        });
+      }
 
-      const balancesUpdatedEvents = events.sort(
-        (a, b) => a.blockNumber - b.blockNumber
+      const chunkResults = await Promise.all(
+        ranges.map((range) =>
+          contract.getPastEvents('BalancesUpdated', {
+            fromBlock: range.fromBlock,
+            toBlock: range.toBlock,
+          })
+        )
       );
+
+      const balancesUpdatedEvents = chunkResults
+        .flat()
+        .sort((a, b) => a.blockNumber - b.blockNumber);
 
       if (balancesUpdatedEvents.length > 1) {
         const beginEvent = balancesUpdatedEvents[0];

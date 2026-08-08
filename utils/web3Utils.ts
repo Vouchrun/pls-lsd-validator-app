@@ -14,18 +14,10 @@ const STORAGE_KEY_WORKING_RPC_INDEX = 'working_rpc_index';
 let ethWeb3: Web3 | undefined = undefined;
 let currentRpcIndex = 0;
 
-// Initialize from localStorage if available
-if (typeof window !== 'undefined') {
-  const savedIndex = window.localStorage.getItem(STORAGE_KEY_WORKING_RPC_INDEX);
-  if (savedIndex) {
-    currentRpcIndex = parseInt(savedIndex, 10);
-    // Validate index
-    const rpcList = getAllRpcUrls();
-    if (currentRpcIndex >= rpcList.length || currentRpcIndex < 0) {
-      currentRpcIndex = 0;
-    }
-  }
-}
+// Always start from the configured primary RPC (index 0) on cold load so the
+// configured order is respected; in-session failover still advances the index
+// via switchToNextRpc and persists it, but a stale index must not override the
+// primary RPC on the next visit.
 
 let lastRpcFailureTime = 0;
 const RPC_FAILURE_COOLDOWN = 30000; // 30 seconds before trying failed RPC again
@@ -37,7 +29,7 @@ function createWeb3Provider(rpcUrl: string) {
   const useWebsocket = rpcUrl.startsWith('wss');
   const provider = useWebsocket
     ? new Web3.providers.WebsocketProvider(rpcUrl, {
-        timeout: 5000, // Reduced to 5s
+        timeout: 25000, // Below Geth's ~30s internal limit
         clientConfig: {
           keepalive: true,
           keepaliveInterval: 60000,
@@ -49,7 +41,7 @@ function createWeb3Provider(rpcUrl: string) {
         },
       })
     : new Web3.providers.HttpProvider(rpcUrl, {
-        timeout: 5000, // Reduced to 5s
+        timeout: 25000, // Below Geth's ~30s internal limit
         keepAlive: false,
       });
   

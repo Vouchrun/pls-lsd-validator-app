@@ -162,16 +162,29 @@ export const useValidatorEjectionData = (
         );
 
         const currentBlock = await web3.eth.getBlockNumber();
-        const events = await networkWithdrawContract.getPastEvents(
-          'NotifyValidatorExit',
-          {
-            fromBlock: Math.max(
-              getWithdrawContractDeploymentBlock(),
-              currentBlock - 1555200 // 180 days at 10s per block
-            ),
-            toBlock: currentBlock,
-          }
+        // Chunk the range into parallel sub-queries to stay under Geth's
+        // hardcoded ~30s eth_getLogs timeout for large spans
+        const CHUNK_BLOCKS = 600000;
+        const fromBlock = Math.max(
+          getWithdrawContractDeploymentBlock(),
+          currentBlock - 1555200 // 180 days at 10s per block
         );
+        const ranges: { fromBlock: number; toBlock: number }[] = [];
+        for (let from = fromBlock; from <= currentBlock; from += CHUNK_BLOCKS) {
+          ranges.push({
+            fromBlock: from,
+            toBlock: Math.min(from + CHUNK_BLOCKS - 1, currentBlock),
+          });
+        }
+        const chunkResults = await Promise.all(
+          ranges.map((range) =>
+            networkWithdrawContract.getPastEvents('NotifyValidatorExit', {
+              fromBlock: range.fromBlock,
+              toBlock: range.toBlock,
+            })
+          )
+        );
+        const events = chunkResults.flat();
 
         let allData: any[] = [];
 
