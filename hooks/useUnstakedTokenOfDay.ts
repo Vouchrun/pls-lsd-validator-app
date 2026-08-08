@@ -1,6 +1,6 @@
 import { getNetworkWithdrawContract } from "config/contract";
 import { useCallback, useEffect, useState } from "react";
-import { decodeUnstakeLog, getEthWeb3, executeWithRpcFallback } from "utils/web3Utils";
+import { getEthWeb3, executeWithRpcFallback } from "utils/web3Utils";
 import Web3 from "web3";
 import { useAppSlice } from "./selector";
 import { getNetworkWithdrawContractAbi } from "config/contractAbi";
@@ -33,10 +33,7 @@ export function useUnstakedTokenOfDay() {
         let totalUnstakedAmount = 0;
 
         unstakeEvents.forEach((event) => {
-          const unstakeEventLog: any = decodeUnstakeLog(
-            event.raw.data,
-            event.raw.topics
-          );
+          const unstakeEventLog = event.returnValues;
           totalUnstakedAmount += Number(unstakeEventLog.ethAmount);
         });
 
