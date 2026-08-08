@@ -2,7 +2,7 @@ import { getNetworkBalanceContract } from 'config/contract';
 import { getNetworkBalanceContractAbi } from 'config/contractAbi';
 import { getBlockSeconds } from 'config/env';
 import { useCallback, useEffect, useState } from 'react';
-import { getEthWeb3 } from 'utils/web3Utils';
+import { getEthWeb3, executeWithRpcFallback } from 'utils/web3Utils';
 import Web3 from 'web3';
 
 export function useRewardUpdateHour() {
@@ -11,33 +11,27 @@ export function useRewardUpdateHour() {
 
   const updateData = useCallback(async () => {
     try {
-      const web3 = getEthWeb3();
+      await executeWithRpcFallback(async (web3) => {
+        const networkBalanceContract = new web3.eth.Contract(
+          getNetworkBalanceContractAbi(),
+          getNetworkBalanceContract(),
+          {}
+        );
 
-      const networkBalanceContract = new web3.eth.Contract(
-        getNetworkBalanceContractAbi(),
-        getNetworkBalanceContract(),
-        {}
-      );
+        const updateBalancesEpochs = await networkBalanceContract.methods
+          .updateBalancesEpochs()
+          .call();
 
-      const updateBalancesEpochs = await networkBalanceContract.methods
-        .updateBalancesEpochs()
-        .call()
-        .catch((err: any) => {
-          console.log({ err });
-        });
+        const updateHours =
+          (Number(updateBalancesEpochs) * (getBlockSeconds() * 32)) / 60 / 60;
+        setRewardUpdateHour(Math.round(updateHours) + '');
 
-      const updateHours =
-        (Number(updateBalancesEpochs) * (getBlockSeconds() * 32)) / 60 / 60;
-      setRewardUpdateHour(Math.round(updateHours) + '');
+        const rateChangeLimitValue = await networkBalanceContract.methods
+          .rateChangeLimit()
+          .call();
 
-      const rateChangeLimitValue = await networkBalanceContract.methods
-        .rateChangeLimit()
-        .call()
-        .catch((err: any) => {
-          console.log({ err });
-        });
-
-      setRateChangeLimit(+Web3.utils.fromWei(rateChangeLimitValue) * 100 + '%');
+        setRateChangeLimit(+Web3.utils.fromWei(rateChangeLimitValue) * 100 + '%');
+      });
     } catch (err: any) {
       console.log({ err });
     }

@@ -9,6 +9,7 @@ import { Provider } from "react-redux";
 import { RootState, store } from "redux/store";
 import { theme } from "styles/material-ui-theme";
 import { SnackbarUtilsConfigurator } from "utils/snackbarUtils";
+import "utils/rpcInitCheck"; // Initialize RPC validation early
 import "styles/globals.css";
 
 import { MaterialDesignContent } from "notistack";

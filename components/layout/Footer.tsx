@@ -3,12 +3,13 @@ import { useAppSlice } from 'hooks/selector';
 import Image from 'next/image';
 import appLogo from 'public/images/logoStafi.svg';
 import appLogoLight from 'public/images/logoStafi.svg';
+import pkg from '../../package.json';
 
 export default function Footer() {
   const { darkMode, unreadNoticeFlag } = useAppSlice();
   return (
     <div className='w-smallContentW xl:w-contentW 2xl:w-largeContentW mx-auto pb-1 flex flex-row justify-between items-center'>
-      <div style={{ color: darkMode ? '#fff' : '#000' }} className='text-[14px]'>v1.1.2</div>
+      <div style={{ color: darkMode ? '#fff' : '#000' }} className='text-[14px]'>v{pkg.version}</div>
       <a
         href='https://www.stafi.io/'
         target='_blank'

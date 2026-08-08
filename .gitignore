@@ -51,3 +51,4 @@ conf.api.toml
 
 out/
 yarn.lock
+package-lock.json

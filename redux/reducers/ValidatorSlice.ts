@@ -34,7 +34,7 @@ import { getTokenName } from 'utils/configUtils';
 import { formatNumber, formatScientificNumber } from 'utils/numberUtils';
 import snackbarUtil from 'utils/snackbarUtils';
 import { getShortAddress } from 'utils/stringUtils';
-import { createWeb3, getEthWeb3 } from 'utils/web3Utils';
+import { createWeb3, getEthWeb3, executeWithRpcFallback } from 'utils/web3Utils';
 import { parseEther } from 'viem';
 import Web3 from 'web3';
 import {
@@ -107,17 +107,18 @@ export default validatorSlice.reducer;
 export const updateValidatorWithdrawalCredentials =
   (): AppThunk => async (dispatch, getState) => {
     try {
-      let web3 = getEthWeb3();
-      let contract = new web3.eth.Contract(
-        getNodeDepositContractAbi(),
-        getNodeDepositContract(),
-        {
-          // from: account,
-        }
-      );
+      await executeWithRpcFallback(async (web3) => {
+        let contract = new web3.eth.Contract(
+          getNodeDepositContractAbi(),
+          getNodeDepositContract(),
+          {
+            // from: account,
+          }
+        );
 
-      const res = await contract.methods.withdrawCredentials().call();
-      dispatch(setValidatorWithdrawalCredentials(res.slice(2)));
+        const res = await contract.methods.withdrawCredentials().call();
+        dispatch(setValidatorWithdrawalCredentials(res.slice(2)));
+      });
     } catch (err: unknown) {}
   };
 
@@ -130,56 +131,53 @@ export const updateNodePubkeys = (): AppThunk => async (dispatch, getState) => {
       return;
     }
 
-    const web3 = getEthWeb3();
+    await executeWithRpcFallback(async (web3) => {
+      const nodeDepositContract = new web3.eth.Contract(
+        getNodeDepositContractAbi(),
+        getNodeDepositContract(),
+        {
+          from: nodeAddress,
+        }
+      );
 
-    const nodeDepositContract = new web3.eth.Contract(
-      getNodeDepositContractAbi(),
-      getNodeDepositContract(),
-      {
-        from: nodeAddress,
+      const pubkeysOfNode = await nodeDepositContract.methods
+        .getPubkeysOfNode(nodeAddress)
+        .call();
+
+      if (pubkeysOfNode.length === 0) {
+        dispatch(setNodePubkeys([]));
+        return;
       }
-    );
 
-    const pubkeysOfNode = await nodeDepositContract.methods
-      .getPubkeysOfNode(nodeAddress)
-      .call()
-      .catch((err: any) => {
-        console.log({ err });
+      const [pubkeyInfos, beaconStatusResponses] = await Promise.all([
+        Promise.all(
+          pubkeysOfNode.map((pubkeyAddress: string) =>
+            nodeDepositContract.methods.pubkeyInfoOf(pubkeyAddress).call()
+          )
+        ),
+        fetchBeaconStatusInChunks(pubkeysOfNode),
+      ]);
+
+      const beaconStatusResJson = beaconStatusResponses.flatMap(
+        (response) => response.data
+      );
+
+      const nodePubkeyInfos: NodePubkeyInfo[] = pubkeyInfos.map((item: any, index: number) => {
+        const matchedBeaconData = beaconStatusResJson?.find(
+          (item: any) => item.validator?.pubkey === pubkeysOfNode[index]
+        );
+        const type = item._nodeDepositAmount === 0 ? 'solo' : 'trusted';
+
+        return {
+          pubkeyAddress: pubkeysOfNode[index],
+          beaconApiStatus: matchedBeaconData?.status?.toUpperCase() || undefined,
+          type,
+          ...item,
+        };
       });
 
-    if (pubkeysOfNode.length === 0) {
-      dispatch(setNodePubkeys([]));
-      return;
-    }
-
-    const [pubkeyInfos, beaconStatusResponses] = await Promise.all([
-      Promise.all(
-        pubkeysOfNode.map((pubkeyAddress: string) =>
-          nodeDepositContract.methods.pubkeyInfoOf(pubkeyAddress).call()
-        )
-      ),
-      fetchBeaconStatusInChunks(pubkeysOfNode),
-    ]);
-
-    const beaconStatusResJson = beaconStatusResponses.flatMap(
-      (response) => response.data
-    );
-
-    const nodePubkeyInfos: NodePubkeyInfo[] = pubkeyInfos.map((item, index) => {
-      const matchedBeaconData = beaconStatusResJson?.find(
-        (item: any) => item.validator?.pubkey === pubkeysOfNode[index]
-      );
-      const type = item._nodeDepositAmount === 0 ? 'solo' : 'trusted';
-
-      return {
-        pubkeyAddress: pubkeysOfNode[index],
-        beaconApiStatus: matchedBeaconData?.status?.toUpperCase() || undefined,
-        type,
-        ...item,
-      };
+      dispatch(setNodePubkeys(nodePubkeyInfos));
     });
-
-    dispatch(setNodePubkeys(nodePubkeyInfos));
   } catch (err: any) {
     console.log({ err });
   }
@@ -207,57 +205,6 @@ export const handleEthValidatorDeposit =
         })
       );
 
-      const web3 = getEthWeb3();
-      let nodeDepositContract = new web3.eth.Contract(
-        getNodeDepositContractAbi(),
-        getNodeDepositContract(),
-        {
-          from: address,
-        }
-      );
-
-      if (type === 'solo') {
-        const depositEnabled = await nodeDepositContract.methods
-          .soloNodeDepositEnabled()
-          .call();
-        if (!depositEnabled) {
-          throw Error('Solo node deposits are currently disabled');
-        }
-      } else {
-        const nodeInfoOf = await nodeDepositContract.methods
-          .nodeInfoOf(address)
-          .call();
-
-        if (nodeInfoOf._removed) {
-          throw Error('Node already removed');
-        }
-
-        const trustNodePubkeyNumberLimit = await nodeDepositContract.methods
-          .trustNodePubkeyNumberLimit()
-          .call();
-
-        const pubkeysOfNode = await nodeDepositContract.methods
-          .getPubkeysOfNode(address)
-          .call()
-          .catch((err: any) => {
-            console.log({ err });
-          });
-
-        if (
-          Number(trustNodePubkeyNumberLimit) <
-          pubkeysOfNode.length + validatorKeys.length
-        ) {
-          throw Error('Pubkey amount over limit');
-        }
-
-        const depositEnabled = await nodeDepositContract.methods
-          .trustNodeDepositEnabled()
-          .call();
-        if (!depositEnabled) {
-          throw Error('Trusted node deposits are currently disabled');
-        }
-      }
-
       const pubkeys: string[] = [];
       const signatures: string[] = [];
       const depositDataRoots: string[] = [];
@@ -270,42 +217,92 @@ export const handleEthValidatorDeposit =
 
       let sendParams: any = {};
       let solodepositAmount: any;
-      if (type === 'solo') {
-        const res = await nodeDepositContract.methods
-          .soloNodeDepositAmount()
-          .call();
-        solodepositAmount = res;
-        // value: formatScientificNumber(res * validatorKeys.length),
-        sendParams = {
-          value: web3.utils.toWei(
-            (+web3.utils.fromWei(res) * validatorKeys.length).toString()
-          ),
-        };
-      }
 
-      {
-        const statusRequests = pubkeys.map((pubkey) => {
-          return (async () => {
-            const pubkeyInfoOf = await nodeDepositContract.methods
-              .pubkeyInfoOf(pubkey)
-              .call();
-            const status = pubkeyInfoOf._status;
-            return status;
-          })();
-        });
-
-        const statusList = await Promise.all(statusRequests);
-
-        console.log({ statusList });
-
-        statusList.forEach((status, index) => {
-          if (Number(status) !== 0) {
-            throw Error(
-              `pubkey ${getShortAddress(pubkeys[index], 10)} already exists`
-            );
+      await executeWithRpcFallback(async (web3) => {
+        let nodeDepositContract = new web3.eth.Contract(
+          getNodeDepositContractAbi(),
+          getNodeDepositContract(),
+          {
+            from: address,
           }
-        });
-      }
+        );
+
+        if (type === 'solo') {
+          const depositEnabled = await nodeDepositContract.methods
+            .soloNodeDepositEnabled()
+            .call();
+          if (!depositEnabled) {
+            throw Error('Solo node deposits are currently disabled');
+          }
+        } else {
+          const nodeInfoOf = await nodeDepositContract.methods
+            .nodeInfoOf(address)
+            .call();
+
+          if (nodeInfoOf._removed) {
+            throw Error('Node already removed');
+          }
+
+          const trustNodePubkeyNumberLimit = await nodeDepositContract.methods
+            .trustNodePubkeyNumberLimit()
+            .call();
+
+          const pubkeysOfNode = await nodeDepositContract.methods
+            .getPubkeysOfNode(address)
+            .call();
+
+          if (
+            Number(trustNodePubkeyNumberLimit) <
+            pubkeysOfNode.length + validatorKeys.length
+          ) {
+            throw Error('Pubkey amount over limit');
+          }
+
+          const depositEnabled = await nodeDepositContract.methods
+            .trustNodeDepositEnabled()
+            .call();
+          if (!depositEnabled) {
+            throw Error('Trusted node deposits are currently disabled');
+          }
+        }
+
+        if (type === 'solo') {
+          const res = await nodeDepositContract.methods
+            .soloNodeDepositAmount()
+            .call();
+          solodepositAmount = res;
+          // value: formatScientificNumber(res * validatorKeys.length),
+          sendParams = {
+            value: web3.utils.toWei(
+              (+web3.utils.fromWei(res) * validatorKeys.length).toString()
+            ),
+          };
+        }
+
+        {
+          const statusRequests = pubkeys.map((pubkey) => {
+            return (async () => {
+              const pubkeyInfoOf = await nodeDepositContract.methods
+                .pubkeyInfoOf(pubkey)
+                .call();
+              const status = pubkeyInfoOf._status;
+              return status;
+            })();
+          });
+
+          const statusList = await Promise.all(statusRequests);
+
+          console.log({ statusList });
+
+          statusList.forEach((status, index) => {
+            if (Number(status) !== 0) {
+              throw Error(
+                `pubkey ${getShortAddress(pubkeys[index], 10)} already exists`
+              );
+            }
+          });
+        }
+      });
       await writeContractAsync(
         {
           abi: getNodeDepositContractAbi(),
@@ -323,39 +320,41 @@ export const handleEthValidatorDeposit =
             if (error) {
               console.error('Transaction settled with error:', error);
             } else {
-              const result = await waitForTransactionReceipt(web3, data);
-              dispatch(setEthTxLoading(false));
-              callback && callback(result?.status, result);
+              await executeWithRpcFallback(async (web3) => {
+                const result = await waitForTransactionReceipt(web3, data);
+                dispatch(setEthTxLoading(false));
+                callback && callback(result?.status, result);
 
-              if (result?.status) {
-                dispatch(
-                  updateDepositLoadingParams({
-                    status: 'success',
-                  })
-                );
-                dispatch(
-                  addNotice({
-                    id: result.transactionHash,
-                    type: 'Validator Deposit',
-                    txDetail: {
-                      transactionHash: result.transactionHash,
-                      sender: address || '',
-                    },
-                    data: {
-                      type: type === 'solo' ? 'solo' : 'trusted',
-                      amount:
-                        type === 'solo'
-                          ? Web3.utils.fromWei(solodepositAmount)
-                          : '0',
-                      pubkeys,
-                    },
-                    scanUrl: getEtherScanTxUrl(result.transactionHash),
-                    status: 'Confirmed',
-                  })
-                );
-              } else {
-                throw new Error(TRANSACTION_FAILED_MESSAGE);
-              }
+                if (result?.status) {
+                  dispatch(
+                    updateDepositLoadingParams({
+                      status: 'success',
+                    })
+                  );
+                  dispatch(
+                    addNotice({
+                      id: result.transactionHash,
+                      type: 'Validator Deposit',
+                      txDetail: {
+                        transactionHash: result.transactionHash,
+                        sender: address || '',
+                      },
+                      data: {
+                        type: type === 'solo' ? 'solo' : 'trusted',
+                        amount:
+                          type === 'solo'
+                            ? Web3.utils.fromWei(solodepositAmount)
+                            : '0',
+                        pubkeys,
+                      },
+                      scanUrl: getEtherScanTxUrl(result.transactionHash),
+                      status: 'Confirmed',
+                    })
+                  );
+                } else {
+                  throw new Error(TRANSACTION_FAILED_MESSAGE);
+                }
+              });
             }
           },
           onError: (error: any) => {
@@ -431,38 +430,40 @@ export const handleEthValidatorStake =
             if (error) {
               console.error('Transaction settled with error:', error);
             } else {
-              const result = await waitForTransactionReceipt(web3, data);
-              dispatch(setEthTxLoading(false));
-              callback && callback(result?.status, result);
+              await executeWithRpcFallback(async (web3) => {
+                const result = await waitForTransactionReceipt(web3, data);
+                dispatch(setEthTxLoading(false));
+                callback && callback(result?.status, result);
 
-              if (result?.status) {
-                dispatch(
-                  updateValidatorStakeLoadingParams({
-                    status: 'success',
-                    scanUrl: getEtherScanTxUrl(result.transactionHash),
-                  })
-                );
-                dispatch(
-                  addNotice({
-                    id: result.transactionHash,
-                    type: 'Validator Stake',
-                    txDetail: {
-                      transactionHash: result.transactionHash,
-                      sender: address || '',
-                    },
-                    data: {
-                      type,
-                      amount:
-                        getValidatorTotalDepositAmount() * pubkeys.length + '',
-                      pubkeys,
-                    },
-                    scanUrl: getEtherScanTxUrl(result.transactionHash),
-                    status: 'Confirmed',
-                  })
-                );
-              } else {
-                throw new Error(TRANSACTION_FAILED_MESSAGE);
-              }
+                if (result?.status) {
+                  dispatch(
+                    updateValidatorStakeLoadingParams({
+                      status: 'success',
+                      scanUrl: getEtherScanTxUrl(result.transactionHash),
+                    })
+                  );
+                  dispatch(
+                    addNotice({
+                      id: result.transactionHash,
+                      type: 'Validator Stake',
+                      txDetail: {
+                        transactionHash: result.transactionHash,
+                        sender: address || '',
+                      },
+                      data: {
+                        type,
+                        amount:
+                          getValidatorTotalDepositAmount() * pubkeys.length + '',
+                        pubkeys,
+                      },
+                      scanUrl: getEtherScanTxUrl(result.transactionHash),
+                      status: 'Confirmed',
+                    })
+                  );
+                } else {
+                  throw new Error(TRANSACTION_FAILED_MESSAGE);
+                }
+              });
             }
           },
           onError: (error: any) => {
@@ -538,45 +539,47 @@ export const claimValidatorRewards =
             if (error) {
               console.error('Transaction settled with error:', error);
             } else {
-              const result = await waitForTransactionReceipt(web3, data);
-              callback && callback(result.status, result);
-              dispatch(updateEthBalance());
-              dispatch(setClaimRewardsLoading(false));
+              await executeWithRpcFallback(async (web3) => {
+                const result = await waitForTransactionReceipt(web3, data);
+                callback && callback(result.status, result);
+                dispatch(updateEthBalance());
+                dispatch(setClaimRewardsLoading(false));
 
-              if (result && result.status) {
-                const txHash = result.transactionHash;
-                dispatch(
-                  addNotice({
-                    id: noticeUuid || '',
-                    type: 'Claim Rewards',
-                    data: {
-                      rewardAmount: formatNumber(myClaimableReward),
-                      rewardTokenName: getTokenName(),
-                    },
-                    status: 'Confirmed',
-                    scanUrl: getEtherScanTxUrl(txHash),
-                  })
-                );
+                if (result && result.status) {
+                  const txHash = result.transactionHash;
+                  dispatch(
+                    addNotice({
+                      id: noticeUuid || '',
+                      type: 'Claim Rewards',
+                      data: {
+                        rewardAmount: formatNumber(myClaimableReward),
+                        rewardTokenName: getTokenName(),
+                      },
+                      status: 'Confirmed',
+                      scanUrl: getEtherScanTxUrl(txHash),
+                    })
+                  );
 
-                // const withdrawInfo: TokenWithdrawInfo = {
-                //   depositAmount: "0",
-                //   rewardAmount: Web3.utils.toWei(myClaimableReward),
-                //   totalAmount: Web3.utils.toWei(myClaimableReward),
-                //   txHash,
-                //   receivedAddress: metaMaskAccount,
-                //   operateTimestamp: dayjs().unix(),
-                //   timeLeft: 0,
-                //   explorerUrl: getEtherScanTxUrl(txHash),
-                //   status: 3,
-                // };
-                // addEthValidatorWithdrawRecords(withdrawInfo);
+                  // const withdrawInfo: TokenWithdrawInfo = {
+                  //   depositAmount: "0",
+                  //   rewardAmount: Web3.utils.toWei(myClaimableReward),
+                  //   totalAmount: Web3.utils.toWei(myClaimableReward),
+                  //   txHash,
+                  //   receivedAddress: metaMaskAccount,
+                  //   operateTimestamp: dayjs().unix(),
+                  //   timeLeft: 0,
+                  //   explorerUrl: getEtherScanTxUrl(txHash),
+                  //   status: 3,
+                  // };
+                  // addEthValidatorWithdrawRecords(withdrawInfo);
 
-                snackbarUtil.success('Claim rewards success');
-                callback && callback(true, {});
-                dispatch(setUpdateFlag(dayjs().unix()));
-              } else {
-                throw new Error(TRANSACTION_FAILED_MESSAGE);
-              }
+                  snackbarUtil.success('Claim rewards success');
+                  callback && callback(true, {});
+                  dispatch(setUpdateFlag(dayjs().unix()));
+                } else {
+                  throw new Error(TRANSACTION_FAILED_MESSAGE);
+                }
+              });
             }
           },
           onError: (error: any) => {
@@ -668,55 +671,57 @@ export const withdrawValidatorEth =
             if (error) {
               console.error('Transaction settled with error:', error);
             } else {
-              const result = await waitForTransactionReceipt(web3, data);
-              callback && callback(result.status, result);
-              dispatch(updateEthBalance());
-              if (result && result.status) {
-                const txHash = result.transactionHash;
-                dispatch(
-                  updateWithdrawLoadingParams(
-                    {
-                      status: 'success',
-                      txHash: txHash,
-                      scanUrl: getEtherScanTxUrl(txHash),
-                      customMsg: undefined,
-                    },
-                    (newParams) => {
-                      dispatch(
-                        addNotice({
-                          id: noticeUuid || '',
-                          type: 'Withdraw',
-                          data: {
-                            tokenAmount: withdrawAmount,
-                          },
-                          status: 'Confirmed',
-                          scanUrl: getEtherScanTxUrl(txHash),
-                        })
-                      );
-                    }
-                  )
-                );
+              await executeWithRpcFallback(async (web3) => {
+                const result = await waitForTransactionReceipt(web3, data);
+                callback && callback(result.status, result);
+                dispatch(updateEthBalance());
+                if (result && result.status) {
+                  const txHash = result.transactionHash;
+                  dispatch(
+                    updateWithdrawLoadingParams(
+                      {
+                        status: 'success',
+                        txHash: txHash,
+                        scanUrl: getEtherScanTxUrl(txHash),
+                        customMsg: undefined,
+                      },
+                      (newParams) => {
+                        dispatch(
+                          addNotice({
+                            id: noticeUuid || '',
+                            type: 'Withdraw',
+                            data: {
+                              tokenAmount: withdrawAmount,
+                            },
+                            status: 'Confirmed',
+                            scanUrl: getEtherScanTxUrl(txHash),
+                          })
+                        );
+                      }
+                    )
+                  );
 
-                const withdrawInfo: TokenWithdrawInfo = {
-                  depositAmount: Web3.utils.toWei(
-                    Math.max(
-                      0,
-                      Number(withdrawAmount) - Number(myClaimableReward)
-                    ) + ''
-                  ),
-                  rewardAmount: Web3.utils.toWei(myClaimableReward),
-                  totalAmount: Web3.utils.toWei(withdrawAmount),
-                  txHash,
-                  receivedAddress: metaMaskAccount,
-                  operateTimestamp: dayjs().unix(),
-                  timeLeft: 0,
-                  explorerUrl: getEtherScanTxUrl(txHash),
-                  status: 4,
-                };
-                // addEthValidatorWithdrawRecords(withdrawInfo);
-              } else {
-                throw new Error(TRANSACTION_FAILED_MESSAGE);
-              }
+                  const withdrawInfo: TokenWithdrawInfo = {
+                    depositAmount: Web3.utils.toWei(
+                      Math.max(
+                        0,
+                        Number(withdrawAmount) - Number(myClaimableReward)
+                      ) + ''
+                    ),
+                    rewardAmount: Web3.utils.toWei(myClaimableReward),
+                    totalAmount: Web3.utils.toWei(withdrawAmount),
+                    txHash,
+                    receivedAddress: metaMaskAccount,
+                    operateTimestamp: dayjs().unix(),
+                    timeLeft: 0,
+                    explorerUrl: getEtherScanTxUrl(txHash),
+                    status: 4,
+                  };
+                  // addEthValidatorWithdrawRecords(withdrawInfo);
+                } else {
+                  throw new Error(TRANSACTION_FAILED_MESSAGE);
+                }
+              });
             }
           },
           onError: (error: any) => {
@@ -778,17 +783,19 @@ export const addTrustNode =
             if (error) {
               console.error('Transaction settled with error:', error);
             } else {
-              const result = await waitForTransactionReceipt(web3, data);
-              if (result.status) {
-                callback && callback(result.status, result);
-                dispatch(updateEthBalance());
-                if (result && result.status) {
-                  const txHash = result.transactionHash;
-                  console.log(txHash);
-                } else {
-                  throw new Error(TRANSACTION_FAILED_MESSAGE);
+              await executeWithRpcFallback(async (web3) => {
+                const result = await waitForTransactionReceipt(web3, data);
+                if (result.status) {
+                  callback && callback(result.status, result);
+                  dispatch(updateEthBalance());
+                  if (result && result.status) {
+                    const txHash = result.transactionHash;
+                    console.log(txHash);
+                  } else {
+                    throw new Error(TRANSACTION_FAILED_MESSAGE);
+                  }
                 }
-              }
+              });
             }
           },
           onError: (error: any) => {

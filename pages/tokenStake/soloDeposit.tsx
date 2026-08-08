@@ -38,7 +38,7 @@ import { RootState } from 'redux/store';
 import { openLink } from 'utils/commonUtils';
 import { getTokenName } from 'utils/configUtils';
 import { formatNumber } from 'utils/numberUtils';
-import { getEthWeb3 } from 'utils/web3Utils';
+import { getEthWeb3, executeWithRpcFallback } from 'utils/web3Utils';
 import { parseEther } from 'viem';
 import { useConnect, useSwitchChain, useWriteContract } from 'wagmi';
 
@@ -116,39 +116,40 @@ const SoloDepositPage = () => {
         pubkeys.push('0x' + validatorKey.pubkey);
       });
 
-      const web3 = getEthWeb3();
-      let nodeDepositContract = new web3.eth.Contract(
-        getNodeDepositContractAbi(),
-        getNodeDepositContract(),
-        {}
-      );
+      await executeWithRpcFallback(async (web3) => {
+        let nodeDepositContract = new web3.eth.Contract(
+          getNodeDepositContractAbi(),
+          getNodeDepositContract(),
+          {}
+        );
 
-      const statusRequests = pubkeys.map((pubkey) => {
-        return (async () => {
-          const pubkeyInfoOf = await nodeDepositContract.methods
-            .pubkeyInfoOf(pubkey)
-            .call();
-          const status = pubkeyInfoOf._status;
-          return status;
-        })();
-      });
+        const statusRequests = pubkeys.map((pubkey) => {
+          return (async () => {
+            const pubkeyInfoOf = await nodeDepositContract.methods
+              .pubkeyInfoOf(pubkey)
+              .call();
+            const status = pubkeyInfoOf._status;
+            return status;
+          })();
+        });
 
-      const statusList = await Promise.all(statusRequests);
+        const statusList = await Promise.all(statusRequests);
 
-      let hasRepeat = false;
-      statusList.forEach((status, index) => {
-        if (Number(status) !== 0) {
-          hasRepeat = true;
+        let hasRepeat = false;
+        statusList.forEach((status, index) => {
+          if (Number(status) !== 0) {
+            hasRepeat = true;
+          }
+        });
+
+        if (hasRepeat) {
+          setUploadingStatus('error');
+          setValidatorKeys([]);
+        } else {
+          setUploadingStatus('normal');
+          setValidatorKeys(validatorKeys);
         }
       });
-
-      if (hasRepeat) {
-        setUploadingStatus('error');
-        setValidatorKeys([]);
-      } else {
-        setUploadingStatus('normal');
-        setValidatorKeys(validatorKeys);
-      }
     } catch (err: any) {
       setUploadingStatus('error');
       setValidatorKeys([]);

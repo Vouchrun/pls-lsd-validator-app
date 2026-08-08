@@ -9,8 +9,15 @@
       "decimals": 18
     }
   },
-  "rpc": "https://rpc-pulsechain.g4mm4.io",
-  "beaconHost": "https://rpc-pulsechain.g4mm4.io/beacon-api",
+  "rpc": [
+    "https://rpc.vouch.run",
+    "https://rpc-pulsechain.g4mm4.io",
+    "https://rpc.pulsechain.com"
+  ],
+  "beaconRPC": [
+    "https://rpc-beacon.vouch.run",
+    "https://rpc-pulsechain.g4mm4.io/beacon-api"
+  ],
   "explorer": "https://scan.mypinata.cloud/ipfs/bafybeih3olry3is4e4lzm7rus5l3h6zrphcal5a7ayfkhzm5oivjro2cp4/#",
   "validatorExplorer": "https://beacon.pulsechain.com/",
   "blockSeconds": 10,

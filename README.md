@@ -29,4 +29,3 @@ Run `yarn build` or `yarn build:dev` to build your app, the static files will be
 
 You can find more details here: [Vouch-docs](https://vouch.run/)
  
----
