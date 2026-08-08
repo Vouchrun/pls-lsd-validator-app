@@ -79,6 +79,7 @@ export const fetchValidatorData =
 
         const CHUNK_SIZE = 100;
         const MINIMUM_BALANCE = 32000000;
+        const CONCURRENCY = 8;
 
         const fetchNodePubkeys = async (nodeAddress: string) => {
           try {
@@ -110,75 +111,88 @@ export const fetchValidatorData =
         };
 
         const fetchValidatorData = async (pubkeys: string[]) => {
-          const chunks = [];
+          const chunks: string[][] = [];
           for (let i = 0; i < pubkeys.length; i += CHUNK_SIZE) {
             chunks.push(pubkeys.slice(i, i + CHUNK_SIZE));
           }
 
-          const results = [];
-          for (const chunk of chunks) {
-            const pubkeysString = chunk.join(',');
-            try {
-              const data = await fetchWithBeaconFallback(
-                `/eth/v1/beacon/states/head/validators?id=${pubkeysString}`
-              );
-              results.push(...data.data);
-            } catch (error) {
-              console.error('Error fetching validator data:', error);
+          // Fetch beacon chunks concurrently (order doesn't matter here; the
+          // results are only aggregated into counts)
+          const results: any[] = [];
+          let next = 0;
+          const workers = Array.from(
+            { length: Math.min(CONCURRENCY, chunks.length) },
+            async () => {
+              while (next < chunks.length) {
+                const index = next++;
+                const pubkeysString = chunks[index].join(',');
+                try {
+                  const data = await fetchWithBeaconFallback(
+                    `/eth/v1/beacon/states/head/validators?id=${pubkeysString}`
+                  );
+                  results.push(...data.data);
+                } catch (error) {
+                  console.error('Error fetching validator data:', error);
+                }
+              }
             }
-          }
+          );
+          await Promise.all(workers);
           return results;
         };
 
         const validatorInfo: ValidatorNodeAddressData[] = [];
         const trustedvalidatorInfo: ValidatorNodeAddressData[] = [];
 
-        for (const node of nodes) {
-          const pubkeys = await fetchNodePubkeys(node);
-          const validatorDetails = await fetchValidatorData(pubkeys);
-          const isTrusted = await setNodesWithCheck(node);
-          const activeValidators = validatorDetails.filter(
-            (validator: any) => validator.status === 'active_ongoing'
-          );
+        // Process nodes concurrently with bounded concurrency (each node is
+        // independent: pubkeys + beacon details + trusted check)
+        let nextNode = 0;
+        const nodeWorkers = Array.from(
+          { length: Math.min(CONCURRENCY, nodes.length) },
+          async () => {
+            while (nextNode < nodes.length) {
+              const node = nodes[nextNode++];
+              const pubkeys = await fetchNodePubkeys(node);
+              const validatorDetails = await fetchValidatorData(pubkeys);
+              const isTrusted = await setNodesWithCheck(node);
+              const activeValidators = validatorDetails.filter(
+                (validator: any) => validator.status === 'active_ongoing'
+              );
 
-          const totalBalance = activeValidators.reduce(
-            (sum: number, validator: any) => sum + parseInt(validator.balance),
-            0
-          );
+              const totalBalance = activeValidators.reduce(
+                (sum: number, validator: any) =>
+                  sum + parseInt(validator.balance),
+                0
+              );
 
-          // Check if any validator has balance below minimum
-          const hasInsufficientBalance = activeValidators.some(
-            (validator: any) =>
-              parseInt(validator.balance) / 10 ** 9 < MINIMUM_BALANCE
-          );
+              // Check if any validator has balance below minimum
+              const hasInsufficientBalance = activeValidators.some(
+                (validator: any) =>
+                  parseInt(validator.balance) / 10 ** 9 < MINIMUM_BALANCE
+              );
 
-          const isSlashed = activeValidators.some(
-            (validator: any) => validator.slashed
-          );
+              const isSlashed = activeValidators.some(
+                (validator: any) => validator.slashed
+              );
 
-          validatorInfo.push({
-            address: node,
-            balance: totalBalance,
-            activeCount: activeValidators.length,
-            status: isSlashed
-              ? 'slashed'
-              : !hasInsufficientBalance
-              ? 'active'
-              : 'inactive',
-          });
-          if (isTrusted) {
-            trustedvalidatorInfo.push({
-              address: node,
-              balance: totalBalance,
-              activeCount: activeValidators.length,
-              status: isSlashed
-                ? 'slashed'
-                : !hasInsufficientBalance
-                ? 'active'
-                : 'inactive',
-            });
+              const info: ValidatorNodeAddressData = {
+                address: node,
+                balance: totalBalance,
+                activeCount: activeValidators.length,
+                status: isSlashed
+                  ? 'slashed'
+                  : !hasInsufficientBalance
+                  ? 'active'
+                  : 'inactive',
+              };
+              validatorInfo.push(info);
+              if (isTrusted) {
+                trustedvalidatorInfo.push(info);
+              }
+            }
           }
-        }
+        );
+        await Promise.all(nodeWorkers);
 
         dispatch(setValidatorData(validatorInfo));
         dispatch(setTrustedValidatorData(trustedvalidatorInfo));

@@ -20,6 +20,70 @@ interface IpfsRewardItem {
   totalExitDepositAmount: string;
 }
 
+// The rewards file location (cid + epoch) and the IPFS rewards JSON itself
+// are shared by every node, so fetch and parse them once and reuse across
+// hook instances (with a short TTL and in-flight dedupe).
+interface RewardsData {
+  timestamp: number;
+  list: IpfsRewardItem[];
+}
+const REWARDS_CACHE_TTL = 5 * 60 * 1000;
+let rewardsCache: RewardsData | null = null;
+let inFlightRewards: Promise<RewardsData> | null = null;
+
+async function getSharedRewardsData(web3: any): Promise<RewardsData> {
+  if (
+    rewardsCache &&
+    Date.now() - rewardsCache.timestamp < REWARDS_CACHE_TTL
+  ) {
+    return rewardsCache;
+  }
+  if (inFlightRewards) {
+    return inFlightRewards;
+  }
+
+  inFlightRewards = (async () => {
+    const networkWithdrawContract = new web3.eth.Contract(
+      getNetworkWithdrawContractAbi(),
+      getNetworkWithdrawContract(),
+      {}
+    );
+
+    const nodeRewardsFileCid = await networkWithdrawContract.methods
+      .nodeRewardsFileCid()
+      .call();
+
+    const latestMerkleRootEpoch = await networkWithdrawContract.methods
+      .latestMerkleRootEpoch()
+      .call();
+
+    const response = await fetch(
+      `https://${nodeRewardsFileCid}.ipfs.dweb.link/${getLsdEthTokenContract().toLowerCase()}-rewards-${getEthereumChainId()}-${latestMerkleRootEpoch}.json`
+    );
+
+    const resText = await response.text();
+    var JSONbig = require('json-bigint');
+    const resTextJson = JSONbig.parse(resText);
+
+    const list: IpfsRewardItem[] =
+      resTextJson.List?.map((item: any) => ({
+        ...item,
+        totalRewardAmount: removeDecimals(item.totalRewardAmount.toFixed()),
+        totalDepositAmount: removeDecimals(item.totalDepositAmount.toFixed()),
+        totalExitDepositAmount: removeDecimals(
+          item.totalExitDepositAmount.toFixed()
+        ),
+      })) || [];
+
+    rewardsCache = { timestamp: Date.now(), list };
+    return rewardsCache;
+  })().finally(() => {
+    inFlightRewards = null;
+  });
+
+  return inFlightRewards;
+}
+
 export const useNodeUnclaimedRewards = (nodeAddress: string) => {
   const [unclaimedRewards, setUnclaimedRewards] = useState<string>('0');
   const [isLoading, setIsLoading] = useState(true);
@@ -43,42 +107,23 @@ export const useNodeUnclaimedRewards = (nodeAddress: string) => {
             }
           );
 
-          // Get IPFS data location
-          const nodeRewardsFileCid = await networkWithdrawContract.methods
-            .nodeRewardsFileCid()
-            .call();
+          // Shared: contract meta + IPFS rewards file (cached across nodes)
+          const rewardsData = await getSharedRewardsData(web3);
 
-          const latestMerkleRootEpoch = await networkWithdrawContract.methods
-            .latestMerkleRootEpoch()
-            .call();
-
-          // Get total claimed rewards for the node
+          // Per-node: total claimed rewards for the node
           const totalClaimedRewardOfNode = await networkWithdrawContract.methods
             .totalClaimedRewardOfNode(nodeAddress)
             .call();
 
-          // Fetch rewards data from IPFS
-          const response = await fetch(
-            `https://${nodeRewardsFileCid}.ipfs.dweb.link/${getLsdEthTokenContract().toLowerCase()}-rewards-${getEthereumChainId()}-${latestMerkleRootEpoch}.json`
-          );
-          
-          const resText = await response.text();
-          var JSONbig = require('json-bigint');
-          const resTextJson = JSONbig.parse(resText);
-
-          const list: IpfsRewardItem[] = resTextJson.List?.map((item: any) => ({
-            ...item,
-            totalRewardAmount: removeDecimals(item.totalRewardAmount.toFixed()),
-            totalDepositAmount: removeDecimals(item.totalDepositAmount.toFixed()),
-            totalExitDepositAmount: removeDecimals(item.totalExitDepositAmount.toFixed()),
-          }));
-
           // Find reward info for the specific node
-          const nodeRewardInfo = list?.find((item) => item.address.toLowerCase() === nodeAddress.toLowerCase());
-          
+          const nodeRewardInfo = rewardsData.list.find(
+            (item) =>
+              item.address.toLowerCase() === nodeAddress.toLowerCase()
+          );
+
           if (nodeRewardInfo) {
             const totalRewardAmount = nodeRewardInfo.totalRewardAmount || '0';
-            
+
             // Calculate unclaimed rewards
             const unclaimedRewardAmount = Web3.utils.fromWei(
               formatScientificNumber(
@@ -86,10 +131,12 @@ export const useNodeUnclaimedRewards = (nodeAddress: string) => {
               ) + ''
             );
 
-            setUnclaimedRewards(formatNumber(+unclaimedRewardAmount, {
-              hideDecimalsForZero: true,
-              decimals: 0,
-            }));
+            setUnclaimedRewards(
+              formatNumber(+unclaimedRewardAmount, {
+                hideDecimalsForZero: true,
+                decimals: 0,
+              })
+            );
           } else {
             setUnclaimedRewards('0');
           }
