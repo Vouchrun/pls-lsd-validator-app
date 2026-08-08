@@ -4,6 +4,33 @@ import { getEthWeb3, executeWithRpcFallback } from "utils/web3Utils";
 import Web3 from "web3";
 import { useAppSlice } from "./selector";
 import { getNetworkWithdrawContractAbi } from "config/contractAbi";
+import { getBlockSeconds } from "config/env";
+
+// Paint the metric instantly from cache on page load - the live fetch is a
+// small log query that can queue behind heavier concurrent RPC queries
+// (browser connection limits), so cache-first keeps it instantaneous.
+const CACHE_KEY = "unstakedTokenOfDay";
+const CACHE_TTL = 5 * 60 * 1000;
+
+const storage = {
+  get: (key: string) => {
+    if (typeof window !== "undefined") {
+      try {
+        return window.localStorage.getItem(key);
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
+  },
+  set: (key: string, value: string) => {
+    if (typeof window !== "undefined") {
+      try {
+        window.localStorage.setItem(key, value);
+      } catch (e) {}
+    }
+  },
+};
 
 export function useUnstakedTokenOfDay() {
   const { updateFlag } = useAppSlice();
@@ -11,6 +38,16 @@ export function useUnstakedTokenOfDay() {
   const [unstakedTokenOfDay, setUnstakedTokenOfDay] = useState<string>();
 
   const updateData = useCallback(async () => {
+    const cached = storage.get(CACHE_KEY);
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        if (Date.now() - parsed.timestamp < CACHE_TTL) {
+          setUnstakedTokenOfDay(parsed.value);
+        }
+      } catch (e) {}
+    }
+
     try {
       await executeWithRpcFallback(async (web3) => {
         const networkWithdrawContract = new web3.eth.Contract(
@@ -22,7 +59,9 @@ export function useUnstakedTokenOfDay() {
         const currentBlock = await web3.eth.getBlockNumber();
 
         const events = await networkWithdrawContract.getPastEvents("Unstake", {
-          fromBlock: currentBlock - Math.floor((1 / 12) * 60 * 60 * 24),
+          fromBlock:
+            currentBlock -
+            Math.floor((1 / getBlockSeconds()) * 60 * 60 * 24),
           toBlock: currentBlock,
         });
 
@@ -37,7 +76,12 @@ export function useUnstakedTokenOfDay() {
           totalUnstakedAmount += Number(unstakeEventLog.ethAmount);
         });
 
-        setUnstakedTokenOfDay(Web3.utils.fromWei(totalUnstakedAmount + ""));
+        const value = Web3.utils.fromWei(totalUnstakedAmount + "");
+        storage.set(
+          CACHE_KEY,
+          JSON.stringify({ value, timestamp: Date.now() })
+        );
+        setUnstakedTokenOfDay(value);
       });
     } catch (err: any) {
       console.log({ err });

@@ -197,14 +197,25 @@ export const updateYearlyApr = (): AppThunk => async (dispatch, getState) => {
         });
       }
 
-      const chunkResults = await Promise.all(
-        ranges.map((range) =>
-          contract.getPastEvents('BalancesUpdated', {
-            fromBlock: range.fromBlock,
-            toBlock: range.toBlock,
-          })
-        )
+      // Run chunks with bounded concurrency so lightweight queries (balances,
+      // unstaked-today, etc.) aren't starved of browser connections while the
+      // large scans are in flight
+      const CHUNK_CONCURRENCY = 4;
+      const chunkResults: any[][] = new Array(ranges.length);
+      let rangeIndex = 0;
+      const chunkWorkers = Array.from(
+        { length: Math.min(CHUNK_CONCURRENCY, ranges.length) },
+        async () => {
+          while (rangeIndex < ranges.length) {
+            const i = rangeIndex++;
+            chunkResults[i] = await contract.getPastEvents('BalancesUpdated', {
+              fromBlock: ranges[i].fromBlock,
+              toBlock: ranges[i].toBlock,
+            });
+          }
+        }
       );
+      await Promise.all(chunkWorkers);
 
       const balancesUpdatedEvents = chunkResults
         .flat()

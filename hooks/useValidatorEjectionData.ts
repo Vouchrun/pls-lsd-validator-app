@@ -176,14 +176,28 @@ export const useValidatorEjectionData = (
             toBlock: Math.min(from + CHUNK_BLOCKS - 1, currentBlock),
           });
         }
-        const chunkResults = await Promise.all(
-          ranges.map((range) =>
-            networkWithdrawContract.getPastEvents('NotifyValidatorExit', {
-              fromBlock: range.fromBlock,
-              toBlock: range.toBlock,
-            })
-          )
+        // Run chunks with bounded concurrency so lightweight queries aren't
+        // starved of browser connections while the large scans are in flight
+        const CHUNK_CONCURRENCY = 4;
+        const chunkResults: any[][] = new Array(ranges.length);
+        let rangeIndex = 0;
+        const chunkWorkers = Array.from(
+          { length: Math.min(CHUNK_CONCURRENCY, ranges.length) },
+          async () => {
+            while (rangeIndex < ranges.length) {
+              const i = rangeIndex++;
+              chunkResults[i] =
+                await networkWithdrawContract.getPastEvents(
+                  'NotifyValidatorExit',
+                  {
+                    fromBlock: ranges[i].fromBlock,
+                    toBlock: ranges[i].toBlock,
+                  }
+                );
+            }
+          }
         );
+        await Promise.all(chunkWorkers);
         const events = chunkResults.flat();
 
         let allData: any[] = [];
