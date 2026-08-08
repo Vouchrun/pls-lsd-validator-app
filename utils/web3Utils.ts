@@ -141,15 +141,6 @@ export function switchToNextRpc(force: boolean = false): boolean {
   // Save new index
   if (typeof window !== 'undefined') {
     window.localStorage.setItem(STORAGE_KEY_WORKING_RPC_INDEX, currentRpcIndex.toString());
-    
-    // Auto-reload on first failure to ensure clean state (prevents "stuck screen")
-    const reloadLock = window.sessionStorage.getItem('rpc_reload_lock');
-    if (!reloadLock) {
-      console.warn('First RPC failure detected. Reloading to ensure clean state with new RPC...');
-      window.sessionStorage.setItem('rpc_reload_lock', 'true');
-      window.location.reload();
-      return true;
-    }
   }
 
   const newRpc = rpcList[currentRpcIndex];
@@ -184,11 +175,6 @@ export async function executeWithRpcFallback<T>(
     try {
       const web3 = getEthWeb3();
       const result = await operation(web3);
-      
-      // If successful, clear the reload lock so we can reload again if needed in future
-      if (typeof window !== 'undefined') {
-        window.sessionStorage.removeItem('rpc_reload_lock');
-      }
       
       return result;
     } catch (error: any) {
