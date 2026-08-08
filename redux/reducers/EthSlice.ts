@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { AppThunk } from "redux/store";
-import { getEthWeb3 } from "utils/web3Utils";
+import { getEthWeb3, executeWithRpcFallback } from "utils/web3Utils";
 import Web3 from "web3";
 
 export interface EthState {
@@ -70,25 +70,22 @@ export const updateEthBalance = (): AppThunk => async (dispatch, getState) => {
     return;
   }
 
-  let ethWeb3 = getEthWeb3();
   try {
-    const balance = await ethWeb3.eth.getBalance(metaMaskAccount);
-    dispatch(setEthBalance(Web3.utils.fromWei(balance.toString(), "ether")));
+    await executeWithRpcFallback(async (web3) => {
+      const balance = await web3.eth.getBalance(metaMaskAccount);
+      dispatch(setEthBalance(Web3.utils.fromWei(balance.toString(), "ether")));
+    });
   } catch (err: unknown) {}
 };
 
 export const updateEthLatestBlockTimestamp =
   (): AppThunk => async (dispatch, getState) => {
     try {
-      const web3 = getEthWeb3();
-      const blockNumber = await web3.givenProvider.request({
-        method: "eth_blockNumber",
+      await executeWithRpcFallback(async (web3) => {
+        const blockNumber = await web3.eth.getBlockNumber();
+        const block = await web3.eth.getBlock(blockNumber);
+        const latestBlockTimestamp = Number(block.timestamp);
+        dispatch(setLatestBlockTimestamp(latestBlockTimestamp + ""));
       });
-      const block = await web3.givenProvider.request({
-        method: "eth_getBlockByNumber",
-        params: [blockNumber, true],
-      });
-      const latestBlockTimestamp = parseInt(block.timestamp, 16);
-      dispatch(setLatestBlockTimestamp(latestBlockTimestamp + ""));
     } catch (err: unknown) {}
   };

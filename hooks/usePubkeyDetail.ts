@@ -11,7 +11,7 @@ import { NodePubkeyInfo } from 'interfaces/common';
 import { useCallback, useEffect, useState } from 'react';
 import { fetchBeaconCheckpoints, fetchPubkeyStatus } from 'utils/apiUtils';
 import { getPubkeyDisplayStatus } from 'utils/commonUtils';
-import { getEthWeb3 } from 'utils/web3Utils';
+import { getEthWeb3, executeWithRpcFallback } from 'utils/web3Utils';
 import Web3 from 'web3';
 import { useUnmatchedToken } from './useUnmatchedToken';
 import { useWalletAccount } from './useWalletAccount';
@@ -28,40 +28,21 @@ export function usePubkeyDetail(pubkeyAddress: string | undefined) {
     }
 
     try {
-      const web3 = getEthWeb3();
-      const networkWithdrawContract = new web3.eth.Contract(
-        getNetworkWithdrawContractAbi(),
-        getNetworkWithdrawContract(),
-        {
-          from: metaMaskAccount,
-        }
-      );
+      const pubkeyInfo = await executeWithRpcFallback(async (web3) => {
+        const nodeDepositContract = new web3.eth.Contract(
+          getNodeDepositContractAbi(),
+          getNodeDepositContract(),
+          {
+            from: metaMaskAccount,
+          }
+        );
 
-      const nodeDepositContract = new web3.eth.Contract(
-        getNodeDepositContractAbi(),
-        getNodeDepositContract(),
-        {
-          from: metaMaskAccount,
-        }
-      );
+        const info = await nodeDepositContract.methods
+          .pubkeyInfoOf(pubkeyAddress)
+          .call();
+        return info;
+      });
 
-      const pubkeyInfo = await nodeDepositContract.methods
-        .pubkeyInfoOf(pubkeyAddress)
-        // .pubkeyInfoOf(
-        //   "0xa6710aa9f9bf9e8fb01020e3a7dcca92fa9f24c07b4038d7b8437ad2082df41c01419760111c7857561da5c3d67db664"
-        // )
-        .call()
-        .catch((err: any) => {
-          console.log({ err });
-        });
-
-      // const beaconStatusResponse = await fetch(
-      //   `/api/pubkeyStatus?id=${pubkeyAddress}`,
-      //   {
-      //     method: "GET",
-      //   }
-      // );
-      // const beaconStatusResJson = await beaconStatusResponse.json();
       const beaconStatusResJson = await fetchPubkeyStatus(pubkeyAddress);
 
       const matchedBeaconData = beaconStatusResJson.data?.find(
@@ -76,10 +57,6 @@ export function usePubkeyDetail(pubkeyAddress: string | undefined) {
           ? '--'
           : matchedBeaconData?.validator?.activation_eligibility_epoch || '--';
 
-      // const beaconCheckpointsResponse = await fetch(`/api/beaconCheckpoints`, {
-      //   method: "GET",
-      // });
-      // const beaconCheckpointsResJson = await beaconCheckpointsResponse.json();
       const beaconCheckpointsResJson = await fetchBeaconCheckpoints();
 
       const currentEpoch = beaconCheckpointsResJson?.data?.finalized?.epoch;
@@ -112,7 +89,7 @@ export function usePubkeyDetail(pubkeyAddress: string | undefined) {
       setPubkeyInfo({
         ...newPubkeyInfo,
         displayStatus,
-      });
+      } as any);
     } catch (err: any) {
       console.log({ err });
     }

@@ -1,5 +1,5 @@
 import Web3 from 'web3';
-import { getEthereumRpc, getLsdEthMetamaskParam } from 'config/env';
+import { getEthereumRpc, getAllRpcUrls, getLsdEthMetamaskParam } from 'config/env';
 import snackbarUtil from './snackbarUtils';
 import { AbiItem } from 'web3-utils';
 
@@ -9,22 +9,178 @@ export function createWeb3(provider?: any) {
   return new Web3(provider || (window.ethereum as any) || Web3.givenProvider);
 }
 
+const STORAGE_KEY_WORKING_RPC_INDEX = 'working_rpc_index';
+
 let ethWeb3: Web3 | undefined = undefined;
+let currentRpcIndex = 0;
+
+// Always start from the configured primary RPC (index 0) on cold load so the
+// configured order is respected; in-session failover still advances the index
+// via switchToNextRpc and persists it, but a stale index must not override the
+// primary RPC on the next visit.
+
+let lastRpcFailureTime = 0;
+const RPC_FAILURE_COOLDOWN = 30000; // 30 seconds before trying failed RPC again
 
 /**
- * get Ethereum web3 instance singleton
+ * Create Web3 provider with current RPC with error handling
+ */
+function createWeb3Provider(rpcUrl: string) {
+  const useWebsocket = rpcUrl.startsWith('wss');
+  const provider = useWebsocket
+    ? new Web3.providers.WebsocketProvider(rpcUrl, {
+        timeout: 25000, // Below Geth's ~30s internal limit
+        clientConfig: {
+          keepalive: true,
+          keepaliveInterval: 60000,
+        },
+        reconnect: {
+          auto: false, // Disable auto-reconnect to fail fast
+          delay: 5000,
+          maxAttempts: 1,
+        },
+      })
+    : new Web3.providers.HttpProvider(rpcUrl, {
+        timeout: 25000, // Below Geth's ~30s internal limit
+        keepAlive: false,
+      });
+  
+  return provider;
+}
+
+/**
+ * Get Ethereum web3 instance singleton with RPC fallback
  */
 export function getEthWeb3() {
-  const rpcLink = getEthereumRpc();
+  const rpcList = getAllRpcUrls();
+  
   if (!ethWeb3) {
-    const useWebsocket = rpcLink.startsWith('wss');
-    ethWeb3 = createWeb3(
-      useWebsocket
-        ? new Web3.providers.WebsocketProvider(rpcLink)
-        : new Web3.providers.HttpProvider(rpcLink)
-    );
+    // Try to create Web3 with current RPC, if fails, try next ones
+    let attempts = 0;
+    while (attempts < rpcList.length) {
+      try {
+        const rpcLink = rpcList[currentRpcIndex];
+        ethWeb3 = createWeb3(createWeb3Provider(rpcLink));
+        break; // Success
+      } catch (error) {
+        console.warn(`Failed to create Web3 instance with RPC ${rpcList[currentRpcIndex]}:`, error);
+        
+        // If custom RPC failed (index 0 and custom RPC exists), remove it
+        if (currentRpcIndex === 0 && typeof window !== 'undefined' && window.localStorage.getItem('eth_lsd_custom_rpc')) {
+           window.localStorage.removeItem('eth_lsd_custom_rpc');
+        }
+
+        // Try next RPC
+        currentRpcIndex = (currentRpcIndex + 1) % rpcList.length;
+        // Save new index
+        if (typeof window !== 'undefined') {
+          window.localStorage.setItem(STORAGE_KEY_WORKING_RPC_INDEX, currentRpcIndex.toString());
+        }
+        attempts++;
+      }
+    }
+
+    // If all failed, just try to create with the current one (will likely fail again but we need an instance)
+    if (!ethWeb3) {
+       const rpcLink = rpcList[currentRpcIndex] || getEthereumRpc();
+       ethWeb3 = createWeb3(createWeb3Provider(rpcLink));
+    }
   }
   return ethWeb3;
+}
+
+// Event listeners for RPC changes
+type RpcChangeListener = (rpc: string) => void;
+const rpcChangeListeners: RpcChangeListener[] = [];
+
+export function onRpcChange(listener: RpcChangeListener) {
+  rpcChangeListeners.push(listener);
+  return () => {
+    const index = rpcChangeListeners.indexOf(listener);
+    if (index > -1) {
+      rpcChangeListeners.splice(index, 1);
+    }
+  };
+}
+
+function notifyRpcChange(newRpc: string) {
+  rpcChangeListeners.forEach(listener => listener(newRpc));
+}
+
+/**
+ * Get the currently active working RPC URL
+ */
+export function getCurrentWorkingRpc(): string {
+  const rpcList = getAllRpcUrls();
+  return rpcList[currentRpcIndex] || rpcList[0];
+}
+
+/**
+ * Switch to next RPC in the list and recreate Web3 instance
+ */
+export function switchToNextRpc(force: boolean = false): boolean {
+  const rpcList = getAllRpcUrls();
+  const now = Date.now();
+  
+  // Don't switch too frequently unless forced
+  if (!force && now - lastRpcFailureTime < RPC_FAILURE_COOLDOWN) {
+    return false;
+  }
+  
+  lastRpcFailureTime = now;
+  currentRpcIndex = (currentRpcIndex + 1) % rpcList.length;
+  
+  // Save new index
+  if (typeof window !== 'undefined') {
+    window.localStorage.setItem(STORAGE_KEY_WORKING_RPC_INDEX, currentRpcIndex.toString());
+  }
+
+  const newRpc = rpcList[currentRpcIndex];
+  
+  console.warn(`Switching to RPC: ${newRpc}`);
+  notifyRpcChange(newRpc);
+  
+  // Recreate Web3 instance with new RPC
+  try {
+      ethWeb3 = createWeb3(createWeb3Provider(newRpc));
+  } catch (e) {
+      console.error("Failed to switch RPC provider", e);
+      // If immediate creation fails, try next one recursively (prevent infinite loop with max depth?)
+      // For now, just let the next call handle it
+  }
+  
+  return true;
+}
+
+/**
+ * Execute Web3 call with automatic RPC fallback on failure
+ */
+export async function executeWithRpcFallback<T>(
+  operation: (web3: Web3) => Promise<T>,
+  maxRetries: number = 2
+): Promise<T> {
+  let lastError: any;
+  const rpcList = getAllRpcUrls();
+  const attempts = Math.min(maxRetries, rpcList.length);
+  
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const web3 = getEthWeb3();
+      const result = await operation(web3);
+      
+      return result;
+    } catch (error: any) {
+      lastError = error;
+      console.warn(`RPC call failed (attempt ${i + 1}/${attempts}):`, error.message);
+      
+      // Try next RPC if available and not last attempt
+      if (i < attempts - 1 && rpcList.length > 1) {
+        switchToNextRpc(true);
+      }
+    }
+  }
+  
+  throw lastError;
 }
 
 export async function getErc20AssetBalance(
@@ -36,14 +192,14 @@ export async function getErc20AssetBalance(
     return undefined;
   }
   try {
-    let web3 = getEthWeb3();
-    let contract = new web3.eth.Contract(tokenAbi, tokenAddress, {
-      from: userAddress,
+    return await executeWithRpcFallback(async (web3) => {
+      let contract = new web3.eth.Contract(tokenAbi, tokenAddress, {
+        from: userAddress,
+      });
+      const result = await contract.methods.balanceOf(userAddress).call();
+      let balance = web3.utils.fromWei(result + '', 'ether');
+      return balance;
     });
-    const result = await contract.methods.balanceOf(userAddress).call();
-    let balance = web3.utils.fromWei(result + '', 'ether');
-
-    return balance;
   } catch (err: any) {
     return undefined;
   }
@@ -106,43 +262,6 @@ export function decodeBalancesUpdatedLog(data: string, topics: string[]) {
       {
         name: 'time',
         type: 'uint256',
-      },
-    ],
-    data,
-    topics
-  );
-  return values;
-}
-
-/**
- * decode Unstake event log data
- * @param data event data
- * @param topics event topics
- * @returns decoded log values
- */
-export function decodeUnstakeLog(data: string, topics: string[]) {
-  const web3 = getEthWeb3();
-  const values = web3.eth.abi.decodeLog(
-    [
-      {
-        name: 'from',
-        type: 'address',
-      },
-      {
-        name: 'lsdTokenAmount',
-        type: 'uint256',
-      },
-      {
-        name: 'ethAmount',
-        type: 'uint256',
-      },
-      {
-        name: 'withdrawIndex',
-        type: 'uint256',
-      },
-      {
-        name: 'instantly',
-        type: 'bool',
       },
     ],
     data,

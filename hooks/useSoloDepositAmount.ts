@@ -1,7 +1,7 @@
 import { getNodeDepositContract } from "config/contract";
 import { getNodeDepositContractAbi } from "config/contractAbi";
 import { useCallback, useEffect, useState } from "react";
-import { getEthWeb3 } from "utils/web3Utils";
+import { getEthWeb3, executeWithRpcFallback } from "utils/web3Utils";
 import { formatEther } from "viem";
 import { useWalletAccount } from "./useWalletAccount";
 
@@ -13,18 +13,19 @@ export function useSoloDepositAmount() {
 
   const updateStatus = useCallback(async () => {
     try {
-      const web3 = getEthWeb3();
-      let nodeDepositContract = new web3.eth.Contract(
-        getNodeDepositContractAbi(),
-        getNodeDepositContract(),
-        {}
-      );
+      await executeWithRpcFallback(async (web3) => {
+        let nodeDepositContract = new web3.eth.Contract(
+          getNodeDepositContractAbi(),
+          getNodeDepositContract(),
+          {}
+        );
 
-      const res = await nodeDepositContract.methods
-        .soloNodeDepositAmount()
-        .call();
-      setSoloDepositAmountInWei(res);
-      setSoloDepositAmount(formatEther(res));
+        const res = await nodeDepositContract.methods
+          .soloNodeDepositAmount()
+          .call();
+        setSoloDepositAmountInWei(res);
+        setSoloDepositAmount(formatEther(res));
+      });
     } catch (err: unknown) {
       console.log("err", err);
     }

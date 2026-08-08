@@ -29,7 +29,8 @@ import { isSupportRestApi } from 'utils/configUtils';
 import snackbarUtil from 'utils/snackbarUtils';
 import { getShortAddress } from 'utils/stringUtils';
 import { MyDataNodeEjection } from './MyDataNodeEjection';
-import { getBeaconHost, getValidatorInfoURL } from 'config/env';
+import { getValidatorInfoURL } from 'config/env';
+import { fetchWithBeaconFallback } from 'utils/beaconUtils';
 
 export const MyDataPubkeys = () => {
   const { metaMaskAccount } = useWalletAccount();
@@ -282,9 +283,8 @@ const MyDataPubkeyItem = (props: MyDataPubkeyItemProps) => {
         return;
       }
 
-      const res = await fetch(
-        `${getBeaconHost()}/eth/v1/beacon/states/head/validators?id=` +
-        pubkeyInfo.pubkeyAddress,
+      const apires = await fetchWithBeaconFallback(
+        `/eth/v1/beacon/states/head/validators?id=${pubkeyInfo.pubkeyAddress}`,
         {
           method: 'GET',
           headers: {
@@ -292,7 +292,6 @@ const MyDataPubkeyItem = (props: MyDataPubkeyItemProps) => {
           },
         }
       );
-      const apires = await res.json();
 
       setApiData(apires.data[0]);
     };
