@@ -165,7 +165,10 @@ export const useValidatorEjectionData = (
         const events = await networkWithdrawContract.getPastEvents(
           'NotifyValidatorExit',
           {
-            fromBlock: getWithdrawContractDeploymentBlock(),
+            fromBlock: Math.max(
+              getWithdrawContractDeploymentBlock(),
+              currentBlock - 1555200 // 180 days at 10s per block
+            ),
             toBlock: currentBlock,
           }
         );

@@ -124,18 +124,15 @@ export const updateApr = (): AppThunk => async (dispatch, getState) => {
         getNetworkBalanceContractAbi(),
         getNetworkBalanceContract()
       );
-      const topics = web3.utils.sha3(
-        'BalancesUpdated(uint256,uint256,uint256,uint256)'
-      );
-      const events = await contract.getPastEvents('allEvents', {
+      const events = await contract.getPastEvents('BalancesUpdated', {
         fromBlock:
           currentBlock - Math.floor((1 / getBlockSeconds()) * 60 * 60 * 24 * 7),
         toBlock: currentBlock,
       });
       let apr = getDefaultApr();
-      const balancesUpdatedEvents = events
-        .filter((e) => e.raw.topics.length === 1 && e.raw.topics[0] === topics)
-        .sort((a, b) => a.blockNumber - b.blockNumber);
+      const balancesUpdatedEvents = events.sort(
+        (a, b) => a.blockNumber - b.blockNumber
+      );
       if (balancesUpdatedEvents.length > 1) {
         const beginEvent = balancesUpdatedEvents[0];
         const endEvent = balancesUpdatedEvents[balancesUpdatedEvents.length - 1];
@@ -189,18 +186,14 @@ export const updateYearlyApr = (): AppThunk => async (dispatch, getState) => {
           ? deploymentBlock
           : currentBlock - blocksFor365Days;
 
-      const topics = web3.utils.sha3(
-        'BalancesUpdated(uint256,uint256,uint256,uint256)'
-      );
-
-      const events = await contract.getPastEvents('allEvents', {
+      const events = await contract.getPastEvents('BalancesUpdated', {
         fromBlock: startBlock,
         toBlock: currentBlock,
       });
 
-      const balancesUpdatedEvents = events
-        .filter((e) => e.raw.topics.length === 1 && e.raw.topics[0] === topics)
-        .sort((a, b) => a.blockNumber - b.blockNumber);
+      const balancesUpdatedEvents = events.sort(
+        (a, b) => a.blockNumber - b.blockNumber
+      );
 
       if (balancesUpdatedEvents.length > 1) {
         const beginEvent = balancesUpdatedEvents[0];

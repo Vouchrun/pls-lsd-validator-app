@@ -21,17 +21,14 @@ export function useUnstakedTokenOfDay() {
 
         const currentBlock = await web3.eth.getBlockNumber();
 
-        const topics = Web3.utils.sha3(
-          "Unstake(address,uint256,uint256,uint256,bool)"
-        );
-        const events = await networkWithdrawContract.getPastEvents("allEvents", {
+        const events = await networkWithdrawContract.getPastEvents("Unstake", {
           fromBlock: currentBlock - Math.floor((1 / 12) * 60 * 60 * 24),
           toBlock: currentBlock,
         });
 
-        const unstakeEvents = events
-          .filter((e) => e.raw.topics.length === 1 && e.raw.topics[0] === topics)
-          .sort((a, b) => a.blockNumber - b.blockNumber);
+        const unstakeEvents = events.sort(
+          (a, b) => a.blockNumber - b.blockNumber
+        );
 
         let totalUnstakedAmount = 0;
 
