@@ -58,7 +58,7 @@ async function getSharedRewardsData(web3: any): Promise<RewardsData> {
       .call();
 
     const response = await fetch(
-      `https://${nodeRewardsFileCid}.ipfs.dweb.link/${getLsdEthTokenContract().toLowerCase()}-rewards-${getEthereumChainId()}-${latestMerkleRootEpoch}.json`
+      `https://fuchsia-adjacent-spoonbill-601.mypinata.cloud/ipfs/${nodeRewardsFileCid}/${getLsdEthTokenContract().toLowerCase()}-rewards-${getEthereumChainId()}-${latestMerkleRootEpoch}.json`
     );
 
     const resText = await response.text();
