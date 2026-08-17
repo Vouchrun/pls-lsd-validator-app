@@ -113,5 +113,5 @@ export function getSAFUAddresses() {
 }
 
 export function getMultiSendContract() {
-  return '0xA238CBeb142c10Ef7Ad8442C6D1f9E89e07e7761';
+  return '0x40A2aCCbd92BCA938b02010E17A5b8929b49130D';
 }

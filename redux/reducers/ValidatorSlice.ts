@@ -649,7 +649,7 @@ export const batchClaimValidatorRewards =
             ValidatorClaimType.ClaimReward
           )
           .encodeABI();
-        const to = item.address.toLowerCase().replace(/^0x/, '');
+        const to = getNetworkWithdrawContract().toLowerCase().replace(/^0x/, '');
         const value = '0'.repeat(64);
         const dataLength = ((calldata.length - 2) / 2)
           .toString(16)
