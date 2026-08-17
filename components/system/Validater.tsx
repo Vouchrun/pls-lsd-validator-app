@@ -7,7 +7,12 @@ import { useWalletAccount } from "hooks/useWalletAccount";
 import { useEffect, useState } from "react";
 import { fetchValidatorData } from "redux/reducers/ValidatorNodeAddress";
 import { useNodeUnclaimedRewards } from "hooks/useNodeUnclaimedRewards";
-import { addTrustNode, removeTrustNode } from "redux/reducers/ValidatorSlice";
+import {
+  addTrustNode,
+  batchClaimValidatorRewards,
+  removeTrustNode,
+} from "redux/reducers/ValidatorSlice";
+import snackbarUtil from "utils/snackbarUtils";
 import { useWriteContract } from "wagmi";
 import Image from "next/image";
 import doubleLeftIcon from "public/images/double-left.svg";
@@ -15,9 +20,21 @@ import doubleRightIcon from "public/images/double-right.svg";
 import leftIcon from "public/images/arrow-left.svg";
 import rightIcon from "public/images/arrow-right.svg";
 
-const UnclaimedRewardsCell = ({ address }: { address: string }) => {
-  const { unclaimedRewards, isLoading, error } =
+const UnclaimedRewardsCell = ({
+  address,
+  onHasUnclaimedChange,
+}: {
+  address: string;
+  onHasUnclaimedChange?: (address: string, hasUnclaimed: boolean) => void;
+}) => {
+  const { unclaimedRewards, hasUnclaimed, isLoading, error } =
     useNodeUnclaimedRewards(address);
+
+  useEffect(() => {
+    if (!isLoading && onHasUnclaimedChange) {
+      onHasUnclaimedChange(address, hasUnclaimed);
+    }
+  }, [address, hasUnclaimed, isLoading, onHasUnclaimedChange]);
 
   if (isLoading) {
     return <DataLoading height="20px" />;
@@ -78,6 +95,12 @@ export default function Validater({ nodes }: any) {
   const [filter, setFilter] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
   const [resultsPerPage, setResultsPerPage] = useState(10);
+  const [checkedItems, setCheckedItems] = useState<string[]>([]);
+  const [allSelected, setAllSelected] = useState(false);
+  const [claimableMap, setClaimableMap] = useState<Record<string, boolean>>({});
+  const claimRewardsLoading = useAppSelector(
+    (state) => state.validator.claimRewardsLoading
+  );
 
   // Get validator data from Redux store
   const {
@@ -132,12 +155,74 @@ export default function Validater({ nodes }: any) {
       : validatorTrustedNodeAddressData;
   const totalPages = Math.ceil(data.length / resultsPerPage);
 
-  const handleFirstPage = () => setCurrentPage(1);
-  const handlePreviousPage = () =>
+  const startIndex = (currentPage - 1) * resultsPerPage;
+  const endIndex = Math.min(startIndex + resultsPerPage, data.length);
+  const paginatedData = data.slice(startIndex, endIndex);
+
+  const handleCheckboxChange = (item: string) => (event: any) => {
+    if (event.target.checked) {
+      setCheckedItems((prev) => [...prev, item]);
+    } else {
+      setCheckedItems((prev) =>
+        prev.filter((checkedItem) => checkedItem !== item)
+      );
+    }
+  };
+
+  const handleAllSelected = (event: any) => {
+    if (event.target.checked) {
+      setAllSelected(true);
+      paginatedData.map((node: any) => {
+        if (claimableMap[node.address]) {
+          setCheckedItems((prev) => [...prev, node.address]);
+        }
+      });
+    } else {
+      setCheckedItems([]);
+      setAllSelected(false);
+    }
+  };
+
+  const handleHasUnclaimedChange = (address: string, hasUnclaimed: boolean) => {
+    setClaimableMap((prev) => {
+      if (prev[address] === hasUnclaimed) return prev;
+      return { ...prev, [address]: hasUnclaimed };
+    });
+  };
+
+  const handleRunClaim = () => {
+    if (checkedItems.length === 0) return;
+    dispatch(
+      batchClaimValidatorRewards(writeContractAsync, checkedItems, (success) => {
+        if (success) {
+          setCheckedItems([]);
+          setAllSelected(false);
+          snackbarUtil.success("Batch claim submitted");
+        }
+      })
+    );
+  };
+
+  const handleFirstPage = () => {
+    setAllSelected(false);
+    setCheckedItems([]);
+    setCurrentPage(1);
+  };
+  const handlePreviousPage = () => {
+    setAllSelected(false);
+    setCheckedItems([]);
     setCurrentPage((prev) => Math.max(1, prev - 1));
-  const handleNextPage = () =>
+  };
+  const handleNextPage = () => {
+    setAllSelected(false);
+    setCheckedItems([]);
     setCurrentPage((prev) => Math.min(totalPages, prev + 1));
-  const handleLastPage = () => setCurrentPage(totalPages);
+  };
+  const handleLastPage = () => {
+    setAllSelected(false);
+    setCheckedItems([]);
+    setCurrentPage(totalPages);
+  };
 
   const renderTableBody = (filter: string) => {
     if (loading) {
@@ -172,10 +257,6 @@ export default function Validater({ nodes }: any) {
       );
     }
 
-    const startIndex = (currentPage - 1) * resultsPerPage;
-    const endIndex = Math.min(startIndex + resultsPerPage, data.length);
-    const paginatedData = data.slice(startIndex, endIndex);
-
     return (
       <>
         <tbody>
@@ -191,10 +272,21 @@ export default function Validater({ nodes }: any) {
                 {node.activeCount > 0 ? getStatusIcon(node.status) : "--"}
               </td>
               <td className="text-center font-semibold px-[30px] py-[15px] text-[12px] sm:text-[.16rem]">
-                <UnclaimedRewardsCell address={node.address} />
+                <UnclaimedRewardsCell
+                  address={node.address}
+                  onHasUnclaimedChange={handleHasUnclaimedChange}
+                />
               </td>
               <td className="text-center font-semibold px-[30px] py-[15px] text-[14px] md:text-[16px]">
                 {node.activeCount}
+              </td>
+              <td className="text-center px-[30px] py-[15px]">
+                <input
+                  type="checkbox"
+                  checked={checkedItems.includes(node.address)}
+                  disabled={!claimableMap[node.address]}
+                  onChange={handleCheckboxChange(node.address)}
+                />
               </td>
             </tr>
           ))}
@@ -335,6 +427,17 @@ export default function Validater({ nodes }: any) {
                 <th className="bg-[#E2E0D0] dark:bg-[#333333] font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[14px] md:text-[16px] text-color-text2 px-[30px] py-[30px]">
                   Active Validators
                 </th>
+                <th className="bg-[#E2E0D0] dark:bg-[#333333] font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[14px] md:text-[16px] text-color-text2 px-[30px] py-[30px]">
+                  <div className="flex items-center">
+                    Claim
+                    <input
+                      type="checkbox"
+                      className="ml-[.24rem]"
+                      checked={allSelected}
+                      onChange={(e) => handleAllSelected(e)}
+                    />
+                  </div>
+                </th>
               </tr>
             </thead>
             {renderTableBody(filter)}
@@ -354,6 +457,15 @@ export default function Validater({ nodes }: any) {
             }
           />
           <div className="mt-[10px] max-w-[100%] mx-auto flex items-center gap-1 w-[100%] justify-center">
+            <CustomButton
+              type="small"
+              height="42px"
+              width="130px"
+              disabled={checkedItems.length === 0 || claimRewardsLoading}
+              onClick={handleRunClaim}
+            >
+              Run Claim
+            </CustomButton>
             <CustomButton
               type="small"
               height="42px"

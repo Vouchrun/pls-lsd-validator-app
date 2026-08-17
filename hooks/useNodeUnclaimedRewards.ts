@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import Web3 from 'web3';
+import { useAppSlice } from 'hooks/selector';
 import {
   getNetworkWithdrawContract,
   getLsdEthTokenContract,
@@ -13,12 +14,7 @@ import {
   } from 'config/contractAbi';
 import { getEthereumChainId } from 'config/env';
 
-interface IpfsRewardItem {
-  address: string;
-  totalRewardAmount: string;
-  totalDepositAmount: string;
-  totalExitDepositAmount: string;
-}
+import { IpfsRewardItem } from 'interfaces/common';
 
 // The rewards file location (cid + epoch) and the IPFS rewards JSON itself
 // are shared by every node, so fetch and parse them once and reuse across
@@ -84,8 +80,25 @@ async function getSharedRewardsData(web3: any): Promise<RewardsData> {
   return inFlightRewards;
 }
 
+export async function getNodeRewardItemsForAddresses(
+  nodeAddresses: string[],
+  web3?: any
+): Promise<IpfsRewardItem[]> {
+  const targetWeb3 = web3 || getEthWeb3();
+  const rewardsData = await getSharedRewardsData(targetWeb3);
+  const lower = nodeAddresses.map((a) => a.toLowerCase());
+  return rewardsData.list.filter((item) =>
+    lower.includes(item.address.toLowerCase())
+  );
+}
+
 export const useNodeUnclaimedRewards = (nodeAddress: string) => {
+  const { updateFlag } = useAppSlice();
   const [unclaimedRewards, setUnclaimedRewards] = useState<string>('0');
+  const [hasUnclaimed, setHasUnclaimed] = useState(false);
+  const [ipfsRewardItem, setIpfsRewardItem] = useState<
+    IpfsRewardItem | undefined
+  >(undefined);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -131,6 +144,10 @@ export const useNodeUnclaimedRewards = (nodeAddress: string) => {
               ) + ''
             );
 
+            setHasUnclaimed(
+              Number(totalRewardAmount) - Number(totalClaimedRewardOfNode) > 0
+            );
+            setIpfsRewardItem(nodeRewardInfo);
             setUnclaimedRewards(
               formatNumber(+unclaimedRewardAmount, {
                 hideDecimalsForZero: true,
@@ -139,6 +156,8 @@ export const useNodeUnclaimedRewards = (nodeAddress: string) => {
             );
           } else {
             setUnclaimedRewards('0');
+            setHasUnclaimed(false);
+            setIpfsRewardItem(undefined);
           }
         });
 
@@ -151,7 +170,7 @@ export const useNodeUnclaimedRewards = (nodeAddress: string) => {
     };
 
     fetchUnclaimedRewards();
-  }, [nodeAddress]);
+  }, [nodeAddress, updateFlag]);
 
-  return { unclaimedRewards, isLoading, error };
+  return { unclaimedRewards, hasUnclaimed, ipfsRewardItem, isLoading, error };
 };

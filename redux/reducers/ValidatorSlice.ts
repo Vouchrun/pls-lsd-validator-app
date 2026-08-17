@@ -1,10 +1,12 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import {
+  getMultiSendContract,
   getNetworkProposalContract,
   getNetworkWithdrawContract,
   getNodeDepositContract,
 } from 'config/contract';
 import {
+  getMultiSendContractAbi,
   getNetworkProposalContractAbi,
   getNetworkWithdrawContractAbi,
   getNodeDepositContractAbi,
@@ -21,6 +23,7 @@ import {
   TRANSACTION_FAILED_MESSAGE,
 } from 'constants/common';
 import dayjs from 'dayjs';
+import { getNodeRewardItemsForAddresses } from 'hooks/useNodeUnclaimedRewards';
 import {
   IpfsRewardItem,
   NodePubkeyInfo,
@@ -574,6 +577,112 @@ export const claimValidatorRewards =
                   // addEthValidatorWithdrawRecords(withdrawInfo);
 
                   snackbarUtil.success('Claim rewards success');
+                  callback && callback(true, {});
+                  dispatch(setUpdateFlag(dayjs().unix()));
+                } else {
+                  throw new Error(TRANSACTION_FAILED_MESSAGE);
+                }
+              });
+            }
+          },
+          onError: (error: any) => {
+            throw new Error(TRANSACTION_FAILED_MESSAGE);
+          },
+        }
+      );
+    } catch (err: any) {
+      let displayMsg = err.message || TRANSACTION_FAILED_MESSAGE;
+      if (err.code === -32603) {
+        displayMsg = COMMON_ERROR_MESSAGE;
+      } else if (isEvmTxCancelError(err)) {
+        displayMsg = CANCELLED_MESSAGE;
+      }
+      snackbarUtil.error(displayMsg);
+    } finally {
+      dispatch(setClaimRewardsLoading(false));
+      dispatch(updateEthBalance());
+    }
+  };
+
+export const batchClaimValidatorRewards =
+  (
+    writeContractAsync: Function,
+    nodeAddresses: string[],
+    callback?: (success: boolean, result: any) => void
+  ): AppThunk =>
+  async (dispatch, getState) => {
+    if (!nodeAddresses || nodeAddresses.length === 0) {
+      return;
+    }
+
+    try {
+      const metaMaskAccount = getState().wallet.metaMaskAccount;
+      if (!metaMaskAccount) {
+        throw new Error('Please connect MetaMask');
+      }
+
+      const web3 = getEthWeb3();
+
+      dispatch(setClaimRewardsLoading(true));
+
+      const items = await getNodeRewardItemsForAddresses(nodeAddresses, web3);
+      if (items.length === 0) {
+        throw new Error('No claimable rewards for selected nodes');
+      }
+
+      const networkWithdrawContract = new web3.eth.Contract(
+        getNetworkWithdrawContractAbi(),
+        getNetworkWithdrawContract(),
+        {}
+      );
+
+      let transactions = '0x';
+      for (const item of items) {
+        const formatProofs = item.proof.split(':').map((p) => '0x' + p);
+        const calldata = networkWithdrawContract.methods
+          .nodeClaim(
+            item.index,
+            item.address,
+            item.totalRewardAmount,
+            item.totalExitDepositAmount,
+            formatProofs,
+            ValidatorClaimType.ClaimReward
+          )
+          .encodeABI();
+        const to = item.address.toLowerCase().replace(/^0x/, '');
+        const value = '0'.repeat(64);
+        const dataLength = ((calldata.length - 2) / 2)
+          .toString(16)
+          .padStart(64, '0');
+        const operation = '00';
+        transactions +=
+          operation + to + value + dataLength + calldata.replace(/^0x/, '');
+      }
+
+      await writeContractAsync(
+        {
+          abi: getMultiSendContractAbi(),
+          address: getMultiSendContract() as `0x${string}`,
+          functionName: 'multiSend',
+          args: [transactions],
+        },
+        {
+          onSuccess: (data: any) => {
+            if (data.Message == 'deny')
+              throw new Error(TRANSACTION_FAILED_MESSAGE);
+          },
+          onSettled: async (data: any, error: any) => {
+            if (error) {
+              console.error('Transaction settled with error:', error);
+            } else {
+              await executeWithRpcFallback(async (web3) => {
+                const result = await waitForTransactionReceipt(web3, data);
+                callback && callback(result.status, result);
+                dispatch(updateEthBalance());
+                dispatch(setClaimRewardsLoading(false));
+
+                if (result && result.status) {
+                  snackbarUtil.success('Batch claim rewards success');
                   callback && callback(true, {});
                   dispatch(setUpdateFlag(dayjs().unix()));
                 } else {
