@@ -293,7 +293,7 @@ export default function Validater({ nodes }: any) {
         </tbody>
         <tfoot>
           <tr>
-            <td colSpan={3}>
+            <td colSpan={4}>
               <div className="flex items-center justify-center mt-1 md:flex-row flex-col p-[.16rem]">
                 <div className="flex items-center">
                   <div className="text-[#FE8A3C] text-[14px] mr-[10px]">
@@ -366,6 +366,17 @@ export default function Validater({ nodes }: any) {
                   </button>
                 </div>
               </div>
+            </td>
+            <td className="text-center px-[30px] py-[15px]">
+              <CustomButton
+                type="small"
+                height="42px"
+                width="130px"
+                disabled={checkedItems.length === 0 || claimRewardsLoading}
+                onClick={handleRunClaim}
+              >
+                Run Claim
+              </CustomButton>
             </td>
           </tr>
         </tfoot>
@@ -457,15 +468,6 @@ export default function Validater({ nodes }: any) {
             }
           />
           <div className="mt-[10px] max-w-[100%] mx-auto flex items-center gap-1 w-[100%] justify-center">
-            <CustomButton
-              type="small"
-              height="42px"
-              width="130px"
-              disabled={checkedItems.length === 0 || claimRewardsLoading}
-              onClick={handleRunClaim}
-            >
-              Run Claim
-            </CustomButton>
             <CustomButton
               type="small"
               height="42px"
