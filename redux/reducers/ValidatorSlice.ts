@@ -818,12 +818,20 @@ export const batchSweepValidatorRewards =
           nonce: nonce.toString(),
         };
 
-        const signature = await signTypedDataAsync({
+        const rawSignature = await signTypedDataAsync({
           domain,
           types,
           primaryType: 'SafeTx',
           message,
         });
+
+        let signature = rawSignature;
+        const vValue = parseInt(rawSignature.slice(-2), 16);
+        if (vValue < 27) {
+          signature =
+            rawSignature.slice(0, -2) +
+            (vValue + 27).toString(16).padStart(2, '0');
+        }
 
         const calldata = safeContract.methods
           .execTransaction(
@@ -839,6 +847,38 @@ export const batchSweepValidatorRewards =
             signature
           )
           .encodeABI();
+
+        try {
+          await web3.eth.call({
+            to: address,
+            data: calldata,
+            from: getMultiSendContract(),
+          });
+        } catch (simErr: any) {
+          const revertData = simErr?.data;
+          let reason = simErr?.message || 'unknown';
+          if (
+            typeof revertData === 'string' &&
+            revertData.startsWith('0x08c379a0')
+          ) {
+            const hex = revertData.slice(2);
+            const len = parseInt(hex.slice(72, 136), 16);
+            let str = '';
+            for (let i = 136; i < 136 + len * 2; i += 2) {
+              str += String.fromCharCode(parseInt(hex.slice(i, i + 2), 16));
+            }
+            reason = str;
+          }
+          console.error(
+            'Sweep simulation reverted for safe',
+            address,
+            reason,
+            simErr
+          );
+          throw new Error(
+            'Sweep simulation failed for ' + address.slice(0, 10) + ': ' + reason
+          );
+        }
 
         const to = address.toLowerCase().replace(/^0x/, '');
         const value = '0'.repeat(64);

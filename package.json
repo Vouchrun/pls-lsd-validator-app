@@ -1,6 +1,6 @@
 {
   "name": "eth-lsd-validator-app",
-  "version": "2.7.1",
+  "version": "2.7.2",
   "scripts": {
     "dev": "NEXT_PUBLIC_ENV=dev next dev -p 8001",
     "build:dev": "NEXT_PUBLIC_ENV=dev next build",
