@@ -10,8 +10,10 @@ import {
   getNetworkProposalContractAbi,
   getNetworkWithdrawContractAbi,
   getNodeDepositContractAbi,
+  getSafeMultiContractAbi,
 } from 'config/contractAbi';
 import {
+  getEthereumChainId,
   getTrustValidatorDepositAmount,
   getValidatorTotalDepositAmount,
 } from 'config/env';
@@ -636,8 +638,25 @@ export const batchClaimValidatorRewards =
         {}
       );
 
-      let transactions = '0x';
+      const claimableItemsFromRewards: IpfsRewardItem[] = [];
       for (const item of items) {
+        const totalClaimedRewardOfNode = await networkWithdrawContract.methods
+          .totalClaimedRewardOfNode(item.address)
+          .call();
+        if (
+          BigInt(item.totalRewardAmount) - BigInt(totalClaimedRewardOfNode) >
+          0n
+        ) {
+          claimableItemsFromRewards.push(item);
+        }
+      }
+
+      if (claimableItemsFromRewards.length === 0) {
+        throw new Error('No claimable rewards for selected nodes');
+      }
+
+      let transactions = '0x';
+      for (const item of claimableItemsFromRewards) {
         const formatProofs = item.proof.split(':').map((p) => '0x' + p);
         const calldata = networkWithdrawContract.methods
           .nodeClaim(
@@ -683,6 +702,184 @@ export const batchClaimValidatorRewards =
 
                 if (result && result.status) {
                   snackbarUtil.success('Batch claim rewards success');
+                  callback && callback(true, {});
+                  dispatch(setUpdateFlag(dayjs().unix()));
+                } else {
+                  throw new Error(TRANSACTION_FAILED_MESSAGE);
+                }
+              });
+            }
+          },
+          onError: (error: any) => {
+            throw new Error(TRANSACTION_FAILED_MESSAGE);
+          },
+        }
+      );
+    } catch (err: any) {
+      let displayMsg = err.message || TRANSACTION_FAILED_MESSAGE;
+      if (err.code === -32603) {
+        displayMsg = COMMON_ERROR_MESSAGE;
+      } else if (isEvmTxCancelError(err)) {
+        displayMsg = CANCELLED_MESSAGE;
+      }
+      snackbarUtil.error(displayMsg);
+    } finally {
+      dispatch(setClaimRewardsLoading(false));
+      dispatch(updateEthBalance());
+    }
+  };
+
+export const batchSweepValidatorRewards =
+  (
+    writeContractAsync: Function,
+    signTypedDataAsync: Function,
+    nodeAddresses: string[],
+    destination: string,
+    callback?: (success: boolean, result: any) => void
+  ): AppThunk =>
+  async (dispatch, getState) => {
+    if (
+      !nodeAddresses ||
+      nodeAddresses.length === 0 ||
+      !destination
+    ) {
+      return;
+    }
+
+    try {
+      const metaMaskAccount = getState().wallet.metaMaskAccount;
+      if (!metaMaskAccount) {
+        throw new Error('Please connect MetaMask');
+      }
+
+      const web3 = getEthWeb3();
+
+      if (!web3.utils.isAddress(destination)) {
+        throw new Error('Invalid sweep destination address');
+      }
+
+      dispatch(setClaimRewardsLoading(true));
+
+      const chainId = Number(getEthereumChainId());
+      const ZERO = '0x0000000000000000000000000000000000000000';
+
+      let transactions = '0x';
+      let sweptCount = 0;
+
+      for (const address of nodeAddresses) {
+        const code = await web3.eth.getCode(address);
+        if (code === '0x' || !code) {
+          continue;
+        }
+
+        const balance = await web3.eth.getBalance(address);
+        if (BigInt(balance) === 0n) {
+          continue;
+        }
+
+        const safeContract = new web3.eth.Contract(
+          getSafeMultiContractAbi(),
+          address,
+          {}
+        );
+
+        const nonce = await safeContract.methods.nonce().call();
+
+        const domain = {
+          chainId,
+          verifyingContract: address,
+        };
+
+        const types = {
+          SafeTx: [
+            { name: 'to', type: 'address' },
+            { name: 'value', type: 'uint256' },
+            { name: 'data', type: 'bytes' },
+            { name: 'operation', type: 'uint8' },
+            { name: 'safeTxGas', type: 'uint256' },
+            { name: 'baseGas', type: 'uint256' },
+            { name: 'gasPrice', type: 'uint256' },
+            { name: 'gasToken', type: 'address' },
+            { name: 'refundReceiver', type: 'address' },
+            { name: 'nonce', type: 'uint256' },
+          ],
+        };
+
+        const message = {
+          to: destination,
+          value: balance.toString(),
+          data: '0x',
+          operation: 0,
+          safeTxGas: '0',
+          baseGas: '0',
+          gasPrice: '0',
+          gasToken: ZERO,
+          refundReceiver: ZERO,
+          nonce: nonce.toString(),
+        };
+
+        const signature = await signTypedDataAsync({
+          domain,
+          types,
+          primaryType: 'SafeTx',
+          message,
+        });
+
+        const calldata = safeContract.methods
+          .execTransaction(
+            destination,
+            balance.toString(),
+            '0x',
+            0,
+            '0',
+            '0',
+            '0',
+            ZERO,
+            ZERO,
+            signature
+          )
+          .encodeABI();
+
+        const to = address.toLowerCase().replace(/^0x/, '');
+        const value = '0'.repeat(64);
+        const dataLength = ((calldata.length - 2) / 2)
+          .toString(16)
+          .padStart(64, '0');
+        const operation = '00';
+        transactions +=
+          operation + to + value + dataLength + calldata.replace(/^0x/, '');
+
+        sweptCount += 1;
+      }
+
+      if (sweptCount === 0) {
+        throw new Error('No sweepable balances for the selected nodes');
+      }
+
+      await writeContractAsync(
+        {
+          abi: getMultiSendContractAbi(),
+          address: getMultiSendContract() as `0x${string}`,
+          functionName: 'multiSend',
+          args: [transactions],
+        },
+        {
+          onSuccess: (data: any) => {
+            if (data.Message == 'deny')
+              throw new Error(TRANSACTION_FAILED_MESSAGE);
+          },
+          onSettled: async (data: any, error: any) => {
+            if (error) {
+              console.error('Transaction settled with error:', error);
+            } else {
+              await executeWithRpcFallback(async (web3) => {
+                const result = await waitForTransactionReceipt(web3, data);
+                callback && callback(result.status, result);
+                dispatch(updateEthBalance());
+                dispatch(setClaimRewardsLoading(false));
+
+                if (result && result.status) {
+                  snackbarUtil.success('Batch sweep rewards success');
                   callback && callback(true, {});
                   dispatch(setUpdateFlag(dayjs().unix()));
                 } else {

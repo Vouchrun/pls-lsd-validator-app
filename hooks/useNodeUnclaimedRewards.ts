@@ -96,6 +96,8 @@ export const useNodeUnclaimedRewards = (nodeAddress: string) => {
   const { updateFlag } = useAppSlice();
   const [unclaimedRewards, setUnclaimedRewards] = useState<string>('0');
   const [hasUnclaimed, setHasUnclaimed] = useState(false);
+  const [hasBalance, setHasBalance] = useState(false);
+  const [isContract, setIsContract] = useState(false);
   const [ipfsRewardItem, setIpfsRewardItem] = useState<
     IpfsRewardItem | undefined
   >(undefined);
@@ -105,6 +107,8 @@ export const useNodeUnclaimedRewards = (nodeAddress: string) => {
   useEffect(() => {
     const fetchUnclaimedRewards = async () => {
       if (!nodeAddress) {
+        setHasBalance(false);
+        setIsContract(false);
         setIsLoading(false);
         return;
       }
@@ -128,6 +132,14 @@ export const useNodeUnclaimedRewards = (nodeAddress: string) => {
             .totalClaimedRewardOfNode(nodeAddress)
             .call();
 
+          // Per-node: PLS balance and contract code (sweep eligibility)
+          const [balance, code] = await Promise.all([
+            web3.eth.getBalance(nodeAddress),
+            web3.eth.getCode(nodeAddress),
+          ]);
+          setHasBalance(BigInt(balance) > 0n);
+          setIsContract(code !== '0x');
+
           // Find reward info for the specific node
           const nodeRewardInfo = rewardsData.list.find(
             (item) =>
@@ -145,7 +157,7 @@ export const useNodeUnclaimedRewards = (nodeAddress: string) => {
             );
 
             setHasUnclaimed(
-              Number(totalRewardAmount) - Number(totalClaimedRewardOfNode) > 0
+              BigInt(totalRewardAmount) - BigInt(totalClaimedRewardOfNode) > 0n
             );
             setIpfsRewardItem(nodeRewardInfo);
             setUnclaimedRewards(
@@ -165,6 +177,8 @@ export const useNodeUnclaimedRewards = (nodeAddress: string) => {
       } catch (err: any) {
         console.error('Error fetching unclaimed rewards:', err);
         setError(err.message || 'Failed to fetch unclaimed rewards');
+        setHasBalance(false);
+        setIsContract(false);
         setIsLoading(false);
       }
     };
@@ -172,5 +186,13 @@ export const useNodeUnclaimedRewards = (nodeAddress: string) => {
     fetchUnclaimedRewards();
   }, [nodeAddress, updateFlag]);
 
-  return { unclaimedRewards, hasUnclaimed, ipfsRewardItem, isLoading, error };
+  return {
+    unclaimedRewards,
+    hasUnclaimed,
+    hasBalance,
+    isContract,
+    ipfsRewardItem,
+    isLoading,
+    error,
+  };
 };
