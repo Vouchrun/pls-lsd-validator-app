@@ -1,15 +1,19 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import {
+  getMultiSendContract,
   getNetworkProposalContract,
   getNetworkWithdrawContract,
   getNodeDepositContract,
 } from 'config/contract';
 import {
+  getMultiSendContractAbi,
   getNetworkProposalContractAbi,
   getNetworkWithdrawContractAbi,
   getNodeDepositContractAbi,
+  getSafeMultiContractAbi,
 } from 'config/contractAbi';
 import {
+  getEthereumChainId,
   getTrustValidatorDepositAmount,
   getValidatorTotalDepositAmount,
 } from 'config/env';
@@ -21,6 +25,7 @@ import {
   TRANSACTION_FAILED_MESSAGE,
 } from 'constants/common';
 import dayjs from 'dayjs';
+import { getNodeRewardItemsForAddresses } from 'hooks/useNodeUnclaimedRewards';
 import {
   IpfsRewardItem,
   NodePubkeyInfo,
@@ -574,6 +579,347 @@ export const claimValidatorRewards =
                   // addEthValidatorWithdrawRecords(withdrawInfo);
 
                   snackbarUtil.success('Claim rewards success');
+                  callback && callback(true, {});
+                  dispatch(setUpdateFlag(dayjs().unix()));
+                } else {
+                  throw new Error(TRANSACTION_FAILED_MESSAGE);
+                }
+              });
+            }
+          },
+          onError: (error: any) => {
+            throw new Error(TRANSACTION_FAILED_MESSAGE);
+          },
+        }
+      );
+    } catch (err: any) {
+      let displayMsg = err.message || TRANSACTION_FAILED_MESSAGE;
+      if (err.code === -32603) {
+        displayMsg = COMMON_ERROR_MESSAGE;
+      } else if (isEvmTxCancelError(err)) {
+        displayMsg = CANCELLED_MESSAGE;
+      }
+      snackbarUtil.error(displayMsg);
+    } finally {
+      dispatch(setClaimRewardsLoading(false));
+      dispatch(updateEthBalance());
+    }
+  };
+
+export const batchClaimValidatorRewards =
+  (
+    writeContractAsync: Function,
+    nodeAddresses: string[],
+    callback?: (success: boolean, result: any) => void
+  ): AppThunk =>
+  async (dispatch, getState) => {
+    if (!nodeAddresses || nodeAddresses.length === 0) {
+      return;
+    }
+
+    try {
+      const metaMaskAccount = getState().wallet.metaMaskAccount;
+      if (!metaMaskAccount) {
+        throw new Error('Please connect MetaMask');
+      }
+
+      const web3 = getEthWeb3();
+
+      dispatch(setClaimRewardsLoading(true));
+
+      const items = await getNodeRewardItemsForAddresses(nodeAddresses, web3);
+      if (items.length === 0) {
+        throw new Error('No claimable rewards for selected nodes');
+      }
+
+      const networkWithdrawContract = new web3.eth.Contract(
+        getNetworkWithdrawContractAbi(),
+        getNetworkWithdrawContract(),
+        {}
+      );
+
+      const claimableItemsFromRewards: IpfsRewardItem[] = [];
+      for (const item of items) {
+        const totalClaimedRewardOfNode = await networkWithdrawContract.methods
+          .totalClaimedRewardOfNode(item.address)
+          .call();
+        if (
+          BigInt(item.totalRewardAmount) - BigInt(totalClaimedRewardOfNode) >
+          0n
+        ) {
+          claimableItemsFromRewards.push(item);
+        }
+      }
+
+      if (claimableItemsFromRewards.length === 0) {
+        throw new Error('No claimable rewards for selected nodes');
+      }
+
+      let transactions = '0x';
+      for (const item of claimableItemsFromRewards) {
+        const formatProofs = item.proof.split(':').map((p) => '0x' + p);
+        const calldata = networkWithdrawContract.methods
+          .nodeClaim(
+            item.index,
+            item.address,
+            item.totalRewardAmount,
+            item.totalExitDepositAmount,
+            formatProofs,
+            ValidatorClaimType.ClaimReward
+          )
+          .encodeABI();
+        const to = getNetworkWithdrawContract().toLowerCase().replace(/^0x/, '');
+        const value = '0'.repeat(64);
+        const dataLength = ((calldata.length - 2) / 2)
+          .toString(16)
+          .padStart(64, '0');
+        const operation = '00';
+        transactions +=
+          operation + to + value + dataLength + calldata.replace(/^0x/, '');
+      }
+
+      await writeContractAsync(
+        {
+          abi: getMultiSendContractAbi(),
+          address: getMultiSendContract() as `0x${string}`,
+          functionName: 'multiSend',
+          args: [transactions],
+        },
+        {
+          onSuccess: (data: any) => {
+            if (data.Message == 'deny')
+              throw new Error(TRANSACTION_FAILED_MESSAGE);
+          },
+          onSettled: async (data: any, error: any) => {
+            if (error) {
+              console.error('Transaction settled with error:', error);
+            } else {
+              await executeWithRpcFallback(async (web3) => {
+                const result = await waitForTransactionReceipt(web3, data);
+                callback && callback(result.status, result);
+                dispatch(updateEthBalance());
+                dispatch(setClaimRewardsLoading(false));
+
+                if (result && result.status) {
+                  snackbarUtil.success('Batch claim rewards success');
+                  callback && callback(true, {});
+                  dispatch(setUpdateFlag(dayjs().unix()));
+                } else {
+                  throw new Error(TRANSACTION_FAILED_MESSAGE);
+                }
+              });
+            }
+          },
+          onError: (error: any) => {
+            throw new Error(TRANSACTION_FAILED_MESSAGE);
+          },
+        }
+      );
+    } catch (err: any) {
+      let displayMsg = err.message || TRANSACTION_FAILED_MESSAGE;
+      if (err.code === -32603) {
+        displayMsg = COMMON_ERROR_MESSAGE;
+      } else if (isEvmTxCancelError(err)) {
+        displayMsg = CANCELLED_MESSAGE;
+      }
+      snackbarUtil.error(displayMsg);
+    } finally {
+      dispatch(setClaimRewardsLoading(false));
+      dispatch(updateEthBalance());
+    }
+  };
+
+export const batchSweepValidatorRewards =
+  (
+    writeContractAsync: Function,
+    signTypedDataAsync: Function,
+    nodeAddresses: string[],
+    destination: string,
+    callback?: (success: boolean, result: any) => void
+  ): AppThunk =>
+  async (dispatch, getState) => {
+    if (
+      !nodeAddresses ||
+      nodeAddresses.length === 0 ||
+      !destination
+    ) {
+      return;
+    }
+
+    try {
+      const metaMaskAccount = getState().wallet.metaMaskAccount;
+      if (!metaMaskAccount) {
+        throw new Error('Please connect MetaMask');
+      }
+
+      const web3 = getEthWeb3();
+
+      if (!web3.utils.isAddress(destination)) {
+        throw new Error('Invalid sweep destination address');
+      }
+
+      dispatch(setClaimRewardsLoading(true));
+
+      const chainId = Number(getEthereumChainId());
+      const ZERO = '0x0000000000000000000000000000000000000000';
+
+      let transactions = '0x';
+      let sweptCount = 0;
+
+      for (const address of nodeAddresses) {
+        const code = await web3.eth.getCode(address);
+        if (code === '0x' || !code) {
+          continue;
+        }
+
+        const balance = await web3.eth.getBalance(address);
+        if (BigInt(balance) === 0n) {
+          continue;
+        }
+
+        const safeContract = new web3.eth.Contract(
+          getSafeMultiContractAbi(),
+          address,
+          {}
+        );
+
+        const nonce = await safeContract.methods.nonce().call();
+
+        const domain = {
+          chainId,
+          verifyingContract: address,
+        };
+
+        const types = {
+          SafeTx: [
+            { name: 'to', type: 'address' },
+            { name: 'value', type: 'uint256' },
+            { name: 'data', type: 'bytes' },
+            { name: 'operation', type: 'uint8' },
+            { name: 'safeTxGas', type: 'uint256' },
+            { name: 'baseGas', type: 'uint256' },
+            { name: 'gasPrice', type: 'uint256' },
+            { name: 'gasToken', type: 'address' },
+            { name: 'refundReceiver', type: 'address' },
+            { name: 'nonce', type: 'uint256' },
+          ],
+        };
+
+        const message = {
+          to: destination,
+          value: balance.toString(),
+          data: '0x',
+          operation: 0,
+          safeTxGas: '0',
+          baseGas: '0',
+          gasPrice: '0',
+          gasToken: ZERO,
+          refundReceiver: ZERO,
+          nonce: nonce.toString(),
+        };
+
+        const rawSignature = await signTypedDataAsync({
+          domain,
+          types,
+          primaryType: 'SafeTx',
+          message,
+        });
+
+        let signature = rawSignature;
+        const vValue = parseInt(rawSignature.slice(-2), 16);
+        if (vValue < 27) {
+          signature =
+            rawSignature.slice(0, -2) +
+            (vValue + 27).toString(16).padStart(2, '0');
+        }
+
+        const calldata = safeContract.methods
+          .execTransaction(
+            destination,
+            balance.toString(),
+            '0x',
+            0,
+            '0',
+            '0',
+            '0',
+            ZERO,
+            ZERO,
+            signature
+          )
+          .encodeABI();
+
+        try {
+          await web3.eth.call({
+            to: address,
+            data: calldata,
+            from: getMultiSendContract(),
+          });
+        } catch (simErr: any) {
+          const revertData = simErr?.data;
+          let reason = simErr?.message || 'unknown';
+          if (
+            typeof revertData === 'string' &&
+            revertData.startsWith('0x08c379a0')
+          ) {
+            const hex = revertData.slice(2);
+            const len = parseInt(hex.slice(72, 136), 16);
+            let str = '';
+            for (let i = 136; i < 136 + len * 2; i += 2) {
+              str += String.fromCharCode(parseInt(hex.slice(i, i + 2), 16));
+            }
+            reason = str;
+          }
+          console.error(
+            'Sweep simulation reverted for safe',
+            address,
+            reason,
+            simErr
+          );
+          throw new Error(
+            'Sweep simulation failed for ' + address.slice(0, 10) + ': ' + reason
+          );
+        }
+
+        const to = address.toLowerCase().replace(/^0x/, '');
+        const value = '0'.repeat(64);
+        const dataLength = ((calldata.length - 2) / 2)
+          .toString(16)
+          .padStart(64, '0');
+        const operation = '00';
+        transactions +=
+          operation + to + value + dataLength + calldata.replace(/^0x/, '');
+
+        sweptCount += 1;
+      }
+
+      if (sweptCount === 0) {
+        throw new Error('No sweepable balances for the selected nodes');
+      }
+
+      await writeContractAsync(
+        {
+          abi: getMultiSendContractAbi(),
+          address: getMultiSendContract() as `0x${string}`,
+          functionName: 'multiSend',
+          args: [transactions],
+        },
+        {
+          onSuccess: (data: any) => {
+            if (data.Message == 'deny')
+              throw new Error(TRANSACTION_FAILED_MESSAGE);
+          },
+          onSettled: async (data: any, error: any) => {
+            if (error) {
+              console.error('Transaction settled with error:', error);
+            } else {
+              await executeWithRpcFallback(async (web3) => {
+                const result = await waitForTransactionReceipt(web3, data);
+                callback && callback(result.status, result);
+                dispatch(updateEthBalance());
+                dispatch(setClaimRewardsLoading(false));
+
+                if (result && result.status) {
+                  snackbarUtil.success('Batch sweep rewards success');
                   callback && callback(true, {});
                   dispatch(setUpdateFlag(dayjs().unix()));
                 } else {

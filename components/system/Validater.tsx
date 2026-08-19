@@ -7,17 +7,51 @@ import { useWalletAccount } from "hooks/useWalletAccount";
 import { useEffect, useState } from "react";
 import { fetchValidatorData } from "redux/reducers/ValidatorNodeAddress";
 import { useNodeUnclaimedRewards } from "hooks/useNodeUnclaimedRewards";
-import { addTrustNode, removeTrustNode } from "redux/reducers/ValidatorSlice";
-import { useWriteContract } from "wagmi";
+import {
+  addTrustNode,
+  batchClaimValidatorRewards,
+  batchSweepValidatorRewards,
+  removeTrustNode,
+} from "redux/reducers/ValidatorSlice";
+import snackbarUtil from "utils/snackbarUtils";
+import { useSignTypedData, useWriteContract } from "wagmi";
 import Image from "next/image";
 import doubleLeftIcon from "public/images/double-left.svg";
 import doubleRightIcon from "public/images/double-right.svg";
 import leftIcon from "public/images/arrow-left.svg";
 import rightIcon from "public/images/arrow-right.svg";
 
-const UnclaimedRewardsCell = ({ address }: { address: string }) => {
-  const { unclaimedRewards, isLoading, error } =
-    useNodeUnclaimedRewards(address);
+const UnclaimedRewardsCell = ({
+  address,
+  onActionableChange,
+}: {
+  address: string;
+  onActionableChange?: (address: string, actionable: boolean) => void;
+}) => {
+  const {
+    unclaimedRewards,
+    hasUnclaimed,
+    hasBalance,
+    isContract,
+    isLoading,
+    error,
+  } = useNodeUnclaimedRewards(address);
+
+  useEffect(() => {
+    if (!isLoading && onActionableChange) {
+      onActionableChange(
+        address,
+        hasUnclaimed || (hasBalance && isContract)
+      );
+    }
+  }, [
+    address,
+    hasUnclaimed,
+    hasBalance,
+    isContract,
+    isLoading,
+    onActionableChange,
+  ]);
 
   if (isLoading) {
     return <DataLoading height="20px" />;
@@ -62,6 +96,13 @@ const TableSkeleton = () => {
               </div>
             </div>
           </td>
+          <td className="px-[30px] py-[15px]">
+            <div className="flex justify-center">
+              <div className="w-[30px]">
+                <DataLoading height="20px" />
+              </div>
+            </div>
+          </td>
         </tr>
       ))}
     </tbody>
@@ -75,9 +116,17 @@ export default function Validater({ nodes }: any) {
   const { admin } = useNetworkProposalData();
   const [voterAddress, setVoterAddress] = useState("");
   const { writeContractAsync } = useWriteContract();
+  const { signTypedDataAsync } = useSignTypedData();
+  const [destination, setDestination] = useState("");
   const [filter, setFilter] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
   const [resultsPerPage, setResultsPerPage] = useState(10);
+  const [checkedItems, setCheckedItems] = useState<string[]>([]);
+  const [allSelected, setAllSelected] = useState(false);
+  const [actionableMap, setActionableMap] = useState<Record<string, boolean>>({});
+  const claimRewardsLoading = useAppSelector(
+    (state) => state.validator.claimRewardsLoading
+  );
 
   // Get validator data from Redux store
   const {
@@ -132,12 +181,93 @@ export default function Validater({ nodes }: any) {
       : validatorTrustedNodeAddressData;
   const totalPages = Math.ceil(data.length / resultsPerPage);
 
-  const handleFirstPage = () => setCurrentPage(1);
-  const handlePreviousPage = () =>
+  const startIndex = (currentPage - 1) * resultsPerPage;
+  const endIndex = Math.min(startIndex + resultsPerPage, data.length);
+  const paginatedData = data.slice(startIndex, endIndex);
+
+  const handleCheckboxChange = (item: string) => (event: any) => {
+    if (event.target.checked) {
+      setCheckedItems((prev) => [...prev, item]);
+    } else {
+      setCheckedItems((prev) =>
+        prev.filter((checkedItem) => checkedItem !== item)
+      );
+    }
+  };
+
+  const handleAllSelected = (event: any) => {
+    if (event.target.checked) {
+      setAllSelected(true);
+      paginatedData.map((node: any) => {
+        if (actionableMap[node.address]) {
+          setCheckedItems((prev) => [...prev, node.address]);
+        }
+      });
+    } else {
+      setCheckedItems([]);
+      setAllSelected(false);
+    }
+  };
+
+  const handleActionableChange = (address: string, actionable: boolean) => {
+    setActionableMap((prev) => {
+      if (prev[address] === actionable) return prev;
+      return { ...prev, [address]: actionable };
+    });
+  };
+
+  const handleRunClaim = () => {
+    if (checkedItems.length === 0) return;
+    dispatch(
+      batchClaimValidatorRewards(writeContractAsync, checkedItems, (success) => {
+        if (success) {
+          setCheckedItems([]);
+          setAllSelected(false);
+          snackbarUtil.success("Batch claim submitted");
+        }
+      })
+    );
+  };
+
+  const handleRunSweep = () => {
+    if (checkedItems.length === 0 || !destination) return;
+    dispatch(
+      batchSweepValidatorRewards(
+        writeContractAsync,
+        signTypedDataAsync,
+        checkedItems,
+        destination,
+        (success) => {
+          if (success) {
+            setCheckedItems([]);
+            setAllSelected(false);
+            snackbarUtil.success("Batch sweep submitted");
+          }
+        }
+      )
+    );
+  };
+
+  const handleFirstPage = () => {
+    setAllSelected(false);
+    setCheckedItems([]);
+    setCurrentPage(1);
+  };
+  const handlePreviousPage = () => {
+    setAllSelected(false);
+    setCheckedItems([]);
     setCurrentPage((prev) => Math.max(1, prev - 1));
-  const handleNextPage = () =>
+  };
+  const handleNextPage = () => {
+    setAllSelected(false);
+    setCheckedItems([]);
     setCurrentPage((prev) => Math.min(totalPages, prev + 1));
-  const handleLastPage = () => setCurrentPage(totalPages);
+  };
+  const handleLastPage = () => {
+    setAllSelected(false);
+    setCheckedItems([]);
+    setCurrentPage(totalPages);
+  };
 
   const renderTableBody = (filter: string) => {
     if (loading) {
@@ -148,7 +278,7 @@ export default function Validater({ nodes }: any) {
       return (
         <tbody>
           <tr>
-            <td colSpan={3} className="text-center py-[30px] text-red-500">
+            <td colSpan={5} className="text-center py-[30px] text-red-500">
               {error}
             </td>
           </tr>
@@ -164,17 +294,13 @@ export default function Validater({ nodes }: any) {
       return (
         <tbody>
           <tr>
-            <td colSpan={3} className="text-center py-[30px] text-white-500">
+            <td colSpan={5} className="text-center py-[30px] text-white-500">
               No validator data available
             </td>
           </tr>
         </tbody>
       );
     }
-
-    const startIndex = (currentPage - 1) * resultsPerPage;
-    const endIndex = Math.min(startIndex + resultsPerPage, data.length);
-    const paginatedData = data.slice(startIndex, endIndex);
 
     return (
       <>
@@ -191,17 +317,28 @@ export default function Validater({ nodes }: any) {
                 {node.activeCount > 0 ? getStatusIcon(node.status) : "--"}
               </td>
               <td className="text-center font-semibold px-[30px] py-[15px] text-[12px] sm:text-[.16rem]">
-                <UnclaimedRewardsCell address={node.address} />
+                <UnclaimedRewardsCell
+                  address={node.address}
+                  onActionableChange={handleActionableChange}
+                />
               </td>
               <td className="text-center font-semibold px-[30px] py-[15px] text-[14px] md:text-[16px]">
                 {node.activeCount}
+              </td>
+              <td className="text-center px-[30px] py-[15px]">
+                <input
+                  type="checkbox"
+                  checked={checkedItems.includes(node.address)}
+                  disabled={!actionableMap[node.address]}
+                  onChange={handleCheckboxChange(node.address)}
+                />
               </td>
             </tr>
           ))}
         </tbody>
         <tfoot>
           <tr>
-            <td colSpan={3}>
+            <td colSpan={5}>
               <div className="flex items-center justify-center mt-1 md:flex-row flex-col p-[.16rem]">
                 <div className="flex items-center">
                   <div className="text-[#FE8A3C] text-[14px] mr-[10px]">
@@ -335,47 +472,95 @@ export default function Validater({ nodes }: any) {
                 <th className="bg-[#E2E0D0] dark:bg-[#333333] font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[14px] md:text-[16px] text-color-text2 px-[30px] py-[30px]">
                   Active Validators
                 </th>
+                <th className="bg-[#E2E0D0] dark:bg-[#333333] font-[500] border-solid border-b-[.01rem] border-white dark:border-[#1B1B1F] text-[14px] md:text-[16px] text-color-text2 px-[30px] py-[15px]">
+                  <div className="flex flex-col items-center justify-center gap-[.06rem]">
+                    <span>Select</span>
+                    <input
+                      type="checkbox"
+                      checked={allSelected}
+                      onChange={(e) => handleAllSelected(e)}
+                    />
+                  </div>
+                </th>
               </tr>
             </thead>
             {renderTableBody(filter)}
           </table>
         </div>
-        <div className="text-[14px] text-color-text1 mt-5 text-center pb-[30px] max-w-[422px] mx-auto">
-          <input
-            type="text"
-            placeholder="Enter Trusted Node Address"
-            value={voterAddress}
-            onChange={(e) => setVoterAddress(e.target.value)}
-            // className={getInputClassName(darkMode)}
-            className={
-              darkMode
-                ? "w-full rounded-[35px] bg-[#1B1B1F] text-center h-[42px] border-[0.01rem] border-color-border1 text-[#8E9397] text-[14px] outline-none focus:border-[#ff4400]/30"
-                : "w-full rounded-[35px] bg-[#fff] text-center h-[42px] border-[0.01rem] border-color-border1 text-[#7D794F] text-[14px] outline-none focus:border-[#ff4400]/30"
-            }
-          />
-          <div className="mt-[10px] max-w-[100%] mx-auto flex items-center gap-1 w-[100%] justify-center">
-            <CustomButton
-              type="small"
-              height="42px"
-              width="130px"
-              disabled={admin !== metaMaskAccount}
-              onClick={() => {
-                dispatch(addTrustNode(writeContractAsync, voterAddress));
-              }}
-            >
-              Add
-            </CustomButton>
-            <CustomButton
-              type="small"
-              height="42px"
-              width="130px"
-              disabled={admin !== metaMaskAccount}
-              onClick={() => {
-                dispatch(removeTrustNode(writeContractAsync, voterAddress));
-              }}
-            >
-              Remove
-            </CustomButton>
+        <div className="text-[14px] text-color-text1 mt-5 text-center pb-[30px] max-w-[950px] mx-auto grid grid-cols-1 md:grid-cols-2 gap-[20px]">
+          <div className="flex flex-col items-center">
+            <input
+              type="text"
+              placeholder="Enter Trusted Node Address"
+              value={voterAddress}
+              onChange={(e) => setVoterAddress(e.target.value)}
+              className={
+                darkMode
+                  ? "w-full rounded-[35px] bg-[#1B1B1F] text-center h-[42px] border-[0.01rem] border-color-border1 text-[#8E9397] text-[14px] outline-none focus:border-[#ff4400]/30"
+                  : "w-full rounded-[35px] bg-[#fff] text-center h-[42px] border-[0.01rem] border-color-border1 text-[#7D794F] text-[14px] outline-none focus:border-[#ff4400]/30"
+              }
+            />
+            <div className="mt-[10px] flex items-center gap-1 w-[100%] justify-center">
+              <CustomButton
+                type="small"
+                height="42px"
+                width="170px"
+                disabled={admin !== metaMaskAccount}
+                onClick={() => {
+                  dispatch(addTrustNode(writeContractAsync, voterAddress));
+                }}
+              >
+                Add
+              </CustomButton>
+              <CustomButton
+                type="small"
+                height="42px"
+                width="170px"
+                disabled={admin !== metaMaskAccount}
+                onClick={() => {
+                  dispatch(removeTrustNode(writeContractAsync, voterAddress));
+                }}
+              >
+                Remove
+              </CustomButton>
+            </div>
+          </div>
+          <div className="flex flex-col items-center">
+            <input
+              type="text"
+              placeholder="Sweep destination address"
+              value={destination}
+              onChange={(e) => setDestination(e.target.value)}
+              className={
+                darkMode
+                  ? "w-full rounded-[35px] bg-[#1B1B1F] text-center h-[42px] border-[0.01rem] border-color-border1 text-[#8E9397] text-[14px] outline-none focus:border-[#ff4400]/30"
+                  : "w-full rounded-[35px] bg-[#fff] text-center h-[42px] border-[0.01rem] border-color-border1 text-[#7D794F] text-[14px] outline-none focus:border-[#ff4400]/30"
+              }
+            />
+            <div className="mt-[10px] flex items-center justify-center gap-1 w-[100%]">
+              <CustomButton
+                type="small"
+                height="42px"
+                width="170px"
+                disabled={checkedItems.length === 0 || claimRewardsLoading}
+                onClick={handleRunClaim}
+              >
+                Run Claim
+              </CustomButton>
+              <CustomButton
+                type="small"
+                height="42px"
+                width="170px"
+                disabled={
+                  checkedItems.length === 0 ||
+                  claimRewardsLoading ||
+                  !destination
+                }
+                onClick={handleRunSweep}
+              >
+                Run Sweep
+              </CustomButton>
+            </div>
           </div>
         </div>
       </div>

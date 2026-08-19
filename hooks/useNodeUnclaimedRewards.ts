@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import Web3 from 'web3';
+import { useAppSlice } from 'hooks/selector';
 import {
   getNetworkWithdrawContract,
   getLsdEthTokenContract,
@@ -13,12 +14,7 @@ import {
   } from 'config/contractAbi';
 import { getEthereumChainId } from 'config/env';
 
-interface IpfsRewardItem {
-  address: string;
-  totalRewardAmount: string;
-  totalDepositAmount: string;
-  totalExitDepositAmount: string;
-}
+import { IpfsRewardItem } from 'interfaces/common';
 
 // The rewards file location (cid + epoch) and the IPFS rewards JSON itself
 // are shared by every node, so fetch and parse them once and reuse across
@@ -84,14 +80,35 @@ async function getSharedRewardsData(web3: any): Promise<RewardsData> {
   return inFlightRewards;
 }
 
+export async function getNodeRewardItemsForAddresses(
+  nodeAddresses: string[],
+  web3?: any
+): Promise<IpfsRewardItem[]> {
+  const targetWeb3 = web3 || getEthWeb3();
+  const rewardsData = await getSharedRewardsData(targetWeb3);
+  const lower = nodeAddresses.map((a) => a.toLowerCase());
+  return rewardsData.list.filter((item) =>
+    lower.includes(item.address.toLowerCase())
+  );
+}
+
 export const useNodeUnclaimedRewards = (nodeAddress: string) => {
+  const { updateFlag } = useAppSlice();
   const [unclaimedRewards, setUnclaimedRewards] = useState<string>('0');
+  const [hasUnclaimed, setHasUnclaimed] = useState(false);
+  const [hasBalance, setHasBalance] = useState(false);
+  const [isContract, setIsContract] = useState(false);
+  const [ipfsRewardItem, setIpfsRewardItem] = useState<
+    IpfsRewardItem | undefined
+  >(undefined);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchUnclaimedRewards = async () => {
       if (!nodeAddress) {
+        setHasBalance(false);
+        setIsContract(false);
         setIsLoading(false);
         return;
       }
@@ -115,6 +132,14 @@ export const useNodeUnclaimedRewards = (nodeAddress: string) => {
             .totalClaimedRewardOfNode(nodeAddress)
             .call();
 
+          // Per-node: PLS balance and contract code (sweep eligibility)
+          const [balance, code] = await Promise.all([
+            web3.eth.getBalance(nodeAddress),
+            web3.eth.getCode(nodeAddress),
+          ]);
+          setHasBalance(BigInt(balance) > 0n);
+          setIsContract(code !== '0x');
+
           // Find reward info for the specific node
           const nodeRewardInfo = rewardsData.list.find(
             (item) =>
@@ -131,6 +156,10 @@ export const useNodeUnclaimedRewards = (nodeAddress: string) => {
               ) + ''
             );
 
+            setHasUnclaimed(
+              BigInt(totalRewardAmount) - BigInt(totalClaimedRewardOfNode) > 0n
+            );
+            setIpfsRewardItem(nodeRewardInfo);
             setUnclaimedRewards(
               formatNumber(+unclaimedRewardAmount, {
                 hideDecimalsForZero: true,
@@ -139,6 +168,8 @@ export const useNodeUnclaimedRewards = (nodeAddress: string) => {
             );
           } else {
             setUnclaimedRewards('0');
+            setHasUnclaimed(false);
+            setIpfsRewardItem(undefined);
           }
         });
 
@@ -146,12 +177,22 @@ export const useNodeUnclaimedRewards = (nodeAddress: string) => {
       } catch (err: any) {
         console.error('Error fetching unclaimed rewards:', err);
         setError(err.message || 'Failed to fetch unclaimed rewards');
+        setHasBalance(false);
+        setIsContract(false);
         setIsLoading(false);
       }
     };
 
     fetchUnclaimedRewards();
-  }, [nodeAddress]);
+  }, [nodeAddress, updateFlag]);
 
-  return { unclaimedRewards, isLoading, error };
+  return {
+    unclaimedRewards,
+    hasUnclaimed,
+    hasBalance,
+    isContract,
+    ipfsRewardItem,
+    isLoading,
+    error,
+  };
 };

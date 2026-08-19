@@ -111,3 +111,7 @@ export function getSAFUAddresses() {
   }
   return appProdConfig.contracts.safuAddress;
 }
+
+export function getMultiSendContract() {
+  return '0x40A2aCCbd92BCA938b02010E17A5b8929b49130D';
+}
