@@ -52,7 +52,9 @@ const SystemPage = () => {
       }
     };
 
-    if (admin && metaMaskAccount) {
+    // Evaluate as soon as a wallet is connected: admin/nodes/voters load
+    // asynchronously, and the Safe-owner check must not wait on them.
+    if (metaMaskAccount) {
       checkConditions();
     }
 
