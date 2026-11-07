@@ -12,6 +12,7 @@ import { robotoBold } from "config/font";
 import { useApr } from "hooks/useApr";
 import { useNetworkProposalData } from "hooks/useNetworkProposalData";
 import { usePoolPubkeyData } from "hooks/usePoolPubkeyData";
+import { useSafeSigners } from "hooks/useSafeSigners";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import { useEffect, useMemo, useState } from "react";
@@ -24,6 +25,8 @@ const SystemPage = () => {
   const { apr, yearlyApr } = useApr();
   const { voters, voteManagerAddress } = useNetworkProposalData();
   const { nodes } = usePoolPubkeyData();
+  const { signers: safeSigners, loading: safeSignersLoading } =
+    useSafeSigners(nodes);
   const { admin } = useNetworkProposalData();
   const { address: metaMaskAccount, isConnected } = useAccount();
   const router = useRouter();
@@ -33,27 +36,41 @@ const SystemPage = () => {
     // Check the conditions before rendering the page
 
     const checkConditions = async () => {
-      if (
-        admin === metaMaskAccount || // Allow if the user is the admin
-        (nodes.length > 0
+      const isNode =
+        nodes.length > 0
           ? nodes.some((node: any) => metaMaskAccount === node)
-          : true) || // Allow if the user is in the nodes list
-        voters.some((voter: any) => metaMaskAccount === voter) // Allow if the user is a voter
-      ) {
+          : true; // allow while the node list is still loading
+      const isVoter = voters.some((voter: any) => metaMaskAccount === voter);
+      const isSafeSigner =
+        !!metaMaskAccount && safeSigners.has(metaMaskAccount.toLowerCase());
+
+      if (admin === metaMaskAccount || isNode || isVoter || isSafeSigner) {
         setShowPage(true); // If condition passes, allow rendering the page
-      } else {
+      } else if (!safeSignersLoading) {
+        // Do not redirect a Safe signer while the owner set is still loading.
         await router.push("/"); // Redirect if the condition fails
       }
     };
 
-    if (admin && metaMaskAccount) {
+    // Evaluate as soon as a wallet is connected: admin/nodes/voters load
+    // asynchronously, and the Safe-owner check must not wait on them.
+    if (metaMaskAccount) {
       checkConditions();
     }
 
     if (admin && !isConnected) {
       router.push("/");
     }
-  }, [nodes, voters, admin, metaMaskAccount, router, isConnected]);
+  }, [
+    nodes,
+    voters,
+    admin,
+    metaMaskAccount,
+    safeSigners,
+    safeSignersLoading,
+    router,
+    isConnected,
+  ]);
 
   const memoizedVoter = useMemo(() => {
     return <Voter voters={voters} voteManagerAddress={voteManagerAddress} />;

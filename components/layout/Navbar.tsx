@@ -49,6 +49,7 @@ import { getShortAddress } from "utils/stringUtils";
 import { useAccount, useConnect } from "wagmi";
 import { useNetworkProposalData } from "hooks/useNetworkProposalData";
 import { usePoolPubkeyData } from "hooks/usePoolPubkeyData";
+import { useSafeSigners } from "hooks/useSafeSigners";
 
 export const Navbar = () => {
   const router = useRouter();
@@ -56,12 +57,21 @@ export const Navbar = () => {
   const { darkMode, unreadNoticeFlag } = useAppSlice();
   const { voters } = useNetworkProposalData();
   const { nodes } = usePoolPubkeyData();
+  const { signers: safeSigners } = useSafeSigners(nodes);
   const { admin } = useNetworkProposalData();
   const [pageWidth, setPageWidth] = useState(
     document.documentElement.clientWidth
   );
 
   const { address: metaMaskAccount } = useAccount();
+
+  // Single source of truth for the System tab / 5-column layout. Must match
+  // the /system page gate: admin, voter, node operator, or any TVA Safe owner.
+  const isSystemOperator =
+    admin === metaMaskAccount ||
+    !!voters?.find((voter: string) => voter === metaMaskAccount) ||
+    !!nodes?.find((node: string) => node === metaMaskAccount) ||
+    (!!metaMaskAccount && safeSigners.has(metaMaskAccount.toLowerCase()));
   const { noticeDrawerOpen, settingsDrawerOpen } = useAppSelector(
     (state: RootState) => {
       return {
@@ -170,12 +180,9 @@ export const Navbar = () => {
   [&>*.tab-active:after]:hidden
   [&>*:has(+_.tab-active):after]:hidden`}
             style={{
-              gridTemplateColumns:
-                admin === metaMaskAccount ||
-                voters?.find((voter: string) => voter === metaMaskAccount) ||
-                nodes?.find((node: string) => node === metaMaskAccount)
-                  ? "20% 20% 20% 20% 20%"
-                  : "25% 25% 25% 25%",
+              gridTemplateColumns: isSystemOperator
+                ? "20% 20% 20% 20% 20%"
+                : "25% 25% 25% 25%",
             }}
           >
             <Link
@@ -249,9 +256,7 @@ export const Navbar = () => {
                 Dashboard
               </div>
             </Link>
-            {(admin === metaMaskAccount ||
-              voters?.find((voter: string) => voter === metaMaskAccount) ||
-              nodes?.find((node: string) => node === metaMaskAccount)) && (
+            {isSystemOperator && (
               <Link
                 href={"/system"}
                 className={
