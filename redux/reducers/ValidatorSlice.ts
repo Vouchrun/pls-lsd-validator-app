@@ -32,6 +32,7 @@ import {
   TokenWithdrawInfo,
   ValidatorClaimType,
 } from 'interfaces/common';
+import { SweepItem, SweepProgress, SweepRunResult } from 'interfaces/sweep';
 import { AppThunk } from 'redux/store';
 import { fetchBeaconStatusInChunks } from 'utils/apiUtils';
 import { isEvmTxCancelError, uuid } from 'utils/commonUtils';
@@ -39,6 +40,13 @@ import { getTokenName } from 'utils/configUtils';
 import { formatNumber, formatScientificNumber } from 'utils/numberUtils';
 import snackbarUtil from 'utils/snackbarUtils';
 import { getShortAddress } from 'utils/stringUtils';
+import {
+  clearSweepSession,
+  loadSweepSession,
+  saveSweepSession,
+  StoredSweepItem,
+  StoredSweepSession,
+} from 'utils/sweepSession';
 import { createWeb3, getEthWeb3, executeWithRpcFallback } from 'utils/web3Utils';
 import { parseEther } from 'viem';
 import Web3 from 'web3';
@@ -60,6 +68,7 @@ export interface ValidatorState {
   claimRewardsLoading: boolean;
   withdrawLoading: boolean;
   nodePubkeys: NodePubkeyInfo[] | undefined;
+  sweepProgress: SweepProgress;
 }
 
 const initialState: ValidatorState = {
@@ -67,6 +76,7 @@ const initialState: ValidatorState = {
   claimRewardsLoading: false,
   withdrawLoading: false,
   nodePubkeys: undefined,
+  sweepProgress: { phase: 'idle', signed: 0, total: 0 },
 };
 
 export const validatorSlice = createSlice({
@@ -97,6 +107,21 @@ export const validatorSlice = createSlice({
     ) => {
       state.nodePubkeys = action.payload;
     },
+    setSweepProgress: (
+      state: ValidatorState,
+      action: PayloadAction<SweepProgress>
+    ) => {
+      state.sweepProgress = action.payload;
+    },
+    updateSweepProgress: (
+      state: ValidatorState,
+      action: PayloadAction<Partial<SweepProgress>>
+    ) => {
+      state.sweepProgress = {
+        ...state.sweepProgress,
+        ...action.payload,
+      };
+    },
   },
 });
 
@@ -105,6 +130,8 @@ export const {
   setClaimRewardsLoading,
   setWithdrawLoading,
   setNodePubkeys,
+  setSweepProgress,
+  updateSweepProgress,
 } = validatorSlice.actions;
 
 export default validatorSlice.reducer;
@@ -729,220 +756,658 @@ export const batchClaimValidatorRewards =
     }
   };
 
+const SAFE_TX_TYPES = {
+  SafeTx: [
+    { name: 'to', type: 'address' },
+    { name: 'value', type: 'uint256' },
+    { name: 'data', type: 'bytes' },
+    { name: 'operation', type: 'uint8' },
+    { name: 'safeTxGas', type: 'uint256' },
+    { name: 'baseGas', type: 'uint256' },
+    { name: 'gasPrice', type: 'uint256' },
+    { name: 'gasToken', type: 'address' },
+    { name: 'refundReceiver', type: 'address' },
+    { name: 'nonce', type: 'uint256' },
+  ],
+};
+
+const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
+
+/** Some providers return v as 0/1; Safe 1.3.0 only accepts 27/28. */
+function normalizeSafeSignature(rawSignature: string): string {
+  const vValue = parseInt(rawSignature.slice(-2), 16);
+  if (Number.isNaN(vValue) || vValue >= 27) {
+    return rawSignature;
+  }
+  return (
+    rawSignature.slice(0, -2) + (vValue + 27).toString(16).padStart(2, '0')
+  );
+}
+
+/** Turn a Safe / EVM revert into something an operator can act on. */
+function describeSweepError(error: any): string {
+  const revertData = error?.data;
+  if (typeof revertData === 'string' && revertData.startsWith('0x08c379a0')) {
+    const hex = revertData.slice(2);
+    const length = parseInt(hex.slice(72, 136), 16);
+    let reason = '';
+    for (let i = 136; i < 136 + length * 2; i += 2) {
+      reason += String.fromCharCode(parseInt(hex.slice(i, i + 2), 16));
+    }
+    if (reason) {
+      return reason;
+    }
+  }
+  if (typeof revertData === 'string' && revertData.length >= 10) {
+    return `revert ${revertData.slice(0, 10)}`;
+  }
+  return error?.shortMessage || error?.message || 'unknown error';
+}
+
+function isSignatureRejection(error: any): boolean {
+  const message = `${error?.message || ''} ${
+    error?.shortMessage || ''
+  }`.toLowerCase();
+  return (
+    error?.code === 4001 ||
+    error?.code === 'ACTION_REJECTED' ||
+    message.includes('user rejected') ||
+    message.includes('user denied') ||
+    message.includes('rejected the request')
+  );
+}
+
+interface SafeNonceAndBalance {
+  nonce: string;
+  balance: string;
+}
+
+async function readSafeNonceAndBalance(
+  web3: Web3,
+  address: string
+): Promise<SafeNonceAndBalance> {
+  const safe = new web3.eth.Contract(getSafeMultiContractAbi(), address, {});
+  const [nonce, balance] = await Promise.all([
+    safe.methods.nonce().call(),
+    web3.eth.getBalance(address),
+  ]);
+  return { nonce: nonce.toString(), balance: balance.toString() };
+}
+
+function isContractCallRevert(error: any): boolean {
+  const message = `${error?.message || ''} ${
+    error?.shortMessage || ''
+  }`.toLowerCase();
+  return (
+    !!error?.data ||
+    message.includes('revert') ||
+    message.includes('call exception')
+  );
+}
+
+/**
+ * Validate a candidate without producing a signature.
+ *
+ * Ownership is checked on-chain (`getOwners`) rather than inferred from the
+ * page gate. That is the difference between "I signed fourteen times and
+ * everything reverted" and "this wallet is not an owner of that Safe".
+ */
+async function preflightSweepItem(
+  web3: Web3,
+  address: string,
+  signer: string
+): Promise<SweepItem> {
+  const base: SweepItem = {
+    address,
+    balance: '0',
+    nonce: '0',
+    owners: [],
+    status: 'ok',
+  };
+
+  // Transport errors propagate so executeWithRpcFallback can retry on the
+  // next RPC; only semantic failures are classified here.
+  const code = await web3.eth.getCode(address);
+  if (!code || code === '0x') {
+    return { ...base, status: 'not_a_safe', reason: 'Not a contract (EOA)' };
+  }
+
+  const safe = new web3.eth.Contract(getSafeMultiContractAbi(), address, {});
+
+  let owners: string[];
+  try {
+    owners = await safe.methods.getOwners().call();
+  } catch (error) {
+    if (isContractCallRevert(error)) {
+      return {
+        ...base,
+        status: 'not_a_safe',
+        reason: 'Contract does not expose Safe getOwners()',
+      };
+    }
+    throw error;
+  }
+
+  const normalizedOwners = owners.map((owner) => owner.toLowerCase());
+  base.owners = normalizedOwners;
+
+  if (!normalizedOwners.includes(signer.toLowerCase())) {
+    return {
+      ...base,
+      status: 'not_owner',
+      reason: 'Connected wallet is not an owner of this Safe',
+    };
+  }
+
+  const threshold = await safe.methods.getThreshold().call();
+  if (Number(threshold) !== 1) {
+    return {
+      ...base,
+      status: 'threshold_unsupported',
+      reason: `Safe threshold is ${threshold}; only 1-of-N Safes are supported`,
+    };
+  }
+
+  const { nonce, balance } = await readSafeNonceAndBalance(web3, address);
+  base.nonce = nonce;
+  base.balance = balance;
+
+  if (BigInt(balance) === 0n) {
+    return {
+      ...base,
+      status: 'zero_balance',
+      reason: 'No PLS balance to sweep',
+    };
+  }
+
+  return base;
+}
+
+/**
+ * Sign one Safe transaction and pre-flight the exact `execTransaction` call.
+ * Throws on rejection or simulation failure; the caller decides whether that
+ * excludes the Safe or stops the run.
+ */
+async function signAndSimulateSweepItem(
+  web3: Web3,
+  item: SweepItem,
+  destination: string,
+  chainId: number,
+  signTypedDataAsync: Function
+): Promise<string> {
+  const safe = new web3.eth.Contract(getSafeMultiContractAbi(), item.address, {});
+
+  const rawSignature = await signTypedDataAsync({
+    domain: {
+      chainId,
+      verifyingContract: item.address,
+    },
+    types: SAFE_TX_TYPES,
+    primaryType: 'SafeTx',
+    message: {
+      to: destination,
+      value: item.balance,
+      data: '0x',
+      operation: 0,
+      safeTxGas: '0',
+      baseGas: '0',
+      gasPrice: '0',
+      gasToken: ZERO_ADDRESS,
+      refundReceiver: ZERO_ADDRESS,
+      nonce: item.nonce,
+    },
+  });
+
+  const signature = normalizeSafeSignature(rawSignature);
+
+  const calldata = safe.methods
+    .execTransaction(
+      destination,
+      item.balance,
+      '0x',
+      0,
+      '0',
+      '0',
+      '0',
+      ZERO_ADDRESS,
+      ZERO_ADDRESS,
+      signature
+    )
+    .encodeABI();
+
+  await executeWithRpcFallback(async (rpcWeb3) =>
+    rpcWeb3.eth.call({
+      to: item.address,
+      data: calldata,
+      from: getMultiSendContract(),
+    })
+  );
+
+  return signature;
+}
+
+function packMultiSendEntry(to: string, calldata: string): string {
+  const address = to.toLowerCase().replace(/^0x/, '');
+  const value = '0'.repeat(64);
+  const dataLength = ((calldata.length - 2) / 2)
+    .toString(16)
+    .padStart(64, '0');
+  return '00' + address + value + dataLength + calldata.replace(/^0x/, '');
+}
+
+/**
+ * Sweep TVA Safe balances to a destination EOA in one MultiSend transaction.
+ *
+ * Flow: pre-flight (no prompts) -> sign + simulate each Safe (one prompt per
+ * Safe) -> re-validate nonce/balance -> one `multiSend`. A failing Safe is
+ * excluded instead of reverting the whole batch, signatures are persisted so
+ * a refresh can resume, and an unconfirmed earlier submission blocks a retry.
+ */
 export const batchSweepValidatorRewards =
   (
     writeContractAsync: Function,
     signTypedDataAsync: Function,
     nodeAddresses: string[],
     destination: string,
-    callback?: (success: boolean, result: any) => void
+    options?: {
+      dryRun?: boolean;
+      preflightOnly?: boolean;
+      onResult?: (result: SweepRunResult) => void;
+    }
   ): AppThunk =>
   async (dispatch, getState) => {
-    if (
-      !nodeAddresses ||
-      nodeAddresses.length === 0 ||
-      !destination
-    ) {
+    const dryRun = options?.dryRun === true;
+    const preflightOnly = options?.preflightOnly === true;
+    const report = (result: SweepRunResult) => options?.onResult?.(result);
+
+    if (!nodeAddresses || nodeAddresses.length === 0) {
       return;
     }
 
+    const wallet = getState().wallet;
+    const signer = wallet.metaMaskDisconnected
+      ? undefined
+      : wallet.metaMaskAccount;
+
+    if (!signer) {
+      snackbarUtil.error('Please connect MetaMask');
+      return;
+    }
+
+    const web3 = getEthWeb3();
+    const trimmedDestination = (destination || '').trim();
+
+    if (!trimmedDestination || !web3.utils.isAddress(trimmedDestination)) {
+      const message = 'Invalid sweep destination address';
+      snackbarUtil.error(message);
+      report({ items: [], signer, dryRun, error: message });
+      return;
+    }
+
+    const destinationAddress = web3.utils.toChecksumAddress(trimmedDestination);
+    const chainId = Number(getEthereumChainId());
+    const signerLower = signer.toLowerCase();
+    const items: SweepItem[] = [];
+
+    dispatch(setClaimRewardsLoading(true));
+    dispatch(
+      setSweepProgress({
+        phase: 'preflight',
+        signed: 0,
+        total: nodeAddresses.length,
+      })
+    );
+
     try {
-      const metaMaskAccount = getState().wallet.metaMaskAccount;
-      if (!metaMaskAccount) {
-        throw new Error('Please connect MetaMask');
+      // Never stack a second sweep on top of an unconfirmed first one.
+      const previous = loadSweepSession();
+      const reusable = new Map<string, StoredSweepItem>();
+
+      if (
+        previous &&
+        previous.chainId === chainId &&
+        previous.signer.toLowerCase() === signerLower
+      ) {
+        if (previous.submittedTxHash) {
+          const receipt = await executeWithRpcFallback(
+            async (rpcWeb3) =>
+              rpcWeb3.eth.getTransactionReceipt(
+                previous.submittedTxHash as string
+              ),
+            1
+          ).catch(() => null);
+
+          if (!receipt) {
+            throw new Error(
+              `A previous sweep is still pending (${previous.submittedTxHash}). ` +
+                'Wait for it to confirm before starting another.'
+            );
+          }
+          clearSweepSession();
+        } else if (previous.submitting) {
+          throw new Error(
+            'A previous sweep submission is unconfirmed. Check your wallet or ' +
+              'explorer before retrying.'
+          );
+        } else if (
+          previous.destination &&
+          previous.destination.toLowerCase() ===
+            destinationAddress.toLowerCase()
+        ) {
+          previous.items.forEach((stored) =>
+            reusable.set(stored.address.toLowerCase(), stored)
+          );
+        }
+      } else if (previous) {
+        clearSweepSession();
       }
 
-      const web3 = getEthWeb3();
-
-      if (!web3.utils.isAddress(destination)) {
-        throw new Error('Invalid sweep destination address');
-      }
-
-      dispatch(setClaimRewardsLoading(true));
-
-      const chainId = Number(getEthereumChainId());
-      const ZERO = '0x0000000000000000000000000000000000000000';
-
-      let transactions = '0x';
-      let sweptCount = 0;
-
+      // 1. Pre-flight. No wallet prompts happen before every Safe is checked.
       for (const address of nodeAddresses) {
-        const code = await web3.eth.getCode(address);
-        if (code === '0x' || !code) {
-          continue;
+        dispatch(updateSweepProgress({ phase: 'preflight', address }));
+        let item: SweepItem;
+        try {
+          item = await executeWithRpcFallback((rpcWeb3) =>
+            preflightSweepItem(rpcWeb3, address, signerLower)
+          );
+        } catch (error) {
+          item = {
+            address,
+            balance: '0',
+            nonce: '0',
+            owners: [],
+            status: 'rpc_error',
+            reason: describeSweepError(error),
+          };
         }
+        items.push(item);
+      }
 
-        const balance = await web3.eth.getBalance(address);
-        if (BigInt(balance) === 0n) {
-          continue;
-        }
+      const candidates = items.filter((item) => item.status === 'ok');
 
-        const safeContract = new web3.eth.Contract(
-          getSafeMultiContractAbi(),
-          address,
-          {}
+      if (candidates.length === 0) {
+        report({ items, destination: destinationAddress, signer, dryRun });
+        snackbarUtil.error('No sweepable Safe balances for the selected nodes');
+        return;
+      }
+
+      if (preflightOnly) {
+        report({ items, destination: destinationAddress, signer, dryRun });
+        return;
+      }
+
+      // 2. Sign + simulate. A failing Safe is excluded; a rejected prompt
+      //    stops the run but leaves the collected signatures resumable.
+      const session: StoredSweepSession = {
+        version: 1,
+        destination: destinationAddress,
+        signer,
+        chainId,
+        createdAt: Date.now(),
+        items: [],
+      };
+      // Sliding TTL: only an idle session expires, not one that is mid-signing.
+      const persist = () => {
+        session.createdAt = Date.now();
+        saveSweepSession(session);
+      };
+
+      let signedCount = 0;
+      dispatch(
+        setSweepProgress({
+          phase: 'signing',
+          signed: 0,
+          total: candidates.length,
+        })
+      );
+
+      for (const item of candidates) {
+        dispatch(
+          updateSweepProgress({
+            phase: 'signing',
+            address: item.address,
+            signed: signedCount,
+          })
         );
 
-        const nonce = await safeContract.methods.nonce().call();
+        try {
+          const fresh = await executeWithRpcFallback((rpcWeb3) =>
+            readSafeNonceAndBalance(rpcWeb3, item.address)
+          );
 
-        const domain = {
-          chainId,
-          verifyingContract: address,
-        };
+          if (
+            fresh.nonce !== item.nonce ||
+            BigInt(fresh.balance) < BigInt(item.balance)
+          ) {
+            item.status = 'stale';
+            item.reason = 'Nonce or balance changed during sign-up';
+            continue;
+          }
 
-        const types = {
-          SafeTx: [
-            { name: 'to', type: 'address' },
-            { name: 'value', type: 'uint256' },
-            { name: 'data', type: 'bytes' },
-            { name: 'operation', type: 'uint8' },
-            { name: 'safeTxGas', type: 'uint256' },
-            { name: 'baseGas', type: 'uint256' },
-            { name: 'gasPrice', type: 'uint256' },
-            { name: 'gasToken', type: 'address' },
-            { name: 'refundReceiver', type: 'address' },
-            { name: 'nonce', type: 'uint256' },
-          ],
-        };
+          item.nonce = fresh.nonce;
+          item.balance = fresh.balance;
 
-        const message = {
-          to: destination,
-          value: balance.toString(),
-          data: '0x',
-          operation: 0,
-          safeTxGas: '0',
-          baseGas: '0',
-          gasPrice: '0',
-          gasToken: ZERO,
-          refundReceiver: ZERO,
-          nonce: nonce.toString(),
-        };
+          // Reuse a signature collected before a refresh when it still matches.
+          const stored = reusable.get(item.address.toLowerCase());
+          if (
+            stored &&
+            stored.nonce === item.nonce &&
+            stored.balance === item.balance
+          ) {
+            try {
+              const safe = new web3.eth.Contract(
+                getSafeMultiContractAbi(),
+                item.address,
+                {}
+              );
+              const calldata = safe.methods
+                .execTransaction(
+                  destinationAddress,
+                  item.balance,
+                  '0x',
+                  0,
+                  '0',
+                  '0',
+                  '0',
+                  ZERO_ADDRESS,
+                  ZERO_ADDRESS,
+                  stored.signature
+                )
+                .encodeABI();
+              await executeWithRpcFallback(async (rpcWeb3) =>
+                rpcWeb3.eth.call({
+                  to: item.address,
+                  data: calldata,
+                  from: getMultiSendContract(),
+                })
+              );
 
-        const rawSignature = await signTypedDataAsync({
-          domain,
-          types,
-          primaryType: 'SafeTx',
-          message,
-        });
+              item.signature = stored.signature;
+              item.status = 'signed';
+              signedCount += 1;
+              session.items.push(stored);
+              persist();
+              dispatch(updateSweepProgress({ signed: signedCount }));
+              continue;
+            } catch {
+              // Signature went stale: ask for a new one below.
+            }
+          }
 
-        let signature = rawSignature;
-        const vValue = parseInt(rawSignature.slice(-2), 16);
-        if (vValue < 27) {
-          signature =
-            rawSignature.slice(0, -2) +
-            (vValue + 27).toString(16).padStart(2, '0');
+          item.signature = await signAndSimulateSweepItem(
+            web3,
+            item,
+            destinationAddress,
+            chainId,
+            signTypedDataAsync
+          );
+          item.status = 'signed';
+          signedCount += 1;
+
+          session.items.push({
+            address: item.address,
+            balance: item.balance,
+            nonce: item.nonce,
+            signature: item.signature,
+          });
+          persist();
+          dispatch(updateSweepProgress({ signed: signedCount }));
+        } catch (error: any) {
+          if (isSignatureRejection(error)) {
+            report({
+              items,
+              destination: destinationAddress,
+              signer,
+              dryRun,
+              error: 'Signature cancelled',
+            });
+            snackbarUtil.error(CANCELLED_MESSAGE);
+            return;
+          }
+          item.status = 'simulation_failed';
+          item.reason = describeSweepError(error);
         }
+      }
 
-        const calldata = safeContract.methods
+      const signedItems = items.filter((item) => item.status === 'signed');
+
+      if (signedItems.length === 0) {
+        report({ items, destination: destinationAddress, signer, dryRun });
+        snackbarUtil.error('No Safe passed signing and simulation');
+        return;
+      }
+
+      if (dryRun) {
+        report({ items, destination: destinationAddress, signer, dryRun });
+        snackbarUtil.success(
+          `Dry run OK: ${signedItems.length} Safe${
+            signedItems.length === 1 ? '' : 's'
+          } signed and simulated`
+        );
+        return;
+      }
+
+      // 3. Re-validate the signed payloads immediately before broadcasting.
+      dispatch(
+        setSweepProgress({
+          phase: 'executing',
+          signed: signedItems.length,
+          total: signedItems.length,
+        })
+      );
+
+      const executable: SweepItem[] = [];
+      for (const item of signedItems) {
+        const fresh = await executeWithRpcFallback((rpcWeb3) =>
+          readSafeNonceAndBalance(rpcWeb3, item.address)
+        ).catch(() => null);
+
+        if (
+          !fresh ||
+          fresh.nonce !== item.nonce ||
+          BigInt(fresh.balance) < BigInt(item.balance)
+        ) {
+          item.status = 'stale';
+          item.reason = 'Nonce or balance changed after signing';
+          continue;
+        }
+        executable.push(item);
+      }
+
+      if (executable.length === 0) {
+        report({ items, destination: destinationAddress, signer, dryRun });
+        snackbarUtil.error('All signatures became stale; nothing was sent');
+        return;
+      }
+
+      let transactions = '0x';
+      for (const item of executable) {
+        const safe = new web3.eth.Contract(
+          getSafeMultiContractAbi(),
+          item.address,
+          {}
+        );
+        const calldata = safe.methods
           .execTransaction(
-            destination,
-            balance.toString(),
+            destinationAddress,
+            item.balance,
             '0x',
             0,
             '0',
             '0',
             '0',
-            ZERO,
-            ZERO,
-            signature
+            ZERO_ADDRESS,
+            ZERO_ADDRESS,
+            item.signature as string
           )
           .encodeABI();
-
-        try {
-          await web3.eth.call({
-            to: address,
-            data: calldata,
-            from: getMultiSendContract(),
-          });
-        } catch (simErr: any) {
-          const revertData = simErr?.data;
-          let reason = simErr?.message || 'unknown';
-          if (
-            typeof revertData === 'string' &&
-            revertData.startsWith('0x08c379a0')
-          ) {
-            const hex = revertData.slice(2);
-            const len = parseInt(hex.slice(72, 136), 16);
-            let str = '';
-            for (let i = 136; i < 136 + len * 2; i += 2) {
-              str += String.fromCharCode(parseInt(hex.slice(i, i + 2), 16));
-            }
-            reason = str;
-          }
-          console.error(
-            'Sweep simulation reverted for safe',
-            address,
-            reason,
-            simErr
-          );
-          throw new Error(
-            'Sweep simulation failed for ' + address.slice(0, 10) + ': ' + reason
-          );
-        }
-
-        const to = address.toLowerCase().replace(/^0x/, '');
-        const value = '0'.repeat(64);
-        const dataLength = ((calldata.length - 2) / 2)
-          .toString(16)
-          .padStart(64, '0');
-        const operation = '00';
-        transactions +=
-          operation + to + value + dataLength + calldata.replace(/^0x/, '');
-
-        sweptCount += 1;
+        transactions += packMultiSendEntry(item.address, calldata);
       }
 
-      if (sweptCount === 0) {
-        throw new Error('No sweepable balances for the selected nodes');
+      session.items = executable.map((item) => ({
+        address: item.address,
+        balance: item.balance,
+        nonce: item.nonce,
+        signature: item.signature as string,
+      }));
+      session.submitting = true;
+      persist();
+
+      const hash = (await writeContractAsync({
+        abi: getMultiSendContractAbi(),
+        address: getMultiSendContract() as `0x${string}`,
+        functionName: 'multiSend',
+        args: [transactions],
+      })) as string | undefined;
+
+      if (!hash) {
+        throw new Error('Wallet did not return a transaction hash');
       }
 
-      await writeContractAsync(
-        {
-          abi: getMultiSendContractAbi(),
-          address: getMultiSendContract() as `0x${string}`,
-          functionName: 'multiSend',
-          args: [transactions],
-        },
-        {
-          onSuccess: (data: any) => {
-            if (data.Message == 'deny')
-              throw new Error(TRANSACTION_FAILED_MESSAGE);
-          },
-          onSettled: async (data: any, error: any) => {
-            if (error) {
-              console.error('Transaction settled with error:', error);
-            } else {
-              await executeWithRpcFallback(async (web3) => {
-                const result = await waitForTransactionReceipt(web3, data);
-                callback && callback(result.status, result);
-                dispatch(updateEthBalance());
-                dispatch(setClaimRewardsLoading(false));
+      session.submitting = false;
+      session.submittedTxHash = hash;
+      persist();
 
-                if (result && result.status) {
-                  snackbarUtil.success('Batch sweep rewards success');
-                  callback && callback(true, {});
-                  dispatch(setUpdateFlag(dayjs().unix()));
-                } else {
-                  throw new Error(TRANSACTION_FAILED_MESSAGE);
-                }
-              });
-            }
-          },
-          onError: (error: any) => {
-            throw new Error(TRANSACTION_FAILED_MESSAGE);
-          },
-        }
+      const receipt = await waitForTransactionReceipt(web3, hash, {
+        timeoutMs: 180_000,
+      });
+
+      if (!receipt || !receipt.status) {
+        throw new Error(TRANSACTION_FAILED_MESSAGE);
+      }
+
+      clearSweepSession();
+      dispatch(setUpdateFlag(dayjs().unix()));
+      report({
+        items,
+        destination: destinationAddress,
+        signer,
+        dryRun,
+        txHash: hash,
+      });
+      snackbarUtil.success(
+        `Batch sweep submitted: ${executable.length} Safe${
+          executable.length === 1 ? '' : 's'
+        }`
       );
     } catch (err: any) {
-      let displayMsg = err.message || TRANSACTION_FAILED_MESSAGE;
-      if (err.code === -32603) {
+      let displayMsg = err?.message || TRANSACTION_FAILED_MESSAGE;
+      if (err?.code === -32603) {
         displayMsg = COMMON_ERROR_MESSAGE;
-      } else if (isEvmTxCancelError(err)) {
+      } else if (isSignatureRejection(err)) {
         displayMsg = CANCELLED_MESSAGE;
       }
       snackbarUtil.error(displayMsg);
+      report({
+        items,
+        destination: destinationAddress,
+        signer,
+        dryRun,
+        error: displayMsg,
+      });
     } finally {
       dispatch(setClaimRewardsLoading(false));
+      dispatch(updateSweepProgress({ phase: 'done' }));
       dispatch(updateEthBalance());
     }
   };

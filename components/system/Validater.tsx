@@ -14,6 +14,12 @@ import {
   removeTrustNode,
 } from "redux/reducers/ValidatorSlice";
 import snackbarUtil from "utils/snackbarUtils";
+import { SweepRunResult } from "interfaces/sweep";
+import {
+  clearSweepSession,
+  loadSweepSession,
+  StoredSweepSession,
+} from "utils/sweepSession";
 import { useSignTypedData, useWriteContract } from "wagmi";
 import Image from "next/image";
 import doubleLeftIcon from "public/images/double-left.svg";
@@ -124,8 +130,15 @@ export default function Validater({ nodes }: any) {
   const [checkedItems, setCheckedItems] = useState<string[]>([]);
   const [allSelected, setAllSelected] = useState(false);
   const [actionableMap, setActionableMap] = useState<Record<string, boolean>>({});
+  const [dryRun, setDryRun] = useState(false);
+  const [sweepResults, setSweepResults] = useState<SweepRunResult | null>(null);
+  const [resumeSession, setResumeSession] =
+    useState<StoredSweepSession | null>(null);
   const claimRewardsLoading = useAppSelector(
     (state) => state.validator.claimRewardsLoading
+  );
+  const sweepProgress = useAppSelector(
+    (state) => state.validator.sweepProgress
   );
 
   // Get validator data from Redux store
@@ -141,6 +154,19 @@ export default function Validater({ nodes }: any) {
       dispatch(fetchValidatorData(nodes));
     }
   }, [dispatch, nodes]);
+
+  useEffect(() => {
+    const session = loadSweepSession();
+    if (
+      session &&
+      metaMaskAccount &&
+      session.signer.toLowerCase() === metaMaskAccount.toLowerCase()
+    ) {
+      setResumeSession(session);
+    } else {
+      setResumeSession(null);
+    }
+  }, [metaMaskAccount]);
 
   if (error) {
     return <div>Error: {error}</div>;
@@ -198,11 +224,13 @@ export default function Validater({ nodes }: any) {
   const handleAllSelected = (event: any) => {
     if (event.target.checked) {
       setAllSelected(true);
-      paginatedData.map((node: any) => {
-        if (actionableMap[node.address]) {
-          setCheckedItems((prev) => [...prev, node.address]);
-        }
-      });
+      // Select every row that has not been explicitly ruled out. Rows that
+      // have not been evaluated yet remain selectable: the sweep pre-flight
+      // is the authoritative eligibility check, not the rewards/IPFS hook.
+      const selectable = data
+        .filter((node: any) => actionableMap[node.address] !== false)
+        .map((node: any) => node.address);
+      setCheckedItems(Array.from(new Set(selectable)));
     } else {
       setCheckedItems([]);
       setAllSelected(false);
@@ -231,41 +259,68 @@ export default function Validater({ nodes }: any) {
 
   const handleRunSweep = () => {
     if (checkedItems.length === 0 || !destination) return;
+    setSweepResults(null);
     dispatch(
       batchSweepValidatorRewards(
         writeContractAsync,
         signTypedDataAsync,
         checkedItems,
         destination,
-        (success) => {
-          if (success) {
-            setCheckedItems([]);
-            setAllSelected(false);
-            snackbarUtil.success("Batch sweep submitted");
-          }
+        {
+          dryRun,
+          onResult: (result) => {
+            setSweepResults(result);
+            setResumeSession(loadSweepSession());
+            if (result.txHash) {
+              setCheckedItems([]);
+              setAllSelected(false);
+            }
+          },
         }
       )
     );
   };
 
-  const handleFirstPage = () => {
+  const handleCheckSafes = () => {
+    if (checkedItems.length === 0 || !destination) return;
+    setSweepResults(null);
+    dispatch(
+      batchSweepValidatorRewards(
+        writeContractAsync,
+        signTypedDataAsync,
+        checkedItems,
+        destination,
+        {
+          preflightOnly: true,
+          onResult: (result) => setSweepResults(result),
+        }
+      )
+    );
+  };
+
+  const handleResume = () => {
+    if (!resumeSession) return;
+    setDestination(resumeSession.destination);
+    setCheckedItems(resumeSession.items.map((item) => item.address));
     setAllSelected(false);
-    setCheckedItems([]);
+  };
+
+  const handleClearResume = () => {
+    clearSweepSession();
+    setResumeSession(null);
+  };
+
+  // Selection is kept across pages: a sweep usually covers more than one page.
+  const handleFirstPage = () => {
     setCurrentPage(1);
   };
   const handlePreviousPage = () => {
-    setAllSelected(false);
-    setCheckedItems([]);
     setCurrentPage((prev) => Math.max(1, prev - 1));
   };
   const handleNextPage = () => {
-    setAllSelected(false);
-    setCheckedItems([]);
     setCurrentPage((prev) => Math.min(totalPages, prev + 1));
   };
   const handleLastPage = () => {
-    setAllSelected(false);
-    setCheckedItems([]);
     setCurrentPage(totalPages);
   };
 
@@ -329,7 +384,7 @@ export default function Validater({ nodes }: any) {
                 <input
                   type="checkbox"
                   checked={checkedItems.includes(node.address)}
-                  disabled={!actionableMap[node.address]}
+                  disabled={actionableMap[node.address] === false}
                   onChange={handleCheckboxChange(node.address)}
                 />
               </td>
@@ -526,6 +581,33 @@ export default function Validater({ nodes }: any) {
             </div>
           </div>
           <div className="flex flex-col items-center">
+            {resumeSession && (
+              <div className="w-full mb-[8px] rounded-[6px] border border-color-border1 px-3 py-2 text-[12px] text-left">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-color-text2 truncate">
+                    Unfinished sweep: {resumeSession.items.length} signed
+                    {" → "}
+                    {resumeSession.destination}
+                  </span>
+                  <span className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      className="underline text-[#FE8A3C]"
+                      onClick={handleResume}
+                    >
+                      Resume
+                    </button>
+                    <button
+                      type="button"
+                      className="underline text-color-text2"
+                      onClick={handleClearResume}
+                    >
+                      Discard
+                    </button>
+                  </span>
+                </div>
+              </div>
+            )}
             <input
               type="text"
               placeholder="Sweep destination address"
@@ -537,11 +619,11 @@ export default function Validater({ nodes }: any) {
                   : "w-full rounded-[35px] bg-[#fff] text-center h-[42px] border-[0.01rem] border-color-border1 text-[#7D794F] text-[14px] outline-none focus:border-[#ff4400]/30"
               }
             />
-            <div className="mt-[10px] flex items-center justify-center gap-1 w-[100%]">
+            <div className="mt-[10px] flex items-center justify-center gap-1 w-[100%] flex-wrap">
               <CustomButton
                 type="small"
                 height="42px"
-                width="170px"
+                width="140px"
                 disabled={checkedItems.length === 0 || claimRewardsLoading}
                 onClick={handleRunClaim}
               >
@@ -550,7 +632,7 @@ export default function Validater({ nodes }: any) {
               <CustomButton
                 type="small"
                 height="42px"
-                width="170px"
+                width="140px"
                 disabled={
                   checkedItems.length === 0 ||
                   claimRewardsLoading ||
@@ -558,9 +640,80 @@ export default function Validater({ nodes }: any) {
                 }
                 onClick={handleRunSweep}
               >
-                Run Sweep
+                {dryRun
+                  ? `Dry Run (${checkedItems.length})`
+                  : `Sign & Sweep (${checkedItems.length})`}
+              </CustomButton>
+              <CustomButton
+                type="small"
+                height="42px"
+                width="140px"
+                disabled={
+                  checkedItems.length === 0 ||
+                  claimRewardsLoading ||
+                  !destination
+                }
+                onClick={handleCheckSafes}
+              >
+                Check
               </CustomButton>
             </div>
+            <label className="mt-[8px] flex items-center gap-1 text-[12px] text-color-text2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={dryRun}
+                onChange={(e) => setDryRun(e.target.checked)}
+              />
+              Dry run (sign + simulate, do not submit)
+            </label>
+            {sweepProgress.phase !== "idle" &&
+              sweepProgress.phase !== "done" && (
+                <div className="mt-[6px] text-[12px] text-color-text2 text-center break-all">
+                  {sweepProgress.phase === "preflight" && "Checking Safes…"}
+                  {sweepProgress.phase === "signing" &&
+                    `Signing ${sweepProgress.signed}/${sweepProgress.total}…`}
+                  {sweepProgress.phase === "executing" &&
+                    "Submitting multiSend…"}
+                  {sweepProgress.address ? ` ${sweepProgress.address}` : ""}
+                </div>
+              )}
+            {sweepResults && sweepResults.items.length > 0 && (
+              <div className="mt-[10px] w-full text-left">
+                <div className="text-[12px] font-semibold mb-1 text-color-text1">
+                  Sweep report
+                </div>
+                <div className="max-h-[220px] overflow-y-auto rounded-[6px] border border-color-border1">
+                  {sweepResults.items.map((item) => (
+                    <div
+                      key={item.address}
+                      className="flex items-start justify-between gap-2 px-2 py-1 border-b border-color-border1 last:border-0 text-[12px]"
+                    >
+                      <span className="truncate">{item.address}</span>
+                      <span
+                        className={
+                          item.status === "signed" || item.status === "ok"
+                            ? "text-color-text2 shrink-0"
+                            : "text-red-500 shrink-0"
+                        }
+                      >
+                        {item.status}
+                        {item.reason ? `: ${item.reason}` : ""}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                {sweepResults.error && (
+                  <div className="text-red-500 text-[12px] mt-1">
+                    {sweepResults.error}
+                  </div>
+                )}
+                {sweepResults.txHash && (
+                  <div className="text-color-text2 text-[12px] mt-1 break-all">
+                    tx: {sweepResults.txHash}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
