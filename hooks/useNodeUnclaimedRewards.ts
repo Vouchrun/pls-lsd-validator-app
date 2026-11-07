@@ -115,6 +115,7 @@ export const useNodeUnclaimedRewards = (nodeAddress: string) => {
 
       try {
         setIsLoading(true);
+        setError(null);
         await executeWithRpcFallback(async (web3) => {
           const networkWithdrawContract = new web3.eth.Contract(
             getNetworkWithdrawContractAbi(),
@@ -124,21 +125,32 @@ export const useNodeUnclaimedRewards = (nodeAddress: string) => {
             }
           );
 
-          // Shared: contract meta + IPFS rewards file (cached across nodes)
-          const rewardsData = await getSharedRewardsData(web3);
-
-          // Per-node: total claimed rewards for the node
-          const totalClaimedRewardOfNode = await networkWithdrawContract.methods
-            .totalClaimedRewardOfNode(nodeAddress)
-            .call();
-
-          // Per-node: PLS balance and contract code (sweep eligibility)
+          // Sweep eligibility must not depend on the IPFS rewards file: read
+          // the balance and contract code first so a rewards/IPFS outage only
+          // hides the claim amount, it does not make the row unselectable.
           const [balance, code] = await Promise.all([
             web3.eth.getBalance(nodeAddress),
             web3.eth.getCode(nodeAddress),
           ]);
           setHasBalance(BigInt(balance) > 0n);
           setIsContract(code !== '0x');
+
+          // Per-node: total claimed rewards for the node
+          const totalClaimedRewardOfNode = await networkWithdrawContract.methods
+            .totalClaimedRewardOfNode(nodeAddress)
+            .call();
+
+          // Shared: contract meta + IPFS rewards file (cached across nodes)
+          let rewardsData;
+          try {
+            rewardsData = await getSharedRewardsData(web3);
+          } catch (rewardsError) {
+            console.error('Error fetching shared rewards data:', rewardsError);
+            setHasUnclaimed(false);
+            setUnclaimedRewards('0');
+            setIpfsRewardItem(undefined);
+            return;
+          }
 
           // Find reward info for the specific node
           const nodeRewardInfo = rewardsData.list.find(
@@ -177,8 +189,6 @@ export const useNodeUnclaimedRewards = (nodeAddress: string) => {
       } catch (err: any) {
         console.error('Error fetching unclaimed rewards:', err);
         setError(err.message || 'Failed to fetch unclaimed rewards');
-        setHasBalance(false);
-        setIsContract(false);
         setIsLoading(false);
       }
     };
