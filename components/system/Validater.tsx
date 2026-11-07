@@ -281,23 +281,6 @@ export default function Validater({ nodes }: any) {
     );
   };
 
-  const handleCheckSafes = () => {
-    if (checkedItems.length === 0 || !destination) return;
-    setSweepResults(null);
-    dispatch(
-      batchSweepValidatorRewards(
-        writeContractAsync,
-        signTypedDataAsync,
-        checkedItems,
-        destination,
-        {
-          preflightOnly: true,
-          onResult: (result) => setSweepResults(result),
-        }
-      )
-    );
-  };
-
   const handleResume = () => {
     if (!resumeSession) return;
     setDestination(resumeSession.destination);
@@ -619,7 +602,7 @@ export default function Validater({ nodes }: any) {
                   : "w-full rounded-[35px] bg-[#fff] text-center h-[42px] border-[0.01rem] border-color-border1 text-[#7D794F] text-[14px] outline-none focus:border-[#ff4400]/30"
               }
             />
-            <div className="mt-[10px] flex items-center justify-center gap-1 w-[100%] flex-wrap">
+            <div className="mt-[10px] flex items-center justify-center gap-2 w-[100%] flex-wrap">
               <CustomButton
                 type="small"
                 height="42px"
@@ -629,43 +612,32 @@ export default function Validater({ nodes }: any) {
               >
                 Run Claim
               </CustomButton>
-              <CustomButton
-                type="small"
-                height="42px"
-                width="140px"
-                disabled={
-                  checkedItems.length === 0 ||
-                  claimRewardsLoading ||
-                  !destination
-                }
-                onClick={handleRunSweep}
-              >
-                {dryRun
-                  ? `Dry Run (${checkedItems.length})`
-                  : `Sign & Sweep (${checkedItems.length})`}
-              </CustomButton>
-              <CustomButton
-                type="small"
-                height="42px"
-                width="140px"
-                disabled={
-                  checkedItems.length === 0 ||
-                  claimRewardsLoading ||
-                  !destination
-                }
-                onClick={handleCheckSafes}
-              >
-                Check
-              </CustomButton>
+              <div className="flex items-center gap-2">
+                <CustomButton
+                  type="small"
+                  height="42px"
+                  width="140px"
+                  disabled={
+                    checkedItems.length === 0 ||
+                    claimRewardsLoading ||
+                    !destination
+                  }
+                  onClick={handleRunSweep}
+                >
+                  {dryRun
+                    ? `Dry Run (${checkedItems.length})`
+                    : `Sweep (${checkedItems.length})`}
+                </CustomButton>
+                <label className="flex items-center gap-1 text-[12px] text-color-text2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={dryRun}
+                    onChange={(e) => setDryRun(e.target.checked)}
+                  />
+                  Dry run
+                </label>
+              </div>
             </div>
-            <label className="mt-[8px] flex items-center gap-1 text-[12px] text-color-text2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={dryRun}
-                onChange={(e) => setDryRun(e.target.checked)}
-              />
-              Dry run (sign + simulate, do not submit)
-            </label>
             {sweepProgress.phase !== "idle" &&
               sweepProgress.phase !== "done" && (
                 <div className="mt-[6px] text-[12px] text-color-text2 text-center break-all">
