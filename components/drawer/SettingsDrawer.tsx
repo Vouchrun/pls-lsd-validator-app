@@ -20,7 +20,7 @@ import { useAppKitTheme } from '@reown/appkit/react';
 import { useState, useEffect } from 'react';
 import { STORAGE_KEY_CUSTOM_RPC } from 'utils/storageUtils';
 import snackbarUtil from 'utils/snackbarUtils';
-import { getCurrentWorkingRpc, onRpcChange } from 'utils/web3Utils';
+import { getCurrentWorkingRpc, onRpcChange, updateCachedCustomRpc } from 'utils/web3Utils';
 
 interface Props {
   open: boolean;
@@ -95,6 +95,8 @@ export const SettingsDrawer = (props: Props) => {
     setCustomRpcInput('');
     setValidationError(null);
     dispatch(setCustomRpc(undefined));
+    updateCachedCustomRpc(null);
+    setActiveRpc(getCurrentWorkingRpc());
     snackbarUtil.success('Custom RPC cleared, using default RPC');
   };
 
@@ -124,6 +126,9 @@ export const SettingsDrawer = (props: Props) => {
       
       if (isValid) {
         dispatch(setCustomRpc(trimmedValue));
+        // Make the selection active immediately and clear any stale bad mark.
+        updateCachedCustomRpc(trimmedValue);
+        setActiveRpc(getCurrentWorkingRpc());
         setValidationError(null);
         snackbarUtil.success('Custom RPC validated and applied successfully');
       } else {
