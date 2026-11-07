@@ -1011,13 +1011,11 @@ export const batchSweepValidatorRewards =
     destination: string,
     options?: {
       dryRun?: boolean;
-      preflightOnly?: boolean;
       onResult?: (result: SweepRunResult) => void;
     }
   ): AppThunk =>
   async (dispatch, getState) => {
     const dryRun = options?.dryRun === true;
-    const preflightOnly = options?.preflightOnly === true;
     const report = (result: SweepRunResult) => options?.onResult?.(result);
 
     if (!nodeAddresses || nodeAddresses.length === 0) {
@@ -1128,11 +1126,6 @@ export const batchSweepValidatorRewards =
       if (candidates.length === 0) {
         report({ items, destination: destinationAddress, signer, dryRun });
         snackbarUtil.error('No sweepable Safe balances for the selected nodes');
-        return;
-      }
-
-      if (preflightOnly) {
-        report({ items, destination: destinationAddress, signer, dryRun });
         return;
       }
 
