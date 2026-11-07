@@ -3,7 +3,7 @@ import { AppThunk } from 'redux/store';
 import { getNodeDepositContract } from 'config/contract';
 import { getNodeDepositContractAbi } from 'config/contractAbi';
 import { getEthWeb3, executeWithRpcFallback } from 'utils/web3Utils';
-import { fetchWithBeaconFallback } from 'utils/beaconUtils';
+import { fetchPubkeyStatus } from 'utils/apiUtils';
 
 interface ValidatorNodeAddressData {
   address: string;
@@ -127,9 +127,7 @@ export const fetchValidatorData =
                 const index = next++;
                 const pubkeysString = chunks[index].join(',');
                 try {
-                  const data = await fetchWithBeaconFallback(
-                    `/eth/v1/beacon/states/head/validators?id=${pubkeysString}`
-                  );
+                  const data = await fetchPubkeyStatus(pubkeysString);
                   results.push(...data.data);
                 } catch (error) {
                   console.error('Error fetching validator data:', error);
@@ -196,7 +194,7 @@ export const fetchValidatorData =
 
         dispatch(setValidatorData(validatorInfo));
         dispatch(setTrustedValidatorData(trustedvalidatorInfo));
-      });
+      }, 1, 30_000);
     } catch (error) {
       dispatch(
         setError(error instanceof Error ? error.message : 'An error occurred')

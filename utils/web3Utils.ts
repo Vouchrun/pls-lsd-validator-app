@@ -491,8 +491,9 @@ export async function executeWithRpcFallback<T>(
 // the range into pages that comfortably fit the budget, run a bounded number of
 // them concurrently, and apply the timeout per page rather than to the sweep.
 
-/** Target page size: ~1.25 s of scanning at the measured ~20k blocks/s. */
-export const DEFAULT_LOG_PAGE_BLOCKS = 25_000;
+/** Target page size: the node measured ~2.4 s for 600k blocks, so 100k
+ *  (~0.4 s scan + RTT) leaves >10x headroom even under heavy degradation. */
+export const DEFAULT_LOG_PAGE_BLOCKS = 100_000;
 /** Hard ceiling for any single eth_getLogs request. */
 export const MAX_LOG_PAGE_BLOCKS = 100_000;
 /** Global cap across every paginated log sweep in the app. */

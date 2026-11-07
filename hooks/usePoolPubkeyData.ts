@@ -214,7 +214,7 @@ export function usePoolPubkeyData() {
           setTrustNodePubkeyNumberLimit(trustNodeLimit);
 
           return validValidatorCount;
-      });
+      }, 1, 30_000);
 
     } catch (err: any) {
       console.error('Error in updateMatchedValidators:', err);
