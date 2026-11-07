@@ -1,13 +1,36 @@
 import { fetchWithBeaconFallback } from './beaconUtils';
 
+// Both the validator table and the pool metrics ask for the same pubkey chunks.
+// Cache by chunk id (and dedupe in-flight requests) so the second caller reuses
+// the first response instead of doubling the beacon load.
+const PUBKEY_STATUS_CACHE_TTL_MS = 60_000;
+const pubkeyStatusCache = new Map<
+  string,
+  { timestamp: number; promise: Promise<any> }
+>();
+
 export async function fetchPubkeyStatus(id: string) {
-  const resJson = await fetchWithBeaconFallback(
+  const now = Date.now();
+  const cached = pubkeyStatusCache.get(id);
+  if (cached && now - cached.timestamp < PUBKEY_STATUS_CACHE_TTL_MS) {
+    return cached.promise;
+  }
+
+  const promise = fetchWithBeaconFallback(
     `/eth/v1/beacon/states/head/validators?id=${id}`,
     {
       method: 'GET',
     }
   );
-  return resJson;
+
+  pubkeyStatusCache.set(id, { timestamp: now, promise });
+
+  try {
+    return await promise;
+  } catch (error) {
+    pubkeyStatusCache.delete(id);
+    throw error;
+  }
 }
 
 export async function fetchBeaconCheckpoints() {

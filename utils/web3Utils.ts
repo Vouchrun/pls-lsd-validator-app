@@ -15,7 +15,15 @@ const STORAGE_KEY_LEGACY_RPC_INDEX = 'working_rpc_index';
 // RPC was never retried, so one transient outage could stick for the session.
 const BAD_RPC_TTL = 30 * 60 * 1000; // 30 minutes
 
-const DEFAULT_OPERATION_TIMEOUT_MS = 15_000;
+// Per-operation client timeout. Deliberately below geth's 30 s request ceiling
+// (rpc/http.go WriteTimeout) so the client always fails first with a clean,
+// deterministic error. 20 s leaves ~8x headroom over a normal 25k-block
+// eth_getLogs page (~1.25 s scan + RTT).
+const DEFAULT_OPERATION_TIMEOUT_MS = 20_000;
+// Provider-level timeout is intentionally longer than the operation timeout so
+// our race wins and the surfaced error is the operation timeout, not a generic
+// provider failure.
+const PROVIDER_TIMEOUT_MS = 25_000;
 
 // RPC failover state
 let currentRpcIndex = 0;
@@ -300,6 +308,27 @@ export function switchToNextRpc(markCurrentAsBad: boolean = false): boolean {
 }
 
 /**
+ * Raised when a request is malformed before it is sent (e.g. an eth_getLogs
+ * range larger than the hard maximum). This is deterministic: it must never
+ * rotate endpoints or mark an RPC as bad.
+ */
+export class QueryShapeError extends Error {
+  readonly isQueryShape = true;
+
+  constructor(message: string) {
+    super(message);
+    this.name = 'QueryShapeError';
+  }
+}
+
+function isQueryShapeError(error: any): boolean {
+  return !!(
+    error &&
+    (error.isQueryShape === true || error.name === 'QueryShapeError')
+  );
+}
+
+/**
  * True when the error carries revert data / a revert message. These are
  * deterministic: retrying on another endpoint will not fix them, and they must
  * surface quickly (the sweep relies on reading GS codes per Safe).
@@ -412,6 +441,13 @@ export async function executeWithRpcFallback<T>(
       return result;
     } catch (error: any) {
       lastError = error;
+
+      // Query-shape errors are deterministic: never rotate or mark the
+      // endpoint bad, just surface the error.
+      if (isQueryShapeError(error)) {
+        throw error;
+      }
+
       const isRpcFailure =
         isRpcError(error) || (error?.message || '').includes('timeout');
 
@@ -445,6 +481,197 @@ export async function executeWithRpcFallback<T>(
   );
 }
 
+// ---------------------------------------------------------------------------
+// eth_getLogs pagination
+// ---------------------------------------------------------------------------
+//
+// A single eth_getLogs over a large range cannot succeed: geth scans at roughly
+// 20k blocks/s and hard-kills any request at 30 s (rpc/http.go WriteTimeout),
+// so a 600k-block query takes ~30 s and always fails. The only fix is to split
+// the range into pages that comfortably fit the budget, run a bounded number of
+// them concurrently, and apply the timeout per page rather than to the sweep.
+
+/** Target page size: ~1.25 s of scanning at the measured ~20k blocks/s. */
+export const DEFAULT_LOG_PAGE_BLOCKS = 25_000;
+/** Hard ceiling for any single eth_getLogs request. */
+export const MAX_LOG_PAGE_BLOCKS = 100_000;
+/** Global cap across every paginated log sweep in the app. */
+export const MAX_CONCURRENT_LOG_PAGES = 8;
+
+const LOG_PAGE_RETRY_DELAY_MS = 300;
+const LOG_PAGE_ATTEMPTS = 3;
+
+export interface LogPageProgress {
+  done: number;
+  total: number;
+  fromBlock: number;
+  toBlock: number;
+}
+
+export interface PaginatedLogOptions {
+  /** Blocks per request. Defaults to 25,000; capped by MAX_LOG_PAGE_BLOCKS. */
+  pageSize?: number;
+  /** Per-sweep concurrency cap. The global semaphore still applies. */
+  concurrency?: number;
+  /** Timeout for a single page (not the whole sweep). */
+  perPageTimeoutMs?: number;
+  onProgress?: (progress: LogPageProgress) => void;
+}
+
+let activeLogPages = 0;
+const logPageWaiters: Array<() => void> = [];
+
+async function acquireLogPageSlot(): Promise<void> {
+  if (activeLogPages < MAX_CONCURRENT_LOG_PAGES) {
+    activeLogPages += 1;
+    return;
+  }
+  await new Promise<void>((resolve) => logPageWaiters.push(resolve));
+  activeLogPages += 1;
+}
+
+function releaseLogPageSlot(): void {
+  activeLogPages = Math.max(0, activeLogPages - 1);
+  const next = logPageWaiters.shift();
+  if (next) {
+    next();
+  }
+}
+
+/**
+ * Fetch `eventName` logs across [fromBlock, toBlock] in safe, concurrent pages.
+ *
+ * @param contractFactory builds the contract from the *current* web3 instance,
+ *        so a failover between pages uses the new endpoint.
+ */
+export async function getPastEventsPaginated(
+  contractFactory: (web3: Web3) => any,
+  eventName: string,
+  fromBlock: number,
+  toBlock: number,
+  options: PaginatedLogOptions = {}
+): Promise<any[]> {
+  const pageSize = options.pageSize ?? DEFAULT_LOG_PAGE_BLOCKS;
+  const concurrency = Math.max(
+    1,
+    options.concurrency ?? MAX_CONCURRENT_LOG_PAGES
+  );
+  const perPageTimeoutMs =
+    options.perPageTimeoutMs ?? DEFAULT_OPERATION_TIMEOUT_MS;
+
+  if (
+    !Number.isFinite(fromBlock) ||
+    !Number.isFinite(toBlock) ||
+    toBlock < fromBlock
+  ) {
+    throw new QueryShapeError(
+      `Invalid block range: fromBlock=${fromBlock}, toBlock=${toBlock}`
+    );
+  }
+
+  if (pageSize > MAX_LOG_PAGE_BLOCKS || pageSize <= 0) {
+    throw new QueryShapeError(
+      `Invalid log page size ${pageSize}; expected 1..${MAX_LOG_PAGE_BLOCKS}`
+    );
+  }
+
+  const totalBlocks = toBlock - fromBlock + 1;
+  const totalPages = Math.ceil(totalBlocks / pageSize);
+
+  const pages = Array.from({ length: totalPages }, (_, index) => {
+    const pageFrom = fromBlock + index * pageSize;
+    return {
+      index,
+      fromBlock: pageFrom,
+      toBlock: Math.min(pageFrom + pageSize - 1, toBlock),
+    };
+  });
+
+  const results: any[][] = new Array(totalPages);
+  let nextPage = 0;
+  let done = 0;
+  let failed: any = null;
+
+  const fetchPage = async (page: (typeof pages)[number]): Promise<any[]> => {
+    let lastError: any;
+
+    for (let attempt = 1; attempt <= LOG_PAGE_ATTEMPTS; attempt += 1) {
+      if (attempt === LOG_PAGE_ATTEMPTS) {
+        // Final attempt: try a different endpoint.
+        switchToNextRpc(true);
+      }
+
+      try {
+        return await executeWithRpcFallback(
+          async (web3) => {
+            const contract = contractFactory(web3);
+            return contract.getPastEvents(eventName, {
+              fromBlock: page.fromBlock,
+              toBlock: page.toBlock,
+            });
+          },
+          1,
+          perPageTimeoutMs
+        );
+      } catch (error: any) {
+        lastError = error;
+
+        // Deterministic failures must not be retried or blamed on the RPC.
+        if (isQueryShapeError(error) || isContractError(error)) {
+          throw error;
+        }
+
+        if (attempt < LOG_PAGE_ATTEMPTS) {
+          await new Promise((resolve) =>
+            setTimeout(
+              resolve,
+              LOG_PAGE_RETRY_DELAY_MS + Math.floor(Math.random() * 200)
+            )
+          );
+        }
+      }
+    }
+
+    throw lastError;
+  };
+
+  const worker = async () => {
+    while (!failed && nextPage < pages.length) {
+      const page = pages[nextPage];
+      nextPage += 1;
+
+      // Yield so React work and timers are not starved while a sweep is
+      // running (validator loading is the usual offender).
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      await acquireLogPageSlot();
+      try {
+        results[page.index] = await fetchPage(page);
+      } catch (error) {
+        // Stop scheduling new pages; in-flight ones finish on their own.
+        failed = error;
+        throw error;
+      } finally {
+        releaseLogPageSlot();
+      }
+
+      done += 1;
+      options.onProgress?.({
+        done,
+        total: totalPages,
+        fromBlock: page.fromBlock,
+        toBlock: page.toBlock,
+      });
+    }
+  };
+
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, pages.length) }, () => worker())
+  );
+
+  return results.flat();
+}
+
 export function createWeb3(provider?: any) {
   return new Web3(provider || (window.ethereum as any) || Web3.givenProvider);
 }
@@ -453,12 +680,12 @@ function createWeb3Provider(rpcUrl: string) {
   const useWebsocket = rpcUrl.startsWith('wss');
   return useWebsocket
     ? new Web3.providers.WebsocketProvider(rpcUrl, {
-        timeout: DEFAULT_OPERATION_TIMEOUT_MS,
+        timeout: PROVIDER_TIMEOUT_MS,
         clientConfig: { keepalive: true, keepaliveInterval: 60_000 },
         reconnect: { auto: false, delay: 5_000, maxAttempts: 1 },
       })
     : new Web3.providers.HttpProvider(rpcUrl, {
-        timeout: DEFAULT_OPERATION_TIMEOUT_MS,
+        timeout: PROVIDER_TIMEOUT_MS,
         keepAlive: false,
       });
 }

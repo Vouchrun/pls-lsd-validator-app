@@ -25,10 +25,10 @@ const SystemPage = () => {
   const { apr, yearlyApr } = useApr();
   const { voters, voteManagerAddress } = useNetworkProposalData();
   const { nodes } = usePoolPubkeyData();
-  const { signers: safeSigners, loading: safeSignersLoading } =
-    useSafeSigners(nodes);
   const { admin } = useNetworkProposalData();
   const { address: metaMaskAccount, isConnected } = useAccount();
+  const { signers: safeSigners, loading: safeSignersLoading } =
+    useSafeSigners(nodes, metaMaskAccount);
   const router = useRouter();
   const [showPage, setShowPage] = useState<null | boolean>(null);
 
@@ -44,10 +44,13 @@ const SystemPage = () => {
       const isSafeSigner =
         !!metaMaskAccount && safeSigners.has(metaMaskAccount.toLowerCase());
 
-      if (admin === metaMaskAccount || isNode || isVoter || isSafeSigner) {
+      // Base roles can render immediately; only an otherwise-unknown wallet
+      // waits for the Safe-owner check instead of leaving the page blank.
+      const isBaseAuthorized = admin === metaMaskAccount || isNode || isVoter;
+
+      if (isBaseAuthorized || isSafeSigner) {
         setShowPage(true); // If condition passes, allow rendering the page
       } else if (!safeSignersLoading) {
-        // Do not redirect a Safe signer while the owner set is still loading.
         await router.push("/"); // Redirect if the condition fails
       }
     };
