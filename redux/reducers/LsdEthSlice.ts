@@ -3,8 +3,8 @@ import { AppThunk } from 'redux/store';
 import {
   decodeBalancesUpdatedLog,
   getErc20AssetBalance,
-  getEthWeb3,
   executeWithRpcFallback,
+  getPastEventsPaginated,
 } from 'utils/web3Utils';
 import {
   getLsdEthTokenContract,
@@ -124,167 +124,224 @@ export const updateLsdEthRate = (): AppThunk => async (dispatch, getState) => {
   } catch (err: unknown) {}
 };
 
+const APR_CACHE_KEY = 'eth_lsd_apr_cache_v1';
+const YEARLY_APR_CACHE_KEY = 'eth_lsd_yearly_apr_cache_v1';
+const APR_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
+const YEARLY_APR_CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+function readAprCache(key: string, ttlMs: number): number | null {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (!raw) {
+      return null;
+    }
+    const parsed = JSON.parse(raw) as { apr: number; timestamp: number };
+    if (!parsed || typeof parsed.apr !== 'number') {
+      return null;
+    }
+    if (Date.now() - parsed.timestamp > ttlMs) {
+      return null;
+    }
+    return parsed.apr;
+  } catch {
+    return null;
+  }
+}
+
+function writeAprCache(key: string, apr: number) {
+  if (typeof window === 'undefined') {
+    return;
+  }
+  try {
+    window.localStorage.setItem(
+      key,
+      JSON.stringify({ apr, timestamp: Date.now() })
+    );
+  } catch {
+    // ignore quota / disabled storage
+  }
+}
+
 /**
- * query apr of lsd ETH
+ * query apr of lsd ETH (7 day window)
  */
-export const updateApr = (): AppThunk => async (dispatch, getState) => {
+export const updateApr = (): AppThunk => async (dispatch) => {
+  const cached = readAprCache(APR_CACHE_KEY, APR_CACHE_TTL_MS);
+  if (cached !== null) {
+    dispatch(setApr(cached));
+    return;
+  }
+
   let apr = getDefaultApr();
+  let computed = false;
+
   try {
     console.log('updateApr');
-    await executeWithRpcFallback(async (web3) => {
-      const currentBlock = await web3.eth.getBlockNumber();
-      const contract = new web3.eth.Contract(
-        getNetworkBalanceContractAbi(),
-        getNetworkBalanceContract()
+    const currentBlock = await executeWithRpcFallback(
+      async (web3) => web3.eth.getBlockNumber()
+    );
+    const fromBlock =
+      currentBlock - Math.floor((1 / getBlockSeconds()) * 60 * 60 * 24 * 7);
+
+    const events = await getPastEventsPaginated(
+      (web3) =>
+        new web3.eth.Contract(
+          getNetworkBalanceContractAbi(),
+          getNetworkBalanceContract()
+        ),
+      'BalancesUpdated',
+      fromBlock,
+      currentBlock
+    );
+
+    const balancesUpdatedEvents = events.sort(
+      (a, b) => a.blockNumber - b.blockNumber
+    );
+
+    if (balancesUpdatedEvents.length > 1) {
+      const beginEvent = balancesUpdatedEvents[0];
+      const endEvent = balancesUpdatedEvents[balancesUpdatedEvents.length - 1];
+      const beginValues: any = decodeBalancesUpdatedLog(
+        beginEvent.raw.data,
+        beginEvent.raw.topics
       );
-      const events = await contract.getPastEvents('BalancesUpdated', {
-        fromBlock:
-          currentBlock - Math.floor((1 / getBlockSeconds()) * 60 * 60 * 24 * 7),
-        toBlock: currentBlock,
-      });
-      let apr = getDefaultApr();
-      const balancesUpdatedEvents = events.sort(
-        (a, b) => a.blockNumber - b.blockNumber
+      const endValues: any = decodeBalancesUpdatedLog(
+        endEvent.raw.data,
+        endEvent.raw.topics
       );
-      if (balancesUpdatedEvents.length > 1) {
-        const beginEvent = balancesUpdatedEvents[0];
-        const endEvent = balancesUpdatedEvents[balancesUpdatedEvents.length - 1];
-        const beginValues: any = decodeBalancesUpdatedLog(
-          beginEvent.raw.data,
-          beginEvent.raw.topics
-        );
-        const endValues: any = decodeBalancesUpdatedLog(
-          endEvent.raw.data,
-          endEvent.raw.topics
-        );
-        const beginRate = bigIntDivide(
-          beginValues.totalEth,
-          beginValues.lsdTokenSupply
-        );
-        const endRate = bigIntDivide(
-          endValues.totalEth,
-          endValues.lsdTokenSupply
-        );
-        // Use actual event timestamps instead of hardcoded /7
-        const beginTimestamp = Number(beginValues.time);
-        const endTimestamp = Number(endValues.time);
-        const daysBetween = (endTimestamp - beginTimestamp) / (60 * 60 * 24);
-        if (
-          !isNaN(beginRate) &&
-          !isNaN(endRate) &&
-          endRate !== 1 &&
-          beginRate !== 1 &&
-          daysBetween > 0
-        ) {
-          apr = ((endRate - beginRate) / daysBetween) * 365.25 * 100;
-        }
+      const beginRate = bigIntDivide(
+        beginValues.totalEth,
+        beginValues.lsdTokenSupply
+      );
+      const endRate = bigIntDivide(
+        endValues.totalEth,
+        endValues.lsdTokenSupply
+      );
+      // Use actual event timestamps instead of hardcoded /7
+      const beginTimestamp = Number(beginValues.time);
+      const endTimestamp = Number(endValues.time);
+      const daysBetween = (endTimestamp - beginTimestamp) / (60 * 60 * 24);
+      if (
+        !isNaN(beginRate) &&
+        !isNaN(endRate) &&
+        endRate !== 1 &&
+        beginRate !== 1 &&
+        daysBetween > 0
+      ) {
+        apr = ((endRate - beginRate) / daysBetween) * 365.25 * 100;
+        computed = true;
       }
-      dispatch(setApr(apr));
-    });
+    }
+
+    dispatch(setApr(apr));
+    if (computed) {
+      writeAprCache(APR_CACHE_KEY, apr);
+    }
   } catch (err: any) {
     dispatch(setApr(apr));
   }
 };
 
-export const updateYearlyApr = (): AppThunk => async (dispatch, getState) => {
+/**
+ * query yearly apr of lsd ETH (365 day window)
+ */
+export const updateYearlyApr = (): AppThunk => async (dispatch) => {
+  const cached = readAprCache(
+    YEARLY_APR_CACHE_KEY,
+    YEARLY_APR_CACHE_TTL_MS
+  );
+  if (cached !== null) {
+    dispatch(setYearlyApr(cached));
+    return;
+  }
+
   let apr = getDefaultApr();
+  let computed = false;
+
   try {
-    await executeWithRpcFallback(async (web3) => {
-      const currentBlock = await web3.eth.getBlockNumber();
-      const contract = new web3.eth.Contract(
-        getNetworkBalanceContractAbi(),
-        getNetworkBalanceContract()
+    const currentBlock = await executeWithRpcFallback(
+      async (web3) => web3.eth.getBlockNumber()
+    );
+
+    // Calculate blocks for 365 days
+    const blocksFor365Days = Math.floor(
+      (1 / getBlockSeconds()) * 60 * 60 * 24 * 365
+    );
+
+    // Get deployment block
+    const deploymentBlock = getNetworkBalanceContractDeploymentBlock();
+
+    // Determine start block based on deployment time
+    const startBlock =
+      currentBlock - deploymentBlock < blocksFor365Days
+        ? deploymentBlock
+        : currentBlock - blocksFor365Days;
+
+    // 365 days is ~3.15M blocks. A single eth_getLogs over that span can
+    // never finish inside geth's 30 s request ceiling, so the helper pages it
+    // (25k blocks per request, ~1.25 s each) and times out per page.
+    const events = await getPastEventsPaginated(
+      (web3) =>
+        new web3.eth.Contract(
+          getNetworkBalanceContractAbi(),
+          getNetworkBalanceContract()
+        ),
+      'BalancesUpdated',
+      startBlock,
+      currentBlock
+    );
+
+    const balancesUpdatedEvents = events.sort(
+      (a, b) => a.blockNumber - b.blockNumber
+    );
+
+    if (balancesUpdatedEvents.length > 1) {
+      const beginEvent = balancesUpdatedEvents[0];
+      const endEvent = balancesUpdatedEvents[balancesUpdatedEvents.length - 1];
+
+      const beginValues: any = decodeBalancesUpdatedLog(
+        beginEvent.raw.data,
+        beginEvent.raw.topics
+      );
+      const endValues: any = decodeBalancesUpdatedLog(
+        endEvent.raw.data,
+        endEvent.raw.topics
       );
 
-      // Calculate blocks for 365 days
-      const blocksFor365Days = Math.floor(
-        (1 / getBlockSeconds()) * 60 * 60 * 24 * 365
+      const beginRate = bigIntDivide(
+        beginValues.totalEth,
+        beginValues.lsdTokenSupply
+      );
+      const endRate = bigIntDivide(
+        endValues.totalEth,
+        endValues.lsdTokenSupply
       );
 
-      // Get deployment block
-      const deploymentBlock = getNetworkBalanceContractDeploymentBlock();
+      // Use actual event timestamps instead of fetching block headers
+      const beginTimestamp = Number(beginValues.time);
+      const endTimestamp = Number(endValues.time);
+      const daysBetween = (endTimestamp - beginTimestamp) / (60 * 60 * 24);
 
-      // Determine start block based on deployment time
-      const startBlock =
-        currentBlock - deploymentBlock < blocksFor365Days
-          ? deploymentBlock
-          : currentBlock - blocksFor365Days;
-
-      // Chunk the range into parallel sub-queries to stay under Geth's
-      // hardcoded ~30s eth_getLogs timeout for large spans
-      const CHUNK_BLOCKS = 600000;
-      const ranges: { fromBlock: number; toBlock: number }[] = [];
-      for (let from = startBlock; from <= currentBlock; from += CHUNK_BLOCKS) {
-        ranges.push({
-          fromBlock: from,
-          toBlock: Math.min(from + CHUNK_BLOCKS - 1, currentBlock),
-        });
+      if (
+        !isNaN(beginRate) &&
+        !isNaN(endRate) &&
+        endRate !== 1 &&
+        beginRate !== 1 &&
+        daysBetween > 0
+      ) {
+        // Use 365.25 for leap-year accuracy (matches pls-lsd-app)
+        apr = ((endRate - beginRate) / daysBetween) * 365.25 * 100;
+        computed = true;
       }
+    }
 
-      // Run chunks with bounded concurrency so lightweight queries (balances,
-      // unstaked-today, etc.) aren't starved of browser connections while the
-      // large scans are in flight
-      const CHUNK_CONCURRENCY = 4;
-      const chunkResults: any[][] = new Array(ranges.length);
-      let rangeIndex = 0;
-      const chunkWorkers = Array.from(
-        { length: Math.min(CHUNK_CONCURRENCY, ranges.length) },
-        async () => {
-          while (rangeIndex < ranges.length) {
-            const i = rangeIndex++;
-            chunkResults[i] = await contract.getPastEvents('BalancesUpdated', {
-              fromBlock: ranges[i].fromBlock,
-              toBlock: ranges[i].toBlock,
-            });
-          }
-        }
-      );
-      await Promise.all(chunkWorkers);
-
-      const balancesUpdatedEvents = chunkResults
-        .flat()
-        .sort((a, b) => a.blockNumber - b.blockNumber);
-
-      if (balancesUpdatedEvents.length > 1) {
-        const beginEvent = balancesUpdatedEvents[0];
-        const endEvent = balancesUpdatedEvents[balancesUpdatedEvents.length - 1];
-
-        const beginValues: any = decodeBalancesUpdatedLog(
-          beginEvent.raw.data,
-          beginEvent.raw.topics
-        );
-        const endValues: any = decodeBalancesUpdatedLog(
-          endEvent.raw.data,
-          endEvent.raw.topics
-        );
-
-        const beginRate = bigIntDivide(
-          beginValues.totalEth,
-          beginValues.lsdTokenSupply
-        );
-        const endRate = bigIntDivide(
-          endValues.totalEth,
-          endValues.lsdTokenSupply
-        );
-
-        // Use actual event timestamps instead of fetching block headers
-        const beginTimestamp = Number(beginValues.time);
-        const endTimestamp = Number(endValues.time);
-        const daysBetween = (endTimestamp - beginTimestamp) / (60 * 60 * 24);
-
-        if (
-          !isNaN(beginRate) &&
-          !isNaN(endRate) &&
-          endRate !== 1 &&
-          beginRate !== 1 &&
-          daysBetween > 0
-        ) {
-          // Use 365.25 for leap-year accuracy (matches pls-lsd-app)
-          apr = ((endRate - beginRate) / daysBetween) * 365.25 * 100;
-        }
-      }
-      dispatch(setYearlyApr(apr));
-    });
+    dispatch(setYearlyApr(apr));
+    if (computed) {
+      writeAprCache(YEARLY_APR_CACHE_KEY, apr);
+    }
   } catch (err: any) {
     dispatch(setYearlyApr(apr));
   }

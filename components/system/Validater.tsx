@@ -130,7 +130,6 @@ export default function Validater({ nodes }: any) {
   const [checkedItems, setCheckedItems] = useState<string[]>([]);
   const [allSelected, setAllSelected] = useState(false);
   const [actionableMap, setActionableMap] = useState<Record<string, boolean>>({});
-  const [dryRun, setDryRun] = useState(false);
   const [sweepResults, setSweepResults] = useState<SweepRunResult | null>(null);
   const [resumeSession, setResumeSession] =
     useState<StoredSweepSession | null>(null);
@@ -140,6 +139,7 @@ export default function Validater({ nodes }: any) {
   const sweepProgress = useAppSelector(
     (state) => state.validator.sweepProgress
   );
+  const sweepDryRun = useAppSelector((state) => state.app.sweepDryRun);
 
   // Get validator data from Redux store
   const {
@@ -267,7 +267,7 @@ export default function Validater({ nodes }: any) {
         checkedItems,
         destination,
         {
-          dryRun,
+          dryRun: sweepDryRun,
           onResult: (result) => {
             setSweepResults(result);
             setResumeSession(loadSweepSession());
@@ -624,18 +624,10 @@ export default function Validater({ nodes }: any) {
                   }
                   onClick={handleRunSweep}
                 >
-                  {dryRun
+                  {sweepDryRun
                     ? `Dry Run (${checkedItems.length})`
                     : `Sweep (${checkedItems.length})`}
                 </CustomButton>
-                <label className="flex items-center gap-1 text-[12px] text-color-text2 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={dryRun}
-                    onChange={(e) => setDryRun(e.target.checked)}
-                  />
-                  Dry run
-                </label>
               </div>
             </div>
             {sweepProgress.phase !== "idle" &&

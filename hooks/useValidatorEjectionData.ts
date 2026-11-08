@@ -9,7 +9,12 @@ import {
   getNodeDepositContractAbi,
 } from 'config/contractAbi';
 import { getWithdrawContractDeploymentBlock } from 'config/env';
-import { getEthWeb3, executeWithRpcFallback } from 'utils/web3Utils';
+import {
+  getEthWeb3,
+  executeWithRpcFallback,
+  getPastEventsPaginated,
+  LogPageProgress,
+} from 'utils/web3Utils';
 import { fetchWithBeaconFallback } from 'utils/beaconUtils';
 
 const findStatus = (status: string) => {
@@ -62,6 +67,7 @@ export const useValidatorEjectionData = (
   const [allValidatorData, setAllValidatorData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [logProgress, setLogProgress] = useState<LogPageProgress | null>(null);
   const isMounted = useRef(true);
 
   // Remove memoized web3 and contracts to ensure fresh instance on fallback
@@ -148,123 +154,110 @@ export const useValidatorEjectionData = (
       dataCache.isFetching = true;
       setIsLoading(true);
 
-      await executeWithRpcFallback(async (web3) => {
-        const networkWithdrawContract = new web3.eth.Contract(
-          getNetworkWithdrawContractAbi(),
-          getNetworkWithdrawContract(),
-          {}
-        );
-        
-        const networkDepositContract = new web3.eth.Contract(
-          getNodeDepositContractAbi(),
-          getNodeDepositContract(),
-          {}
-        );
+      const currentBlock = await executeWithRpcFallback(
+        async (web3) => web3.eth.getBlockNumber()
+      );
+      const fromBlock = Math.max(
+        getWithdrawContractDeploymentBlock(),
+        currentBlock - 1555200 // 180 days at 10s per block
+      );
 
-        const currentBlock = await web3.eth.getBlockNumber();
-        // Chunk the range into parallel sub-queries to stay under Geth's
-        // hardcoded ~30s eth_getLogs timeout for large spans
-        const CHUNK_BLOCKS = 600000;
-        const fromBlock = Math.max(
-          getWithdrawContractDeploymentBlock(),
-          currentBlock - 1555200 // 180 days at 10s per block
-        );
-        const ranges: { fromBlock: number; toBlock: number }[] = [];
-        for (let from = fromBlock; from <= currentBlock; from += CHUNK_BLOCKS) {
-          ranges.push({
-            fromBlock: from,
-            toBlock: Math.min(from + CHUNK_BLOCKS - 1, currentBlock),
-          });
-        }
-        // Run chunks with bounded concurrency so lightweight queries aren't
-        // starved of browser connections while the large scans are in flight
-        const CHUNK_CONCURRENCY = 4;
-        const chunkResults: any[][] = new Array(ranges.length);
-        let rangeIndex = 0;
-        const chunkWorkers = Array.from(
-          { length: Math.min(CHUNK_CONCURRENCY, ranges.length) },
-          async () => {
-            while (rangeIndex < ranges.length) {
-              const i = rangeIndex++;
-              chunkResults[i] =
-                await networkWithdrawContract.getPastEvents(
-                  'NotifyValidatorExit',
-                  {
-                    fromBlock: ranges[i].fromBlock,
-                    toBlock: ranges[i].toBlock,
-                  }
-                );
+      // 180 days is ~1.55M blocks. A single eth_getLogs over that span can
+      // never finish inside geth's 30 s request ceiling, so the helper pages
+      // it (50k pages at ~20k blocks/s) and applies the timeout per page.
+      const events = await getPastEventsPaginated(
+        (web3) =>
+          new web3.eth.Contract(
+            getNetworkWithdrawContractAbi(),
+            getNetworkWithdrawContract(),
+            {}
+          ),
+        'NotifyValidatorExit',
+        fromBlock,
+        currentBlock,
+        {
+          onProgress: (progress) => {
+            if (isMounted.current) {
+              setLogProgress(progress);
             }
+          },
+        }
+      );
+
+      const web3 = getEthWeb3();
+      const networkDepositContract = new web3.eth.Contract(
+        getNodeDepositContractAbi(),
+        getNodeDepositContract(),
+        {}
+      );
+
+      let allData: any[] = [];
+
+      // Process events sequentially
+      for (const event of events) {
+        const block = await web3.eth.getBlock(event.blockNumber);
+        const timeStamp = Number(block.timestamp);
+        const validators = event?.returnValues?.ejectedValidators || [];
+
+        // For first event, process first 10 validators immediately
+        if (allData.length === 0 && validators.length > 0) {
+          const firstBatch = validators.slice(0, 10);
+          const remainingBatch = validators.slice(10);
+
+          // Process first batch
+          const firstBatchResults = await Promise.all(
+            firstBatch.map((vid: string) =>
+              processValidator(vid, timeStamp, networkDepositContract)
+            )
+          );
+
+          const validResults = firstBatchResults.filter(
+            (item) => item !== null
+          );
+          if (validResults.length > 0) {
+            allData = [...allData, ...validResults];
+            allData.sort((a, b) => b.timeStamp - a.timeStamp);
+            setAllValidatorData(allData);
+            setIsLoading(false);
           }
-        );
-        await Promise.all(chunkWorkers);
-        const events = chunkResults.flat();
 
-        let allData: any[] = [];
-
-        // Process events sequentially
-        for (const event of events) {
-          const block = await web3.eth.getBlock(event.blockNumber);
-          const timeStamp = Number(block.timestamp);
-          const validators = event?.returnValues?.ejectedValidators || [];
-
-          // For first event, process first 10 validators immediately
-          if (allData.length === 0 && validators.length > 0) {
-            const firstBatch = validators.slice(0, 10);
-            const remainingBatch = validators.slice(10);
-
-            // Process first batch
-            const firstBatchResults = await Promise.all(
-              firstBatch.map((vid: string) => processValidator(vid, timeStamp, networkDepositContract))
+          // Process remaining validators if any
+          if (remainingBatch.length > 0) {
+            setIsLoadingMore(true);
+            const remainingResults = await Promise.all(
+              remainingBatch.map((vid: string) =>
+                processValidator(vid, timeStamp, networkDepositContract)
+              )
             );
-
-            const validResults = firstBatchResults.filter(
+            const validRemainingResults = remainingResults.filter(
               (item) => item !== null
             );
-            if (validResults.length > 0) {
-              allData = [...allData, ...validResults];
-              allData.sort((a, b) => b.timeStamp - a.timeStamp);
-              setAllValidatorData(allData);
-              setIsLoading(false);
-            }
-
-            // Process remaining validators if any
-            if (remainingBatch.length > 0) {
-              setIsLoadingMore(true);
-              const remainingResults = await Promise.all(
-                remainingBatch.map((vid: string) =>
-                  processValidator(vid, timeStamp, networkDepositContract)
-                )
-              );
-              const validRemainingResults = remainingResults.filter(
-                (item) => item !== null
-              );
-              if (validRemainingResults.length > 0) {
-                allData = [...allData, ...validRemainingResults];
-                allData.sort((a, b) => b.timeStamp - a.timeStamp);
-                setAllValidatorData(allData);
-              }
-            }
-          } else {
-            // Process subsequent events
-            setIsLoadingMore(true);
-            const results = await Promise.all(
-              validators.map((vid: string) => processValidator(vid, timeStamp, networkDepositContract))
-            );
-            const validResults = results.filter((item) => item !== null);
-            if (validResults.length > 0) {
-              allData = [...allData, ...validResults];
+            if (validRemainingResults.length > 0) {
+              allData = [...allData, ...validRemainingResults];
               allData.sort((a, b) => b.timeStamp - a.timeStamp);
               setAllValidatorData(allData);
             }
           }
+        } else {
+          // Process subsequent events
+          setIsLoadingMore(true);
+          const results = await Promise.all(
+            validators.map((vid: string) =>
+              processValidator(vid, timeStamp, networkDepositContract)
+            )
+          );
+          const validResults = results.filter((item) => item !== null);
+          if (validResults.length > 0) {
+            allData = [...allData, ...validResults];
+            allData.sort((a, b) => b.timeStamp - a.timeStamp);
+            setAllValidatorData(allData);
+          }
         }
+      }
 
-        // Update cache
-        dataCache.data = allData;
-        dataCache.lastFetchTimestamp = Date.now();
-      });
-
+      // Update cache
+      dataCache.data = allData;
+      dataCache.lastFetchTimestamp = Date.now();
     } catch (error) {
       console.error('Error fetching validator data:', error);
     } finally {
@@ -350,6 +343,7 @@ export const useValidatorEjectionData = (
     showLoading: isLoading,
     showEmptyContent,
     isLoadingMore,
+    logProgress,
     totalCount: counts.total,
     othersCount: counts.others,
     pendingCount: counts.pending,

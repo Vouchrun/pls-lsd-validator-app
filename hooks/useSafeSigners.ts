@@ -3,33 +3,35 @@ import { getSafeMultiContractAbi } from 'config/contractAbi';
 import { executeWithRpcFallback } from 'utils/web3Utils';
 
 /**
- * Resolve the owner set of every Safe among the node addresses.
+ * Decide whether the connected wallet is an owner of any node Safe.
  *
  * The /system page is gated on "is this wallet allowed to operate here". The
  * TVA Safes are owned by a fixed set of signer EOAs, which is a different set
- * from the node operators / voters / admin. Reading `getOwners()` (Safe 1.3.0)
- * lets every signer of any TVA Safe reach the page, instead of only whoever
- * happens to be in the node or voter list.
+ * from the node operators / voters / admin. This asks the Safe directly via
+ * `isOwner(account)` and short-circuits on the first match, so the common case
+ * (the wallet is a signer on every TVA) costs a single RPC call instead of
+ * reading every owner list.
  *
- * Results are cached for a few minutes because the owner set changes rarely.
+ * Results are cached for a few minutes because ownership changes rarely.
  */
 
-const CACHE_KEY = 'tva_safe_owners_v1';
+const CACHE_KEY = 'tva_safe_signers_v1';
 const CACHE_TTL_MS = 5 * 60 * 1000;
-
-interface OwnersCache {
-  timestamp: number;
-  ownersBySafe: Record<string, string[]>;
-}
+const OWNER_CHECK_CONCURRENCY = 6;
 
 export interface SafeSignersResult {
-  /** Union of every Safe owner found, lowercased. */
+  /** Contains the connected account when it owns at least one node Safe. */
   signers: Set<string>;
-  ownersBySafe: Record<string, string[]>;
   loading: boolean;
 }
 
-function readCache(): OwnersCache | null {
+interface SignerCache {
+  timestamp: number;
+  key: string;
+  signer: string;
+}
+
+function readCache(): SignerCache | null {
   if (typeof window === 'undefined') {
     return null;
   }
@@ -38,13 +40,13 @@ function readCache(): OwnersCache | null {
     if (!raw) {
       return null;
     }
-    return JSON.parse(raw) as OwnersCache;
+    return JSON.parse(raw) as SignerCache;
   } catch {
     return null;
   }
 }
 
-function writeCache(cache: OwnersCache): void {
+function writeCache(cache: SignerCache): void {
   if (typeof window === 'undefined') {
     return;
   }
@@ -55,7 +57,10 @@ function writeCache(cache: OwnersCache): void {
   }
 }
 
-export function useSafeSigners(addresses: string[]): SafeSignersResult {
+export function useSafeSigners(
+  addresses: string[],
+  account?: string
+): SafeSignersResult {
   // Stable key so the effect does not re-run on every render.
   const key = useMemo(
     () =>
@@ -71,16 +76,16 @@ export function useSafeSigners(addresses: string[]): SafeSignersResult {
     [addresses]
   );
 
-  const [ownersBySafe, setOwnersBySafe] = useState<Record<string, string[]>>(
-    {}
-  );
+  const accountLower = account ? account.toLowerCase() : undefined;
+  const [signers, setSigners] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
     const list = key ? key.split(',') : [];
 
-    if (list.length === 0) {
+    if (!accountLower || list.length === 0) {
+      setSigners(new Set());
       setLoading(false);
       return;
     }
@@ -88,10 +93,11 @@ export function useSafeSigners(addresses: string[]): SafeSignersResult {
     const cached = readCache();
     if (
       cached &&
-      Date.now() - cached.timestamp < CACHE_TTL_MS &&
-      list.every((address) => cached.ownersBySafe[address])
+      cached.key === key &&
+      cached.signer === accountLower &&
+      Date.now() - cached.timestamp < CACHE_TTL_MS
     ) {
-      setOwnersBySafe(cached.ownersBySafe);
+      setSigners(new Set([accountLower]));
       setLoading(false);
       return;
     }
@@ -99,56 +105,62 @@ export function useSafeSigners(addresses: string[]): SafeSignersResult {
     setLoading(true);
 
     (async () => {
-      const next: Record<string, string[]> = {
-        ...(cached?.ownersBySafe || {}),
-      };
+      let found = false;
+      let next = 0;
 
-      try {
-        await executeWithRpcFallback(async (web3) => {
-          for (const address of list) {
-            // getCode failures are transport errors: let the fallback retry.
-            const code = await web3.eth.getCode(address);
-            if (!code || code === '0x') {
-              continue;
-            }
-            try {
+      const worker = async () => {
+        while (!found && next < list.length) {
+          const address = list[next];
+          next += 1;
+          try {
+            const isOwner = await executeWithRpcFallback(async (web3) => {
+              // Node addresses include EOAs (TVA_2, Stafi). Calling isOwner
+              // on those returns 0x and web3 throws a decode error, so skip
+              // them before making the call.
+              const code = await web3.eth.getCode(address);
+              if (!code || code === '0x') {
+                return false;
+              }
               const safe = new web3.eth.Contract(
                 getSafeMultiContractAbi(),
                 address,
                 {}
               );
-              const owners: string[] = await safe.methods.getOwners().call();
-              next[address] = owners.map((owner) => owner.toLowerCase());
-            } catch {
-              // Not a Safe, or no getOwners(): skip it.
+              return safe.methods.isOwner(accountLower).call();
+            });
+            if (isOwner) {
+              found = true;
             }
+          } catch {
+            // Ignore this Safe; another may still confirm ownership.
           }
-        });
-      } catch {
-        // Keep whatever we resolved; the gate still works for node/voter/admin.
-      }
+        }
+      };
+
+      await Promise.all(
+        Array.from(
+          { length: Math.min(OWNER_CHECK_CONCURRENCY, list.length) },
+          () => worker()
+        )
+      );
 
       if (cancelled) {
         return;
       }
 
-      setOwnersBySafe(next);
-      writeCache({ timestamp: Date.now(), ownersBySafe: next });
+      if (found) {
+        setSigners(new Set([accountLower]));
+        writeCache({ timestamp: Date.now(), key, signer: accountLower });
+      } else {
+        setSigners(new Set());
+      }
       setLoading(false);
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [key]);
+  }, [key, accountLower]);
 
-  const signers = useMemo(() => {
-    const set = new Set<string>();
-    Object.values(ownersBySafe).forEach((owners) => {
-      owners.forEach((owner) => set.add(owner.toLowerCase()));
-    });
-    return set;
-  }, [ownersBySafe]);
-
-  return { signers, ownersBySafe, loading };
+  return { signers, loading };
 }
