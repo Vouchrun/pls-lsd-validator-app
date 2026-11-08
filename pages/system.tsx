@@ -26,7 +26,7 @@ const SystemPage = () => {
   const { voters, voteManagerAddress } = useNetworkProposalData();
   const { nodes } = usePoolPubkeyData();
   const { admin } = useNetworkProposalData();
-  const { address: metaMaskAccount, isConnected } = useAccount();
+  const { address: metaMaskAccount } = useAccount();
   const { signers: safeSigners, loading: safeSignersLoading } =
     useSafeSigners(nodes, metaMaskAccount);
   const router = useRouter();
@@ -50,20 +50,24 @@ const SystemPage = () => {
 
       if (isBaseAuthorized || isSafeSigner) {
         setShowPage(true); // If condition passes, allow rendering the page
-      } else if (!safeSignersLoading) {
-        await router.push("/"); // Redirect if the condition fails
+      } else if (!!admin && !safeSignersLoading) {
+        // Only redirect once the on-chain auth data actually loaded and the
+        // owner check finished. Redirecting while admin is undefined (RPC
+        // failure) bounced legitimate operators to "/" with a 404 data fetch.
+        await router.push("/");
       }
     };
 
     // Evaluate as soon as a wallet is connected: admin/nodes/voters load
     // asynchronously, and the Safe-owner check must not wait on them.
-    if (metaMaskAccount) {
-      checkConditions();
+    if (!metaMaskAccount) {
+      // No wallet: render an empty shell. Do not redirect here — wagmi can
+      // briefly report no account during reconnect, and bouncing to "/" in
+      // static export triggers a 404 data fetch.
+      setShowPage(false);
+      return;
     }
-
-    if (admin && !isConnected) {
-      router.push("/");
-    }
+    checkConditions();
   }, [
     nodes,
     voters,
@@ -72,7 +76,6 @@ const SystemPage = () => {
     safeSigners,
     safeSignersLoading,
     router,
-    isConnected,
   ]);
 
   const memoizedVoter = useMemo(() => {
@@ -80,7 +83,15 @@ const SystemPage = () => {
   }, [voters, voteManagerAddress]);
 
   if (showPage === null) {
-    return null; // Render nothing while the condition is being checked
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <DataLoading height="40px" />
+      </div>
+    );
+  }
+
+  if (showPage === false) {
+    return null;
   }
 
   return (

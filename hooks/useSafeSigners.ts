@@ -114,6 +114,13 @@ export function useSafeSigners(
           next += 1;
           try {
             const isOwner = await executeWithRpcFallback(async (web3) => {
+              // Node addresses include EOAs (TVA_2, Stafi). Calling isOwner
+              // on those returns 0x and web3 throws a decode error, so skip
+              // them before making the call.
+              const code = await web3.eth.getCode(address);
+              if (!code || code === '0x') {
+                return false;
+              }
               const safe = new web3.eth.Contract(
                 getSafeMultiContractAbi(),
                 address,
