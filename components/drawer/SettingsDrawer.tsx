@@ -11,7 +11,7 @@ import { IOSSwitch } from 'components/common/CustomSwitch';
 import { MenuItem } from 'components/common/MenuItem';
 import { Icomoon } from 'components/icon/Icomoon';
 import { useAppDispatch, useAppSelector } from 'hooks/common';
-import { setDarkMode, setCustomRpc } from 'redux/reducers/AppSlice';
+import { setDarkMode, setCustomRpc, setSweepDryRun } from 'redux/reducers/AppSlice';
 import { RootState } from 'redux/store';
 import { openLink } from 'utils/commonUtils';
 import { getContactList, getExternalLinkList } from 'utils/configUtils';
@@ -31,12 +31,15 @@ export const SettingsDrawer = (props: Props) => {
   const { open, onChangeOpen } = props;
   const dispatch = useAppDispatch();
   const { setThemeMode } = useAppKitTheme();
-  const { darkMode, customRpc } = useAppSelector((state: RootState) => {
-    return {
-      darkMode: state.app.darkMode,
-      customRpc: state.app.customRpc,
-    };
-  });
+  const { darkMode, customRpc, sweepDryRun } = useAppSelector(
+    (state: RootState) => {
+      return {
+        darkMode: state.app.darkMode,
+        customRpc: state.app.customRpc,
+        sweepDryRun: state.app.sweepDryRun,
+      };
+    }
+  );
 
   const [customRpcInput, setCustomRpcInput] = useState(customRpc || '');
   const [isValidating, setIsValidating] = useState(false);
@@ -195,6 +198,26 @@ export const SettingsDrawer = (props: Props) => {
                   setThemeMode(e.target.checked ? 'dark' : 'light');
                 }}
               />
+            </div>
+
+            <div className='ml-[24px] mt-[20px] flex items-center'>
+              <div
+                className='text-[16px] mr-[16px]'
+                style={{ color: darkMode ? '#fff' : '#1b1b1f' }}
+              >
+                Enable sweep dry run
+              </div>
+
+              <IOSSwitch
+                checked={sweepDryRun}
+                onChange={(e) => dispatch(setSweepDryRun(e.target.checked))}
+              />
+            </div>
+            <div
+              className='ml-[24px] mt-[6px] text-[12px] italic'
+              style={{ color: darkMode ? '#888' : '#666' }}
+            >
+              Signs and simulates the sweep without submitting the transaction.
             </div>
 
             <div className='mt-[32px] h-[0.01rem] bg-color-divider2' />

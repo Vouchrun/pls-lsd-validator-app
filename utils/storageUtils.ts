@@ -7,6 +7,7 @@ export const STORAGE_KEY_UNREAD_NOTICE = "eth_lsd_unread_notice_v2";
 export const STORAGE_KEY_UNBOND_RECORDS = "eth_lsd_unbond_records";
 export const STORAGE_KEY_DISCONNECT_METAMASK = "eth_lsd_disconnect_metamask";
 export const STORAGE_KEY_CUSTOM_RPC = "eth_lsd_custom_rpc";
+export const STORAGE_KEY_SWEEP_DRY_RUN = "eth_lsd_sweep_dry_run";
 
 const tokenName = getTokenName();
 

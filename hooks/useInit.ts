@@ -3,6 +3,7 @@ import dayjs from 'dayjs';
 import { useEffect } from 'react';
 import {
   setDarkMode,
+  setSweepDryRun,
   setUnreadNoticeFlag,
   setUpdateFlag,
 } from 'redux/reducers/AppSlice';
@@ -23,6 +24,7 @@ import {
 import {
   STORAGE_KEY_DARK_MODE,
   STORAGE_KEY_DISCONNECT_METAMASK,
+  STORAGE_KEY_SWEEP_DRY_RUN,
   STORAGE_KEY_UNREAD_NOTICE,
   getStorage,
 } from 'utils/storageUtils';
@@ -54,6 +56,7 @@ export function useInit() {
     );
     const darkMode = JSON.parse(getStorage(STORAGE_KEY_DARK_MODE) || 'true');
     dispatch(setDarkMode(darkMode));
+    dispatch(setSweepDryRun(getStorage(STORAGE_KEY_SWEEP_DRY_RUN) === '1'));
   }, [dispatch]);
 
   useEffect(() => {
