@@ -13,6 +13,7 @@ import {
   STORAGE_KEY_DARK_MODE,
   STORAGE_KEY_UNREAD_NOTICE,
   STORAGE_KEY_CUSTOM_RPC,
+  STORAGE_KEY_SWEEP_DRY_RUN,
 } from 'utils/storageUtils';
 
 export interface DepositLoadingParams {
@@ -52,6 +53,7 @@ export interface AppState {
   noticeDrawerOpen: boolean;
   settingsDrawerOpen: boolean;
   customRpc: string | undefined;
+  sweepDryRun: boolean;
 }
 
 const initialState: AppState = {
@@ -74,6 +76,7 @@ const initialState: AppState = {
   noticeDrawerOpen: false,
   settingsDrawerOpen: false,
   customRpc: undefined,
+  sweepDryRun: false,
 };
 
 export const appSlice = createSlice({
@@ -149,6 +152,14 @@ export const appSlice = createSlice({
       }
       state.customRpc = action.payload;
     },
+    setSweepDryRun: (state: AppState, action: PayloadAction<boolean>) => {
+      if (action.payload) {
+        saveStorage(STORAGE_KEY_SWEEP_DRY_RUN, '1');
+      } else {
+        removeStorage(STORAGE_KEY_SWEEP_DRY_RUN);
+      }
+      state.sweepDryRun = action.payload;
+    },
   },
 });
 
@@ -166,6 +177,7 @@ export const {
   setNoticeDrawerOpen,
   setSettingsDrawerOpen,
   setCustomRpc,
+  setSweepDryRun,
 } = appSlice.actions;
 
 export default appSlice.reducer;
